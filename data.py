@@ -49,19 +49,11 @@ class Triangulation:
         self.edges = edges
         
     def sort_cw_with_half_circle(self, pts, center):
-
         cx, cy = self.pts[center].x, self.pts[center].y
-
-        # 각도 계산 (atan2, 라디안)
         with_angles = [(pt, math.atan2(self.pts[pt].y - cy, self.pts[pt].x - cx)) for pt in pts]
-
-        # 시계 방향 정렬 (angle 큰 것 -> 작은 것 순)
         with_angles.sort(key=lambda pa: -pa[1])
-
         n = len(with_angles)
         angles = [a for _, a in with_angles]
-
-        # cyclic shift 탐색: 연속 n개 중 각도 범위 ≤ π 찾기
         best_start = 0
         found = False
         doubled = angles + [a - 2*math.pi for a in angles]  # wrap-around
@@ -76,15 +68,14 @@ class Triangulation:
             reordered = with_angles[best_start:best_start+n]
             reordered_angles = [a if a <= math.pi else a - 2*math.pi for _, a in reordered]
         else:
-            # 불가능하다면 그냥 기본 CW 정렬 반환
             reordered = with_angles
             reordered_angles = angles
-
         reordered_pts = [pt for pt, _ in reordered]
         return reordered_pts, reordered_angles, found
 
         
     def intersect(self, d11, d12, d21, d22):
+        # (d11,d12)와 (d21,d22)가 intersect하는지 확인
         p1 = self.pts[d11]
         p2 = self.pts[d12]
         p3 = self.pts[d21]
@@ -95,6 +86,7 @@ class Triangulation:
         return False
     
     def is_convex_quad(self, i, j):
+        # (i,j) edge가 실제로 존재하고 flip 가능한지 확인
         i, j = min(i,j), max(i,j)
         try:
             edge:Diag = self.edges[(i,j)]
@@ -107,6 +99,7 @@ class Triangulation:
             return False
         
     def flip(self, i, j):
+        # (i,j) edge가 flip 가능하면 flip하고 새로 생긴 edge return, 아니면 (-1,-1) return
         i, j = min(i,j), max(i,j)
         if not self.is_convex_quad(i,j):
             return -1, -1
@@ -138,8 +131,13 @@ class Triangulation:
         del self.edges[(min(i,j),max(i,j))]
         return d1, d2
         
+    def find_difference(self, T):
+        e1 = set(self.edges.keys())
+        e2 = set(T.edges.keys())
         
-        
+    def check_1pfd(self, T):
+        # T와 1 parallel flip distance인지 확인
+        pass
         
         
     
@@ -169,7 +167,8 @@ class Data:
                 self.triangulations.append(Triangulation(self.pts, T))
             print(f"num of pts: {len(self.pts)}")
             print(f"num of triangulations: {len(self.triangulations)}")
-        self.DrawTriangulation(self.triangulations[0])
+        for i in range(len(self.triangulations)):
+            self.DrawTriangulation(self.triangulations[i], name = f"{i}")
         while True:
             i,j = random.randint(0,len(self.pts)-1), random.randint(0,len(self.pts)-1)
             if i==j:
@@ -218,7 +217,7 @@ class Data:
             cv2.imwrite(folder+"/"+self.instance_uid + ".triangulation" + name + ".png", img)
         else:
             loc = os.path.join(self.application_path, "solutions")
-            print("loc: "+loc)
+            # print("loc: "+loc)
             os.makedirs(loc, exist_ok=True)
             cv2.imwrite(loc+"/"+self.instance_uid + ".triangulation" + name + ".png", img)
         
