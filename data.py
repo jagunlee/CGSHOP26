@@ -119,32 +119,87 @@ class Triangulation:
     def maximal_disjoint_convex_quad(self, E:list[(int, int)], prev_use=[]):
         res = []
         second_best = None
-        used = [False]*len(self.pts)
+        used = [[False]*len(self.pts) for _ in range(len(self.pts))]
         for i, e in enumerate(E):
             if self.is_convex_quad(e[0], e[1]):
                 if e not in prev_use:
                     res.append(e)
-                    used[e[0]] = True
-                    used[e[1]] = True
-                    used[self.edges[e].nei_pts[0]] = True
-                    used[self.edges[e].nei_pts[1]] = True
+                    used[e[0]][e[1]] = True
+                    used[e[1]][e[0]] = True
+                    used[e[0]][self.edges[e].nei_pts[0]] = True
+                    used[e[0]][self.edges[e].nei_pts[1]] = True
+                    used[e[1]][self.edges[e].nei_pts[0]] = True
+                    used[e[1]][self.edges[e].nei_pts[1]] = True
+                    used[self.edges[e].nei_pts[0]][e[0]] = True
+                    used[self.edges[e].nei_pts[1]][e[0]] = True
+                    used[self.edges[e].nei_pts[0]][e[1]] = True
+                    used[self.edges[e].nei_pts[1]][e[1]] = True
                     break
                 else:
                     second_best = e
         if not res:
             res.append(e)
-            used[e[0]] = True
-            used[e[1]] = True
-            used[self.edges[e].nei_pts[0]] = True
-            used[self.edges[e].nei_pts[1]] = True
-        for j in range(len(E)):
-            if self.is_convex_quad(e[0], e[1]):
-                check_ind = [E[j][0],E[j][1],self.edges[E[j]].nei_pts[0],self.edges[E[j]].nei_pts[1]]
-                check_use = [used[k] for k in check_ind]
-                if True in check_use:
-                    continue
-                for ind in check_ind: used[ind] = True
-                res.append(E[j])
+            used[e[0]][e[1]] = True
+            used[e[1]][e[0]] = True
+            used[e[0]][self.edges[e].nei_pts[0]] = True
+            used[e[0]][self.edges[e].nei_pts[1]] = True
+            used[e[1]][self.edges[e].nei_pts[0]] = True
+            used[e[1]][self.edges[e].nei_pts[1]] = True
+            used[self.edges[e].nei_pts[0]][e[0]] = True
+            used[self.edges[e].nei_pts[1]][e[0]] = True
+            used[self.edges[e].nei_pts[0]][e[1]] = True
+            used[self.edges[e].nei_pts[1]][e[1]] = True
+            for j in range(len(E)):
+                e = E[j]
+                if self.is_convex_quad(e[0], e[1]):
+                    if used[e[0]][e[1]]==True:
+                        continue
+                    used[e[0]][e[1]] = True
+                    used[e[1]][e[0]] = True
+                    used[e[0]][self.edges[e].nei_pts[0]] = True
+                    used[e[0]][self.edges[e].nei_pts[1]] = True
+                    used[e[1]][self.edges[e].nei_pts[0]] = True
+                    used[e[1]][self.edges[e].nei_pts[1]] = True
+                    used[self.edges[e].nei_pts[0]][e[0]] = True
+                    used[self.edges[e].nei_pts[1]][e[0]] = True
+                    used[self.edges[e].nei_pts[0]][e[1]] = True
+                    used[self.edges[e].nei_pts[1]][e[1]] = True
+                    res.append(E[j])
+        else:
+            for j in range(len(E)):
+                e = E[j]
+                if e not in prev_use:
+                    if self.is_convex_quad(e[0], e[1]):
+                        if used[e[0]][e[1]]==True:
+                            continue
+                        used[e[0]][e[1]] = True
+                        used[e[1]][e[0]] = True
+                        used[e[0]][self.edges[e].nei_pts[0]] = True
+                        used[e[0]][self.edges[e].nei_pts[1]] = True
+                        used[e[1]][self.edges[e].nei_pts[0]] = True
+                        used[e[1]][self.edges[e].nei_pts[1]] = True
+                        used[self.edges[e].nei_pts[0]][e[0]] = True
+                        used[self.edges[e].nei_pts[1]][e[0]] = True
+                        used[self.edges[e].nei_pts[0]][e[1]] = True
+                        used[self.edges[e].nei_pts[1]][e[1]] = True
+                        res.append(E[j])
+            for j in range(len(E)):
+                e = E[j]
+                if self.is_convex_quad(e[0], e[1]):
+                    if used[e[0]][e[1]]==True:
+                        continue
+                    used[e[0]][e[1]] = True
+                    used[e[1]][e[0]] = True
+                    used[e[0]][self.edges[e].nei_pts[0]] = True
+                    used[e[0]][self.edges[e].nei_pts[1]] = True
+                    used[e[1]][self.edges[e].nei_pts[0]] = True
+                    used[e[1]][self.edges[e].nei_pts[1]] = True
+                    used[self.edges[e].nei_pts[0]][e[0]] = True
+                    used[self.edges[e].nei_pts[1]][e[0]] = True
+                    used[self.edges[e].nei_pts[0]][e[1]] = True
+                    used[self.edges[e].nei_pts[1]][e[1]] = True
+                    res.append(E[j])
+                
         return res
         
     def flip(self, i, j):
@@ -226,10 +281,10 @@ class Data:
         step = 0
         res_e_list = []
         while True:
-            step+=1
             E1, E2 = T.find_difference(self.triangulations[1])
             if not E1:
                 break
+            step+=1
             e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
             if not e_list:
                 pdb.set_trace()
@@ -238,6 +293,7 @@ class Data:
                 res_e_list.append(T.flip(e[0],e[1]))
             self.DrawTriangulation(T, colored_edges=res_e_list,name=f"step {step}")
             self.DrawTriangulation(T, colored_edges=res_e_list,name=f"check")
+        print(f"0 -> 1 can be done in {step} step!")
             # pdb.set_trace()
         # for e in self.triangulations[0].edges.values():
         #     print(f"edge {e.p1} {e.p2}: {e.nei_pts[0]}, {e.nei_pts[1]}")
