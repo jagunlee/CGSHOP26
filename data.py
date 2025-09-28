@@ -138,6 +138,7 @@ class Triangulation:
                 else:
                     second_best = e
         if not res:
+            e = second_best
             res.append(e)
             used[e[0]][e[1]] = True
             used[e[1]][e[0]] = True
@@ -238,7 +239,15 @@ class Triangulation:
     def find_difference(self, T):
         e1 = set(self.edges.keys())
         e2 = set(T.edges.keys())
-        return (list(e1-e2), list(e2-e1))
+        def intersect_num(e, l):
+            n = 0
+            for i in l:
+                if self.intersect(e[0],e[1],i[0],i[1]): n+=1
+            return n
+        l1,l2 = list(e1-e2), list(e2-e1)
+        l1.sort(key=lambda x:intersect_num(x,l2), reverse=True)
+        l2.sort(key=lambda x:intersect_num(x,l1), reverse=True)
+        return (l1, l2)
         
     def check_1pfd(self, T):
         E1, E2 = self.find_difference(T)
