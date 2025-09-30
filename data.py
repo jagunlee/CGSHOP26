@@ -1,7 +1,9 @@
+import copy
 import cv2
 from heapq import *
 import json
 import math
+from multiprocessing import Pool
 import numpy as np
 import os
 from pathlib import Path
@@ -210,21 +212,9 @@ class Triangulation:
             return -1, -1
         edge:Diag = self.edges[(min(i,j),max(i,j))]
         d1, d2 = edge.nei_pts
-        if self.edges[min(i,d1), max(i,d1)].nei_pts[i<d1]!=j: 
-            print(f"Something Wrong!! {i} {d1}")
-            pdb.set_trace()
         self.edges[min(i,d1), max(i,d1)].nei_pts[i<d1] = d2
-        if self.edges[min(d1,j), max(d1,j)].nei_pts[d1<j]!=i: 
-            print(f"Something Wrong!! {d1} {j}")
-            pdb.set_trace()
         self.edges[min(d1,j), max(d1,j)].nei_pts[d1<j] = d2
-        if self.edges[min(j,d2), max(j,d2)].nei_pts[j<d2]!=i: 
-            print(f"Something Wrong!! {j} {d2}")
-            pdb.set_trace()
         self.edges[min(j,d2), max(j,d2)].nei_pts[j<d2] = d1
-        if self.edges[min(d2,i), max(d2,i)].nei_pts[d2<i]!=j: 
-            print(f"Something Wrong!! {d2} {i}")
-            pdb.set_trace()
         self.edges[min(d2,i), max(d2,i)].nei_pts[d2<i] = d1
         
         if d1<d2:
@@ -286,11 +276,32 @@ class Data:
             print(f"num of triangulations: {len(self.triangulations)}")
         for i in range(len(self.triangulations)):
             self.DrawTriangulation(self.triangulations[i], name = f"{i}")
-        T:Triangulation = self.triangulations[0]
+        max_pfd = 0
+        inp = []
+        for i in range((len(self.triangulations))-1):
+            for j in range(i+1, len(self.triangulations)):
+                inp.append((i,j))
+        print(inp)
+        with Pool() as pool:
+            res = pool.starmap(self.compute_pfd, inp)
+            max_pfd = max(res, key=lambda x:x[0])
+        # for i in range((len(self.triangulations))-1):
+        #     for j in range(i+1, len(self.triangulations)):
+        #         pfd, _ = self.compute_pfd(i,j)
+        #         max_pfd = max(max_pfd, pfd)
+        print(f"Maximum Parallel flip distance: {max_pfd[0]}")
+        
+            # pdb.set_trace()
+        # for e in self.triangulations[0].edges.values():
+        #     print(f"edge {e.p1} {e.p2}: {e.nei_pts[0]}, {e.nei_pts[1]}")
+        
+    def compute_pfd(self, i, j):
+        T, T1 = self.triangulations[i], self.triangulations[j]
         step = 0
         res_e_list = []
+        T_list = [copy.deepcopy(T)]
         while True:
-            E1, E2 = T.find_difference(self.triangulations[1])
+            E1, E2 = T.find_difference(T1)
             if not E1:
                 break
             step+=1
@@ -300,13 +311,12 @@ class Data:
             res_e_list = []
             for e in e_list:
                 res_e_list.append(T.flip(e[0],e[1]))
-            self.DrawTriangulation(T, colored_edges=res_e_list,name=f"step {step}")
-            self.DrawTriangulation(T, colored_edges=res_e_list,name=f"check")
-        print(f"0 -> 1 can be done in {step} step!")
-            # pdb.set_trace()
-        # for e in self.triangulations[0].edges.values():
-        #     print(f"edge {e.p1} {e.p2}: {e.nei_pts[0]}, {e.nei_pts[1]}")
-        
+            T_list.append(copy.deepcopy(T))
+            # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"step {step}")
+            # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"check")
+        print(f"{i} -> {j} can be done in {step} step!")
+        return step, T_list
+    
     def WriteData(self):
         pass
 
