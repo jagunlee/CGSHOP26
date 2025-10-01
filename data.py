@@ -281,7 +281,7 @@ class Data:
         for i in range((len(self.triangulations))-1):
             for j in range(i+1, len(self.triangulations)):
                 inp.append((i,j))
-        print(inp)
+        # print(inp)
         with Pool() as pool:
             res = pool.starmap(self.compute_pfd, inp)
             max_pfd = max(res, key=lambda x:x[0])
