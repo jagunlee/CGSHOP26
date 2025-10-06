@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import pdb
 import random
+import time
 
 class Point:
     def __init__(self,x,y):
@@ -20,18 +21,20 @@ class Diag:
         self.p1 = i
         self.p2 = j
         self.nei_pts = [None, None]
+    def pts(self):
+        return (self.p1, self.p2)
     
 class Triangulation:
     def __init__(self, pts, T):
         self.pts = pts
         self.edges: dict = dict()
         self.make_triangulation(T)
+        self.times = dict()
 
     # def __init__(self, pts, edges:dict):
     #     self.pts = pts
     #     self.edges = edges
 
-        
     def make_triangulation(self, T):
         edges = dict()
         for e in T:
@@ -231,12 +234,19 @@ class Triangulation:
         e2 = set(T.edges.keys())
         def intersect_num(e, l):
             n = 0
-            for i in l:
-                if self.intersect(e[0],e[1],i[0],i[1]): n+=1
+            for e1 in l:
+                if self.intersect(e[0],e[1],e1[0],e1[1]): n+=1
             return n
         l1,l2 = list(e1-e2), list(e2-e1)
-        l1.sort(key=lambda x:intersect_num(x,l2), reverse=True)
-        l2.sort(key=lambda x:intersect_num(x,l1), reverse=True)
+        _l1, _l2 = l1[:], l2[:]
+        for i in range(len(l1)):
+            l1[i] = (intersect_num(l1[i],_l2), l1[i])
+        for i in range(len(l2)):
+            l2[i] = (intersect_num(l2[i],_l1), l2[i])
+        l1.sort(reverse=True)
+        l2.sort(reverse=True)
+        l1 = [x[1] for x in l1]
+        l2 = [x[1] for x in l2]
         return (l1, l2)
         
     def check_1pfd(self, T):
@@ -256,7 +266,9 @@ class Data:
             base = Path(os.getcwd()).resolve()
         self.application_path = str(base.parents[0])
         self.input = input
+        # self.compute_intersect()
         self.ReadData()
+        
 
     def ReadData(self):
         print("--------------------ReadData--------------------")
@@ -282,18 +294,120 @@ class Data:
             for j in range(i+1, len(self.triangulations)):
                 inp.append((i,j))
         # print(inp)
-        with Pool() as pool:
-            res = pool.starmap(self.compute_pfd, inp)
-            max_pfd = max(res, key=lambda x:x[0])
-        # for i in range((len(self.triangulations))-1):
-        #     for j in range(i+1, len(self.triangulations)):
-        #         pfd, _ = self.compute_pfd(i,j)
-        #         max_pfd = max(max_pfd, pfd)
-        print(f"Maximum Parallel flip distance: {max_pfd[0]}")
+        _multi = True
+        _ini_sol = True
+        initial_sol = [0]*len(self.triangulations)
+        if _ini_sol:
+            if _multi:
+                with Pool() as pool:
+                    res = pool.starmap(self.compute_pfd, inp)
+                for res1 in res:
+                    initial_sol[res1[2]]+=res1[0]
+                    initial_sol[res1[3]]+=res1[0]
+                max_pfd = max(res, key=lambda x:x[0])
+                print(f"Maximum Parallel flip distance: {max_pfd[0]}")
+            else:
+                for i in range((len(self.triangulations))-1):
+                    for j in range(i+1, len(self.triangulations)):
+                        pfd, *_ = self.compute_pfd(i,j)
+                        max_pfd = max(max_pfd, pfd)
+                        initial_sol[i]+=res1[0]
+                        initial_sol[j]+=res1[0]
+                print(f"Maximum Parallel flip distance: {max_pfd}")
+            print(f"Initial Center: {np.argmax(initial_sol)} (total dist: {max(initial_sol)})")
         
-            # pdb.set_trace()
-        # for e in self.triangulations[0].edges.values():
-        #     print(f"edge {e.p1} {e.p2}: {e.nei_pts[0]}, {e.nei_pts[1]}")
+    def compute_intersect(self):
+        self.inter_list = [[[[False]*len(self.pts) for _ in range(len(self.pts))]for __ in range(len(self.pts))]for ___ in range(len(self.pts))]
+        for i1 in range(len(self.pts)):
+            for j1 in range(len(self.pts)):
+                for i2 in range(len(self.pts)):
+                    for j2 in range(len(self.pts)):
+                        if i1==j1 or i2==j2:
+                            continue
+                        if i1==i2 and j1==j2:
+                            continue
+                        if self.intersect(i1, j1, i2, j2):
+                            self.inter_list[i1][j1][i2][j2] = True
+        
+
+
+    def find_center(self):
+        T = [copy.deepcopy(t) for t in self.triangulations]
+        res_e_lists = [[] for _ in range(len(self.triangulations))]
+        step = 0
+        while True:
+            done = True
+            set_list = [set(t.edges.keys()) for t in T]
+            base_set = set_list[0]
+            for i in range(1, len(T)):
+                if base_set!=set_list[i]:
+                    done = False
+                    break
+            if done:
+                dist = self.compute_center_dist(T[0])
+                print(f"Total distance from center: {dist}")
+                return T[0], dist
+            step+=1
+            e_list = dict()
+            for t in T:
+                for e in t.edges:
+                    if e in e_list.keys():
+                        e_list[e][0]+=1
+                    else:
+                        e_list[e] = [1,0]
+            for e1 in e_list.keys():
+                for e2 in e_list.keys():
+                    if e1==e2: continue
+                    if self.intersect(e1[0], e1[1], e2[0], e2[1]):
+                        e_list[e1][1]+=e_list[e2][0]
+                        e_list[e2][1]+=e_list[e1][0]
+            T_val = [0]*len(T)
+            for i, t in enumerate(T):
+                for e in t.edges:
+                    exs_num, inter_num = e_list[e]
+                    T_val[i]+=(inter_num-exs_num)/exs_num
+            # print(T_val)
+            update_t_ind = np.argmax(T_val)
+            t:Triangulation = T[update_t_ind]
+            update_e = list(t.edges.keys())
+            update_e.sort(key = lambda x: (e_list[x][1]-e_list[x][0])/e_list[x][0], reverse=True)
+            for i in range(len(update_e)):
+                x = update_e[i]
+                if (e_list[x][1]-e_list[x][0])/e_list[x][0]<0:
+                    break
+            # print(update_e, len(update_e), i)
+            update_e = update_e[:i]
+            flip_list = t.maximal_disjoint_convex_quad(update_e, res_e_lists[update_t_ind])
+            local_res_list = []
+            for e in flip_list:
+                local_res_list.append(t.flip(e[0],e[1]))
+            res_e_lists[update_t_ind] = local_res_list
+            print(f"[{step} step] Triangulation {update_t_ind} flipped, {len(local_res_list)} edges")
+            
+
+
+    
+
+
+
+    def intersect(self, d11, d12, d21, d22):
+        def _orient(a, b, c) -> float:
+            return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
+        # (d11,d12)와 (d21,d22)가 intersect하는지 확인
+        EPS = 1e-9
+        p1 = self.pts[d11]
+        p2 = self.pts[d12]
+        p3 = self.pts[d21]
+        p4 = self.pts[d22]
+        o1 = _orient(p1, p2, p3)
+        o2 = _orient(p1, p2, p4)
+        o3 = _orient(p3, p4, p1)
+        o4 = _orient(p3, p4, p2)
+
+        # 일반적인 교차 (서로 다른 편에 위치)
+        if (o1 * o2 < -EPS) and (o3 * o4 < -EPS):
+            return True
+        return False      
         
     def compute_pfd(self, i, j):
         T, T1 = self.triangulations[i], self.triangulations[j]
@@ -315,7 +429,32 @@ class Data:
             # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"step {step}")
             # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"check")
         print(f"{i} -> {j} can be done in {step} step!")
-        return step, T_list
+        return step, T_list, i, j
+
+    def compute_center_dist(self, T1:Triangulation):
+        total_length = 0
+        for i,T in enumerate(self.triangulations):
+            step = 0
+            res_e_list = []
+            T_list = [copy.deepcopy(T)]
+            while True:
+                E1, E2 = T.find_difference(T1)
+                # print(E1)
+                if not E1:
+                    break
+                step+=1
+                e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
+                if not e_list:
+                    pdb.set_trace()
+                res_e_list = []
+                for e in e_list:
+                    res_e_list.append(T.flip(e[0],e[1]))
+                T_list.append(copy.deepcopy(T))
+                # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"step {step}")
+                # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"check")
+            total_length+=step
+            print(f"{i} -> center can be done in {step} step!")
+        return total_length
     
     def WriteData(self):
         pass
