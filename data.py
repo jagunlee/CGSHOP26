@@ -297,6 +297,8 @@ class Data:
         _multi = True
         _ini_sol = True
         initial_sol = [0]*len(self.triangulations)
+        self.initial_sol = float("INF")
+        self.center = self.triangulations[0]
         if _ini_sol:
             if _multi:
                 with Pool() as pool:
@@ -315,6 +317,8 @@ class Data:
                         initial_sol[j]+=res1[0]
                 print(f"Maximum Parallel flip distance: {max_pfd}")
             print(f"Initial Center: {np.argmax(initial_sol)} (total dist: {max(initial_sol)})")
+            self.initial_sol = max(initial_sol)
+            self.center = self.triangulations[np.argmax(initial_sol)]
         
     def compute_intersect(self):
         self.inter_list = [[[[False]*len(self.pts) for _ in range(len(self.pts))]for __ in range(len(self.pts))]for ___ in range(len(self.pts))]
@@ -345,7 +349,8 @@ class Data:
                     break
             if done:
                 dist = self.compute_center_dist(T[0])
-                print(f"Total distance from center: {dist}")
+                print(f"Total distance from center: {self.initial_sol} -> {dist}")
+                self.center = T[0]
                 return T[0], dist
             step+=1
             e_list = dict()
@@ -385,7 +390,62 @@ class Data:
             print(f"[{step} step] Triangulation {update_t_ind} flipped, {len(local_res_list)} edges")
             
 
+    def random_move(self):
+        prev_len = self.compute_center_dist(self.center)
+        total_best = prev_len
+        T:Triangulation = copy.deepcopy(self.center)
+        print(f"Start with {prev_len}")
+        step = 0
+        edges = list(T.edges.keys())
+        # print(edges)
+        # pdb.set_trace()
+        starting_edge_ind = 0
+        random.shuffle(edges)
+        while step<10000:
+            random_move = random.random()>0.999**step
+            if random_move or starting_edge_ind==len(edges): 
+                random.shuffle(edges)
+                _e_list = T.maximal_disjoint_convex_quad(edges)
+                random_choice = [random.random() for _ in range(len(_e_list))]
+                e_list = []
+                for i,e in enumerate(_e_list):
+                    if random_choice[i]>0.5:
+                        e_list.append(_e_list[i])
 
+                for e in e_list:
+                    T.flip(e[0], e[1])
+                edges = list(T.edges.keys())
+                random.shuffle(edges)
+                new_len = self.compute_center_dist(T)
+                total_best = min(total_best, new_len)
+                print(f"[{self.instance_uid}] Random move! {prev_len}->{new_len} (total best: {total_best})")
+                prev_len = new_len
+                
+                step = 0
+            else:
+                T1 = copy.deepcopy(T)
+                e = edges[starting_edge_ind]
+                if not T1.is_convex_quad(e[0], e[1]):
+                    starting_edge_ind +=1
+                    continue
+                T1.flip(e[0], e[1])
+                new_len = self.compute_center_dist(T1)
+                if new_len<=prev_len:
+                    step = 0
+                    T = copy.deepcopy(T1)
+                    edges = list(T1.edges.keys())
+                    random.shuffle(edges)
+                    if new_len<prev_len:
+                        self.center = copy.deepcopy(T)
+                        total_best = min(new_len, total_best)
+                        print(f"[{self.instance_uid}] {prev_len}->{new_len} (total best: {total_best})")
+                        prev_len = new_len
+                        
+                    starting_edge_ind = 0
+                else:
+                    step+=1
+                    starting_edge_ind+=1
+        return self.center
     
 
 
@@ -410,7 +470,7 @@ class Data:
         return False      
         
     def compute_pfd(self, i, j):
-        T, T1 = self.triangulations[i], self.triangulations[j]
+        T, T1 = copy.deepcopy(self.triangulations[i]), copy.deepcopy(self.triangulations[j])
         step = 0
         res_e_list = []
         T_list = [copy.deepcopy(T)]
@@ -433,7 +493,8 @@ class Data:
 
     def compute_center_dist(self, T1:Triangulation):
         total_length = 0
-        for i,T in enumerate(self.triangulations):
+        for i,_T in enumerate(self.triangulations):
+            T = copy.deepcopy(_T)
             step = 0
             res_e_list = []
             T_list = [copy.deepcopy(T)]
@@ -453,7 +514,7 @@ class Data:
                 # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"step {step}")
                 # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"check")
             total_length+=step
-            print(f"{i} -> center can be done in {step} step!")
+            # print(f"{i} -> center can be done in {step} step!")
         return total_length
     
     def WriteData(self):
