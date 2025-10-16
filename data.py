@@ -1,5 +1,6 @@
 import copy
 import cv2
+import datetime
 from heapq import *
 import json
 import math
@@ -7,6 +8,8 @@ from multiprocessing import Pool
 import numpy as np
 import os
 from pathlib import Path
+from pandas import DataFrame
+import pandas as pd
 import pdb
 import random
 import time
@@ -266,6 +269,7 @@ class Data:
             base = Path(os.getcwd()).resolve()
         self.application_path = str(base.parents[0])
         self.input = input
+        self.df = None
         # self.compute_intersect()
         self.ReadData()
         
@@ -299,6 +303,7 @@ class Data:
         initial_sol = [0]*len(self.triangulations)
         self.initial_sol = float("INF")
         self.center = self.triangulations[0]
+        self.dist = float("INF")
         if _ini_sol:
             if _multi:
                 with Pool() as pool:
@@ -319,6 +324,7 @@ class Data:
             print(f"Initial Center: {np.argmax(initial_sol)} (total dist: {max(initial_sol)})")
             self.initial_sol = max(initial_sol)
             self.center = self.triangulations[np.argmax(initial_sol)]
+            self.dist = max(initial_sol)
         
     def compute_intersect(self):
         self.inter_list = [[[[False]*len(self.pts) for _ in range(len(self.pts))]for __ in range(len(self.pts))]for ___ in range(len(self.pts))]
@@ -351,6 +357,7 @@ class Data:
                 dist = self.compute_center_dist(T[0])
                 print(f"Total distance from center: {self.initial_sol} -> {dist}")
                 self.center = T[0]
+                self.dist = dist
                 return T[0], dist
             step+=1
             e_list = dict()
@@ -437,6 +444,7 @@ class Data:
                     random.shuffle(edges)
                     if new_len<prev_len:
                         self.center = copy.deepcopy(T)
+                        self.dist = new_len
                         total_best = min(new_len, total_best)
                         print(f"[{self.instance_uid}] {prev_len}->{new_len} (total best: {total_best})")
                         prev_len = new_len
@@ -492,6 +500,8 @@ class Data:
         return step, T_list, i, j
 
     def compute_center_dist(self, T1:Triangulation):
+        if not T1:
+            return float("INF")
         total_length = 0
         for i,_T in enumerate(self.triangulations):
             T = copy.deepcopy(_T)
@@ -518,6 +528,26 @@ class Data:
         return total_length
     
     def WriteData(self):
+        inst = dict()
+
+        fname = "result.csv"
+        if not os.path.exists(fname):
+            df_dict = dict()
+            df_dict["date"] = datetime.date.today()
+            df_dict[self.instance_uid] = self.dist
+            df = DataFrame(df_dict)
+        else:
+            df = pd.read_csv(fname)
+        col = df.columns
+        if self.instance_uid not in col:
+            df[self.instance_uid] = float("INF")
+        today = datetime.date.today()
+        if today not in df["date"]:
+            df.loc[len(df)] = list(df.iloc[-1])
+            df.loc[-1, "date"] = today
+
+        df.loc[-1, self.instance_uid] = min(df.loc[-1, self.instance_uid], self.dist)
+        df.to_csv("result.csv")
         pass
 
     def DrawTriangulation(self, T, colored_edges = [], name = "", folder = ""):
