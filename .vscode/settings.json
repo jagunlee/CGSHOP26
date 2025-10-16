@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./pyutils26/src"
+    ]
+}
