@@ -276,55 +276,84 @@ class Data:
 
     def ReadData(self):
         print("--------------------ReadData--------------------")
-        with open(self.input, "r", encoding="utf-8") as f:
-            root = json.load(f)
-            self.instance_uid = root["instance_uid"]
-            pts_x = root["points_x"]
-            pts_y = root["points_y"]
-            self.pts = []
-            for i in range(len(pts_y)):
-                self.pts.append(Point(pts_x[i], pts_y[i]))
-            self.triangulations = []
-            Ts = root["triangulations"]
-            for T in Ts:
-                self.triangulations.append(Triangulation(self.pts, T))
-            print(f"num of pts: {len(self.pts)}")
-            print(f"num of triangulations: {len(self.triangulations)}")
-        for i in range(len(self.triangulations)):
-            self.DrawTriangulation(self.triangulations[i], name = f"{i}")
-        max_pfd = 0
-        inp = []
-        for i in range((len(self.triangulations))-1):
-            for j in range(i+1, len(self.triangulations)):
-                inp.append((i,j))
-        # print(inp)
-        _multi = True
-        _ini_sol = True
-        initial_sol = [0]*len(self.triangulations)
-        self.initial_sol = float("INF")
-        self.center = self.triangulations[0]
-        self.dist = float("INF")
-        if _ini_sol:
-            if _multi:
-                with Pool() as pool:
-                    res = pool.starmap(self.compute_pfd, inp)
-                for res1 in res:
-                    initial_sol[res1[2]]+=res1[0]
-                    initial_sol[res1[3]]+=res1[0]
-                max_pfd = max(res, key=lambda x:x[0])
-                print(f"Maximum Parallel flip distance: {max_pfd[0]}")
-            else:
-                for i in range((len(self.triangulations))-1):
-                    for j in range(i+1, len(self.triangulations)):
-                        pfd, *_ = self.compute_pfd(i,j)
-                        max_pfd = max(max_pfd, pfd)
-                        initial_sol[i]+=res1[0]
-                        initial_sol[j]+=res1[0]
-                print(f"Maximum Parallel flip distance: {max_pfd}")
-            print(f"Initial Center: {np.argmax(initial_sol)} (total dist: {max(initial_sol)})")
-            self.initial_sol = max(initial_sol)
-            self.center = self.triangulations[np.argmax(initial_sol)]
-            self.dist = max(initial_sol)
+        if "solution" not in self.input:
+            with open(self.input, "r", encoding="utf-8") as f:
+                root = json.load(f)
+                self.instance_uid = root["instance_uid"]
+                pts_x = root["points_x"]
+                pts_y = root["points_y"]
+                self.pts = []
+                for i in range(len(pts_y)):
+                    self.pts.append(Point(pts_x[i], pts_y[i]))
+                self.triangulations = []
+                Ts = root["triangulations"]
+                for T in Ts:
+                    self.triangulations.append(Triangulation(self.pts, T))
+                print(f"num of pts: {len(self.pts)}")
+                print(f"num of triangulations: {len(self.triangulations)}")
+            # for i in range(len(self.triangulations)):
+            #     self.DrawTriangulation(self.triangulations[i], name = f"{i}")
+            max_pfd = 0
+            inp = []
+            for i in range((len(self.triangulations))-1):
+                for j in range(i+1, len(self.triangulations)):
+                    inp.append((i,j))
+            # print(inp)
+            _multi = True
+            _ini_sol = True
+            initial_sol = [0]*len(self.triangulations)
+            self.center = self.triangulations[0]
+            self.dist = float("INF")
+            self.flip = [[] for _ in range(len(self.triangulations))]
+            if _ini_sol:
+                if _multi:
+                    with Pool() as pool:
+                        res = pool.starmap(self.compute_pfd, inp)
+                    for res1 in res:
+                        initial_sol[res1[2]]+=res1[0]
+                        initial_sol[res1[3]]+=res1[0]
+                    max_pfd = max(res, key=lambda x:x[0])
+                    print(f"Maximum Parallel flip distance: {max_pfd[0]}")
+                else:
+                    for i in range((len(self.triangulations))-1):
+                        for j in range(i+1, len(self.triangulations)):
+                            pfd, *_ = self.compute_pfd(i,j)
+                            max_pfd = max(max_pfd, pfd)
+                            initial_sol[i]+=res1[0]
+                            initial_sol[j]+=res1[0]
+                    print(f"Maximum Parallel flip distance: {max_pfd}")
+                print(f"Initial Center: {np.argmax(initial_sol)} (total dist: {max(initial_sol)})")
+                self.center = self.triangulations[np.argmax(initial_sol)]
+                _, self.flip = self.compute_center_dist(self.center)
+        else:
+            with open(self.input, "r", encoding="utf-8") as f:
+                root = json.load(f)
+                self.instance_uid = root["instance_uid"]
+                self.flip = root["flips"]
+                self.dist = sum([len(x) for x in self.flip])
+                org_input = root["meta"]["input"]
+            self.input = org_input
+            with open(self.input, "r", encoding="utf-8") as f:
+                root = json.load(f)
+                self.instance_uid = root["instance_uid"]
+                pts_x = root["points_x"]
+                pts_y = root["points_y"]
+                self.pts = []
+                for i in range(len(pts_y)):
+                    self.pts.append(Point(pts_x[i], pts_y[i]))
+                self.triangulations = []
+                Ts = root["triangulations"]
+                for T in Ts:
+                    self.triangulations.append(Triangulation(self.pts, T))
+                print(f"num of pts: {len(self.pts)}")
+                print(f"num of triangulations: {len(self.triangulations)}")
+            min_flip_ind = np.argmin([len(x) for x in self.flip])
+            self.center =  copy.deepcopy(self.triangulations[min_flip_ind])
+            for flip_seq in self.flip[min_flip_ind]:
+                for flp in flip_seq:
+                    self.center.flip(flp[0], flp[1])
+
+
         
     def compute_intersect(self):
         self.inter_list = [[[[False]*len(self.pts) for _ in range(len(self.pts))]for __ in range(len(self.pts))]for ___ in range(len(self.pts))]
@@ -354,10 +383,11 @@ class Data:
                     done = False
                     break
             if done:
-                dist = self.compute_center_dist(T[0])
-                print(f"Total distance from center: {self.initial_sol} -> {dist}")
+                dist, flip = self.compute_center_dist(T[0])
+                print(f"Total distance from center: {self.dist} -> {dist}")
                 self.center = T[0]
                 self.dist = dist
+                self.flip = flip
                 return T[0], dist
             step+=1
             e_list = dict()
@@ -398,17 +428,19 @@ class Data:
             
 
     def random_move(self):
-        prev_len = self.compute_center_dist(self.center)
+        prev_len, old_flip = self.compute_center_dist(self.center)
         total_best = prev_len
         T:Triangulation = copy.deepcopy(self.center)
         print(f"Start with {prev_len}")
         step = 0
+        total_step = 0
         edges = list(T.edges.keys())
         # print(edges)
         # pdb.set_trace()
         starting_edge_ind = 0
         random.shuffle(edges)
-        while step<10000:
+        while total_step<10000*len(self.triangulations)*len(self.pts):
+            total_step+=1
             random_move = random.random()>0.999**step
             if random_move or starting_edge_ind==len(edges): 
                 random.shuffle(edges)
@@ -423,7 +455,8 @@ class Data:
                     T.flip(e[0], e[1])
                 edges = list(T.edges.keys())
                 random.shuffle(edges)
-                new_len = self.compute_center_dist(T)
+                starting_edge_ind = 0
+                new_len, _ = self.compute_center_dist(T)
                 total_best = min(total_best, new_len)
                 print(f"[{self.instance_uid}] Random move! {prev_len}->{new_len} (total best: {total_best})")
                 prev_len = new_len
@@ -436,7 +469,7 @@ class Data:
                     starting_edge_ind +=1
                     continue
                 T1.flip(e[0], e[1])
-                new_len = self.compute_center_dist(T1)
+                new_len, flip = self.compute_center_dist(T1)
                 if new_len<=prev_len:
                     step = 0
                     T = copy.deepcopy(T1)
@@ -445,8 +478,10 @@ class Data:
                     if new_len<prev_len:
                         self.center = copy.deepcopy(T)
                         self.dist = new_len
+                        self.flip = flip
                         total_best = min(new_len, total_best)
                         print(f"[{self.instance_uid}] {prev_len}->{new_len} (total best: {total_best})")
+                        self.WriteData()
                         prev_len = new_len
                         
                     starting_edge_ind = 0
@@ -481,7 +516,7 @@ class Data:
         T, T1 = copy.deepcopy(self.triangulations[i]), copy.deepcopy(self.triangulations[j])
         step = 0
         res_e_list = []
-        T_list = [copy.deepcopy(T)]
+        flip_list = []
         while True:
             E1, E2 = T.find_difference(T1)
             if not E1:
@@ -491,23 +526,26 @@ class Data:
             if not e_list:
                 pdb.set_trace()
             res_e_list = []
+            flip_iter = []
             for e in e_list:
+                flip_iter.append([e[0],e[1]])
                 res_e_list.append(T.flip(e[0],e[1]))
-            T_list.append(copy.deepcopy(T))
+            flip_list.append(flip_iter)
             # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"step {step}")
             # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"check")
         print(f"{i} -> {j} can be done in {step} step!")
-        return step, T_list, i, j
+        return step, flip_list, i, j
 
     def compute_center_dist(self, T1:Triangulation):
         if not T1:
             return float("INF")
         total_length = 0
+        flip = []
         for i,_T in enumerate(self.triangulations):
             T = copy.deepcopy(_T)
             step = 0
             res_e_list = []
-            T_list = [copy.deepcopy(T)]
+            flip_list = []
             while True:
                 E1, E2 = T.find_difference(T1)
                 # print(E1)
@@ -518,37 +556,71 @@ class Data:
                 if not e_list:
                     pdb.set_trace()
                 res_e_list = []
+                f_iter = []
                 for e in e_list:
+                    f_iter.append([e[0],e[1]])
                     res_e_list.append(T.flip(e[0],e[1]))
-                T_list.append(copy.deepcopy(T))
+                flip_list.append(f_iter)
                 # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"step {step}")
                 # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"check")
             total_length+=step
+            flip.append(flip_list)
             # print(f"{i} -> center can be done in {step} step!")
-        return total_length
+        return total_length, flip
     
     def WriteData(self):
         inst = dict()
+        inst["content_type"] = "CGSHOP2026_Solution"
+        inst["instance_uid"] = self.instance_uid
+        inst["flips"] = self.flip
+        inst["meta"] = {"dist":self.dist, "input": self.input}
+        folder = "solutions"
+        with open(folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+            json.dump(inst, f, indent='\t')
+        opt_folder = "opt"
+        opt_list = os.listdir(opt_folder)
+        already_exist = False
+        for sol in opt_list:
+            if self.instance_uid+".solution.json" in sol:
+                already_exist = True
+                with open(opt_folder+"/"+sol, "r", encoding="utf-8") as ff:
+                    root = json.load(ff)
+                    try:
+                        old_score = root["meta"]["dist"]
+                    except:
+                        old_flips = root["flips"]
+                        old_score = len([len(x) for x in old_flips])
+                if old_score>self.dist:
+                    os.remove(opt_folder+"/"+sol)
+                    with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+                        json.dump(inst, f, indent='\t')
+        if not already_exist:
+            with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+                json.dump(inst, f, indent='\t')
+
+
 
         fname = "result.csv"
         if not os.path.exists(fname):
             df_dict = dict()
             df_dict["date"] = datetime.date.today()
-            df_dict[self.instance_uid] = self.dist
+            df_dict[self.instance_uid] = [self.dist]
             df = DataFrame(df_dict)
+            df.to_csv("result.csv")
         else:
-            df = pd.read_csv(fname)
-        col = df.columns
-        if self.instance_uid not in col:
-            df[self.instance_uid] = float("INF")
-        today = datetime.date.today()
-        if today not in df["date"]:
-            df.loc[len(df)] = list(df.iloc[-1])
-            df.loc[-1, "date"] = today
+            df = pd.read_csv(fname, index_col = 0)
+            col = df.columns
+            if self.instance_uid not in col:
+                df[self.instance_uid] = float("INF")
+            today = datetime.date.today().isoformat()
+            # pdb.set_trace()
+            if df["date"].iloc[-1]!=today:
+                df.loc[len(df)] = list(df.iloc[-1])
+                df.loc[len(df.index)-1, "date"] = today
 
-        df.loc[-1, self.instance_uid] = min(df.loc[-1, self.instance_uid], self.dist)
-        df.to_csv("result.csv")
-        pass
+            df.loc[len(df.index)-1, self.instance_uid] = min(df.loc[len(df.index)-1, self.instance_uid], self.dist)
+            df.to_csv("result.csv")
+            pass
 
     def DrawTriangulation(self, T, colored_edges = [], name = "", folder = ""):
         if name:
