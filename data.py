@@ -434,12 +434,13 @@ class Data:
         print(f"Start with {prev_len}")
         step = 0
         total_step = 0
+        end_step = 10*len(self.triangulations)*len(self.pts)
         edges = list(T.edges.keys())
         # print(edges)
         # pdb.set_trace()
         starting_edge_ind = 0
         random.shuffle(edges)
-        while total_step<10000*len(self.triangulations)*len(self.pts):
+        while total_step<end_step:
             total_step+=1
             random_move = random.random()>0.999**step
             if random_move or starting_edge_ind==len(edges): 
@@ -458,7 +459,7 @@ class Data:
                 starting_edge_ind = 0
                 new_len, _ = self.compute_center_dist(T)
                 total_best = min(total_best, new_len)
-                print(f"[{self.instance_uid}] Random move! {prev_len}->{new_len} (total best: {total_best})")
+                # print(f"[{self.instance_uid} {total_step}/{end_step}] Random move! {prev_len}->{new_len} (total best: {total_best})")
                 prev_len = new_len
                 
                 step = 0
@@ -479,9 +480,11 @@ class Data:
                         self.center = copy.deepcopy(T)
                         self.dist = new_len
                         self.flip = flip
-                        total_best = min(new_len, total_best)
-                        print(f"[{self.instance_uid}] {prev_len}->{new_len} (total best: {total_best})")
-                        self.WriteData()
+                        if new_len<total_best:
+                            print(f"[{self.instance_uid} {total_step}/{end_step}] {total_best}->{new_len}")
+                            total_best = min(new_len, total_best)
+                            # print(f"[{self.instance_uid} {total_step}/{end_step}] {prev_len}->{new_len} (total best: {total_best})")
+                            self.WriteData()
                         prev_len = new_len
                         
                     starting_edge_ind = 0

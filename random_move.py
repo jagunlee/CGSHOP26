@@ -26,6 +26,7 @@ if __name__=="__main__":
         dt.random_move()
     else:
         json_list = os.listdir(inp)
+        json_list.reverse()
         for i in range(len(json_list)):
             json_list[i] = os.path.join(inp, json_list[i])
         pool = Pool()
