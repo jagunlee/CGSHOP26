@@ -1,679 +1,436 @@
-import copy
-import cv2
-import datetime
-from heapq import *
 import json
-import math
-from multiprocessing import Pool
-import numpy as np
-import os
-from pathlib import Path
-from pandas import DataFrame
-import pandas as pd
-import pdb
+import sys
 import random
-import time
+from copy import deepcopy
+
+sys.setrecursionlimit(1000000)
 
 class Point:
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
+    def __init__(self, x, y):
+        self.x = int(x)
+        self.y = int(y)
 
-class Diag:
-    def __init__(self, i:int, j:int):
-        self.p1 = i
-        self.p2 = j
-        self.nei_pts = [None, None]
-    def pts(self):
-        return (self.p1, self.p2)
-    
+    def __eq__(self, p):
+        return self.x == p.x and self.y == p.y
+
+    def __str__(self):
+        return "(" + str(self.x) + ", " + str(self.y) + ")"
+
+    def __ne__(self, p):
+        return self.x != p.x or self.y != p.y
+
+    def __lt__(self, p):
+        return (self.x, self.y) < (p.x, p.y)
+
+    def __le__(self, p):
+        return (self.x, self.y) <= (p.x, p.y)
+
+    def __gt__(self, p):
+        return (self.x, self.y) > (p.x, p.y)
+
+    def __ge__(self, p):
+        return (self.x, self.y) >= (p.x, p.y)
+
+class Edge:
+    def __init__(self, ):
+        
+        self.endpoints = []
+
+class Triangle:
+    # p, q, r: point index
+    def __init__(self, p: int, q: int, r: int):
+        self.pts = [p, q, r]
+        self.neis = [None, None, None]
+
+    def get_ind(self, p: int):
+        for i in range(3):
+            if self.pts[i] == p:
+                return i
+        return -1
+
+    def pt(self, i: int):
+        return self.pts[i % 3]
+
+    def nei(self, i: int):
+        return self.neis[i % 3]
+
+
 class Triangulation:
-    def __init__(self, pts, T):
-        self.pts = pts
-        self.edges: dict = dict()
-        self.make_triangulation(T)
-        self.times = dict()
+    def __init__(self):
+        self.triangles = set()
+        self.edges = set()
 
-    # def __init__(self, pts, edges:dict):
-    #     self.pts = pts
-    #     self.edges = edges
+    def __del__(self):
+        for t in self.triangles:
+            del t
 
-    def make_triangulation(self, T):
-        edges = dict()
-        for e in T:
-            edges[(min(e[0],e[1]),max(e[0],e[1]))] = Diag(min(e[0],e[1]),max(e[0],e[1]))
-        nei_dict = dict()
-        for i in range(len(self.pts)):
-            nei_dict[i] = []
-        for e in T:
-            nei_dict[e[0]].append(e[1])
-            nei_dict[e[1]].append(e[0])
-        for i in range(len(self.pts)):
-            nei_dict[i], _, found = self.sort_cw_with_half_circle(nei_dict[i], i)
-            for j in range(len(nei_dict[i])-1):
-                if i<nei_dict[i][j]:
-                    edges[(i,nei_dict[i][j])].nei_pts[1] = nei_dict[i][j+1]
-                else:
-                    edges[(nei_dict[i][j],i)].nei_pts[0] = nei_dict[i][j+1]
-            if not found:
-                if i<nei_dict[i][len(nei_dict[i])-1]:
-                    edges[(i,nei_dict[i][len(nei_dict[i])-1])].nei_pts[1] = nei_dict[i][0]
-                else:
-                    edges[(nei_dict[i][len(nei_dict[i])-1],i)].nei_pts[0] = nei_dict[i][0]
-        self.edges = edges
-        
-    def sort_cw_with_half_circle(self, pts, center):
-        cx, cy = self.pts[center].x, self.pts[center].y
-        with_angles = [(pt, math.atan2(self.pts[pt].y - cy, self.pts[pt].x - cx)) for pt in pts]
-        with_angles.sort(key=lambda pa: -pa[1])
-        n = len(with_angles)
-        angles = [a for _, a in with_angles]
-        best_start = 0
-        found = False
-        doubled = angles + [a - 2*math.pi for a in angles]  # wrap-around
-        for i in range(n):
-            j = i + n - 1
-            if doubled[i] - doubled[j] <= math.pi + 1e-12:
-                best_start = i
-                found = True
-                break
-        with_angles = with_angles+with_angles
-        if found:
-            reordered = with_angles[best_start:best_start+n]
-            reordered_angles = [a if a <= math.pi else a - 2*math.pi for _, a in reordered]
-        else:
-            reordered = with_angles
-            reordered_angles = angles
-        reordered_pts = [pt for pt, _ in reordered]
-        return reordered_pts, reordered_angles, found
+    def find_triangle(self, q1: int, q2: int):
+        for t in self.triangles:
+            if t.pts[0] == q1 and t.pts[1] == q2:
+                return t
+            if t.pts[1] == q1 and t.pts[2] == q2:
+                return t
+            if t.pts[2] == q1 and t.pts[0] == q2:
+                return t
+        return None
 
-        
-    def intersect(self, d11, d12, d21, d22):
-        def _orient(a, b, c) -> float:
-            return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
-        # (d11,d12)와 (d21,d22)가 intersect하는지 확인
-        EPS = 1e-9
-        p1 = self.pts[d11]
-        p2 = self.pts[d12]
-        p3 = self.pts[d21]
-        p4 = self.pts[d22]
-        o1 = _orient(p1, p2, p3)
-        o2 = _orient(p1, p2, p4)
-        o3 = _orient(p3, p4, p1)
-        o4 = _orient(p3, p4, p2)
+    def copy(self):
+        newtri = Triangulation()
+        newtri.edges = set(self.edges)
+        tridict = dict()
+        for t in self.triangles:
+            tt = Triangle(t.pts[0], t.pts[1], t.pts[2])
+            tridict[t] = tt
+            for i in range(3):
+                if t.neis[i] in tridict:
+                    ttt = tridict[t.neis[i]]
+                    tt.neis[i] = ttt
+                    ttt.neis[ttt.get_ind(tt.pt(i + 1))] = tt
+            newtri.triangles.add(tt)
+        return newtri
 
-        # 일반적인 교차 (서로 다른 편에 위치)
-        if (o1 * o2 < -EPS) and (o3 * o4 < -EPS):
-            return True
-        return False
-            # x1 = ((p2.y-p1.y)*(p4.x-p3.x)*p1.x-(p2.x-p1.x)*(p4.x-p3.x)*p1.y-(p4.y-p3.y)*(p2.x-p1.x)*p3.x+(p4.x-p3.x)*(p2.x-p1.x)*p3.y)/((p2.y-p1.y)*(p4.x-p3.x)-(p4.y-p3.y)*(p2.x-p1.x))
-        # if p1.x<x1 and x1<p2.x:
-        #     return True
-        # return False
-    
-    def is_convex_quad(self, i, j):
-        # (i,j) edge가 실제로 존재하고 flip 가능한지 확인
-        i, j = min(i,j), max(i,j)
-        try:
-            edge:Diag = self.edges[(i,j)]
-            d1, d2 = edge.nei_pts
-            if d1==None or d2==None:
-                return False
-            return self.intersect(i, j, d1, d2)
-            
-        except:
-            return False
-        
-    def maximal_disjoint_convex_quad(self, E:list[(int, int)], prev_use=[]):
-        res = []
-        second_best = None
-        used = [[False]*len(self.pts) for _ in range(len(self.pts))]
-        for i, e in enumerate(E):
-            if self.is_convex_quad(e[0], e[1]):
-                if e not in prev_use:
-                    res.append(e)
-                    used[e[0]][e[1]] = True
-                    used[e[1]][e[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[1]] = True
-                    used[e[1]][self.edges[e].nei_pts[0]] = True
-                    used[e[1]][self.edges[e].nei_pts[1]] = True
-                    used[self.edges[e].nei_pts[0]][e[0]] = True
-                    used[self.edges[e].nei_pts[1]][e[0]] = True
-                    used[self.edges[e].nei_pts[0]][e[1]] = True
-                    used[self.edges[e].nei_pts[1]][e[1]] = True
-                    break
-                else:
-                    second_best = e
-        if not res:
-            e = second_best
-            res.append(e)
-            used[e[0]][e[1]] = True
-            used[e[1]][e[0]] = True
-            used[e[0]][self.edges[e].nei_pts[0]] = True
-            used[e[0]][self.edges[e].nei_pts[1]] = True
-            used[e[1]][self.edges[e].nei_pts[0]] = True
-            used[e[1]][self.edges[e].nei_pts[1]] = True
-            used[self.edges[e].nei_pts[0]][e[0]] = True
-            used[self.edges[e].nei_pts[1]][e[0]] = True
-            used[self.edges[e].nei_pts[0]][e[1]] = True
-            used[self.edges[e].nei_pts[1]][e[1]] = True
-            for j in range(len(E)):
-                e = E[j]
-                if self.is_convex_quad(e[0], e[1]):
-                    if used[e[0]][e[1]]==True:
-                        continue
-                    used[e[0]][e[1]] = True
-                    used[e[1]][e[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[1]] = True
-                    used[e[1]][self.edges[e].nei_pts[0]] = True
-                    used[e[1]][self.edges[e].nei_pts[1]] = True
-                    used[self.edges[e].nei_pts[0]][e[0]] = True
-                    used[self.edges[e].nei_pts[1]][e[0]] = True
-                    used[self.edges[e].nei_pts[0]][e[1]] = True
-                    used[self.edges[e].nei_pts[1]][e[1]] = True
-                    res.append(E[j])
-        else:
-            for j in range(len(E)):
-                e = E[j]
-                if e not in prev_use:
-                    if self.is_convex_quad(e[0], e[1]):
-                        if used[e[0]][e[1]]==True:
-                            continue
-                        used[e[0]][e[1]] = True
-                        used[e[1]][e[0]] = True
-                        used[e[0]][self.edges[e].nei_pts[0]] = True
-                        used[e[0]][self.edges[e].nei_pts[1]] = True
-                        used[e[1]][self.edges[e].nei_pts[0]] = True
-                        used[e[1]][self.edges[e].nei_pts[1]] = True
-                        used[self.edges[e].nei_pts[0]][e[0]] = True
-                        used[self.edges[e].nei_pts[1]][e[0]] = True
-                        used[self.edges[e].nei_pts[0]][e[1]] = True
-                        used[self.edges[e].nei_pts[1]][e[1]] = True
-                        res.append(E[j])
-            for j in range(len(E)):
-                e = E[j]
-                if self.is_convex_quad(e[0], e[1]):
-                    if used[e[0]][e[1]]==True:
-                        continue
-                    used[e[0]][e[1]] = True
-                    used[e[1]][e[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[1]] = True
-                    used[e[1]][self.edges[e].nei_pts[0]] = True
-                    used[e[1]][self.edges[e].nei_pts[1]] = True
-                    used[self.edges[e].nei_pts[0]][e[0]] = True
-                    used[self.edges[e].nei_pts[1]][e[0]] = True
-                    used[self.edges[e].nei_pts[0]][e[1]] = True
-                    used[self.edges[e].nei_pts[1]][e[1]] = True
-                    res.append(E[j])
-                
-        return res
-        
-    def flip(self, i, j):
-        # (i,j) edge가 flip 가능하면 flip하고 새로 생긴 edge return, 아니면 (-1,-1) return
-        i, j = min(i,j), max(i,j)
-        if not self.is_convex_quad(i,j):
-            return -1, -1
-        edge:Diag = self.edges[(min(i,j),max(i,j))]
-        d1, d2 = edge.nei_pts
-        self.edges[min(i,d1), max(i,d1)].nei_pts[i<d1] = d2
-        self.edges[min(d1,j), max(d1,j)].nei_pts[d1<j] = d2
-        self.edges[min(j,d2), max(j,d2)].nei_pts[j<d2] = d1
-        self.edges[min(d2,i), max(d2,i)].nei_pts[d2<i] = d1
-        
-        if d1<d2:
-            self.edges[d1, d2] = Diag(d1, d2)
-            self.edges[d1, d2].nei_pts = [j,i]
-        else:
-            self.edges[d2, d1] = Diag(d2, d1)
-            self.edges[d2, d1].nei_pts = [i,j]
-        del self.edges[(min(i,j),max(i,j))]
-        return min(d1, d2),max(d1, d2)
-        
-    def find_difference(self, T):
-        e1 = set(self.edges.keys())
-        e2 = set(T.edges.keys())
-        def intersect_num(e, l):
-            n = 0
-            for e1 in l:
-                if self.intersect(e[0],e[1],e1[0],e1[1]): n+=1
-            return n
-        l1,l2 = list(e1-e2), list(e2-e1)
-        _l1, _l2 = l1[:], l2[:]
-        for i in range(len(l1)):
-            l1[i] = (intersect_num(l1[i],_l2), l1[i])
-        for i in range(len(l2)):
-            l2[i] = (intersect_num(l2[i],_l1), l2[i])
-        l1.sort(reverse=True)
-        l2.sort(reverse=True)
-        l1 = [x[1] for x in l1]
-        l2 = [x[1] for x in l2]
-        return (l1, l2)
-        
-    def check_1pfd(self, T):
-        E1, E2 = self.find_difference(T)
-        E1_in = self.maximal_disjoint_convex_quad(E1)
-        if len(E1_in)==len(E1): 
-            return True
-        return False
-        # T와 1 parallel flip distance인지 확인
-        
-    
+
 class Data:
-    def __init__(self, input):
-        try:
-            base = Path(__file__).resolve()
-        except NameError:
-            base = Path(os.getcwd()).resolve()
-        self.application_path = str(base.parents[0])
-        self.input = input
-        self.df = None
-        # self.compute_intersect()
+    def __init__(self, inp):
+        self.input = inp
+        self.triangulations = []
         self.ReadData()
-        
 
     def ReadData(self):
-        print("--------------------ReadData--------------------")
-        if "solution" not in self.input:
-            with open(self.input, "r", encoding="utf-8") as f:
-                root = json.load(f)
-                self.instance_uid = root["instance_uid"]
-                pts_x = root["points_x"]
-                pts_y = root["points_y"]
-                self.pts = []
-                for i in range(len(pts_y)):
-                    self.pts.append(Point(pts_x[i], pts_y[i]))
-                self.triangulations = []
-                Ts = root["triangulations"]
-                for T in Ts:
-                    self.triangulations.append(Triangulation(self.pts, T))
-                print(f"num of pts: {len(self.pts)}")
-                print(f"num of triangulations: {len(self.triangulations)}")
-            # for i in range(len(self.triangulations)):
-            #     self.DrawTriangulation(self.triangulations[i], name = f"{i}")
-            max_pfd = 0
-            inp = []
-            for i in range((len(self.triangulations))-1):
-                for j in range(i+1, len(self.triangulations)):
-                    inp.append((i,j))
-            # print(inp)
-            _multi = True
-            _ini_sol = True
-            initial_sol = [0]*len(self.triangulations)
-            self.center = self.triangulations[0]
-            self.dist = float("INF")
-            self.flip = [[] for _ in range(len(self.triangulations))]
-            if _ini_sol:
-                if _multi:
-                    with Pool() as pool:
-                        res = pool.starmap(self.compute_pfd, inp)
-                    for res1 in res:
-                        initial_sol[res1[2]]+=res1[0]
-                        initial_sol[res1[3]]+=res1[0]
-                    max_pfd = max(res, key=lambda x:x[0])
-                    print(f"Maximum Parallel flip distance: {max_pfd[0]}")
-                else:
-                    for i in range((len(self.triangulations))-1):
-                        for j in range(i+1, len(self.triangulations)):
-                            pfd, *_ = self.compute_pfd(i,j)
-                            max_pfd = max(max_pfd, pfd)
-                            initial_sol[i]+=res1[0]
-                            initial_sol[j]+=res1[0]
-                    print(f"Maximum Parallel flip distance: {max_pfd}")
-                print(f"Initial Center: {np.argmax(initial_sol)} (total dist: {max(initial_sol)})")
-                self.center = self.triangulations[np.argmax(initial_sol)]
-                _, self.flip = self.compute_center_dist(self.center)
-        else:
-            with open(self.input, "r", encoding="utf-8") as f:
-                root = json.load(f)
-                self.instance_uid = root["instance_uid"]
-                self.flip = root["flips"]
-                self.dist = sum([len(x) for x in self.flip])
-                org_input = root["meta"]["input"]
-            self.input = org_input
-            with open(self.input, "r", encoding="utf-8") as f:
-                root = json.load(f)
-                self.instance_uid = root["instance_uid"]
-                pts_x = root["points_x"]
-                pts_y = root["points_y"]
-                self.pts = []
-                for i in range(len(pts_y)):
-                    self.pts.append(Point(pts_x[i], pts_y[i]))
-                self.triangulations = []
-                Ts = root["triangulations"]
-                for T in Ts:
-                    self.triangulations.append(Triangulation(self.pts, T))
-                print(f"num of pts: {len(self.pts)}")
-                print(f"num of triangulations: {len(self.triangulations)}")
-            min_flip_ind = np.argmin([len(x) for x in self.flip])
-            self.center =  copy.deepcopy(self.triangulations[min_flip_ind])
-            for flip_seq in self.flip[min_flip_ind]:
-                for flp in flip_seq:
-                    self.center.flip(flp[0], flp[1])
+        # print("--------------------ReadData--------------------")
+        f = open(self.input, "r", encoding="utf-8")
+        root = json.load(f)
+        # print(root)
+        self.instance_name = root["instance_uid"]
+        pts_x = root["points_x"]
+        pts_y = root["points_y"]
+        self.pts = []
+        for i in range(len(pts_y)):
+            self.pts.append(Point(pts_x[i], pts_y[i]))
+        for t in root["triangulations"]:
+            self.triangulations.append(self.make_triangulation(t))
 
-
-        
-    def compute_intersect(self):
-        self.inter_list = [[[[False]*len(self.pts) for _ in range(len(self.pts))]for __ in range(len(self.pts))]for ___ in range(len(self.pts))]
-        for i1 in range(len(self.pts)):
-            for j1 in range(len(self.pts)):
-                for i2 in range(len(self.pts)):
-                    for j2 in range(len(self.pts)):
-                        if i1==j1 or i2==j2:
-                            continue
-                        if i1==i2 and j1==j2:
-                            continue
-                        if self.intersect(i1, j1, i2, j2):
-                            self.inter_list[i1][j1][i2][j2] = True
-        
-
-
-    def find_center(self):
-        T = [copy.deepcopy(t) for t in self.triangulations]
-        res_e_lists = [[] for _ in range(len(self.triangulations))]
-        step = 0
-        while True:
-            done = True
-            set_list = [set(t.edges.keys()) for t in T]
-            base_set = set_list[0]
-            for i in range(1, len(T)):
-                if base_set!=set_list[i]:
-                    done = False
-                    break
-            if done:
-                dist, flip = self.compute_center_dist(T[0])
-                print(f"Total distance from center: {self.dist} -> {dist}")
-                self.center = T[0]
-                self.dist = dist
-                self.flip = flip
-                return T[0], dist
-            step+=1
-            e_list = dict()
-            for t in T:
-                for e in t.edges:
-                    if e in e_list.keys():
-                        e_list[e][0]+=1
-                    else:
-                        e_list[e] = [1,0]
-            for e1 in e_list.keys():
-                for e2 in e_list.keys():
-                    if e1==e2: continue
-                    if self.intersect(e1[0], e1[1], e2[0], e2[1]):
-                        e_list[e1][1]+=e_list[e2][0]
-                        e_list[e2][1]+=e_list[e1][0]
-            T_val = [0]*len(T)
-            for i, t in enumerate(T):
-                for e in t.edges:
-                    exs_num, inter_num = e_list[e]
-                    T_val[i]+=(inter_num-exs_num)/exs_num
-            # print(T_val)
-            update_t_ind = np.argmax(T_val)
-            t:Triangulation = T[update_t_ind]
-            update_e = list(t.edges.keys())
-            update_e.sort(key = lambda x: (e_list[x][1]-e_list[x][0])/e_list[x][0], reverse=True)
-            for i in range(len(update_e)):
-                x = update_e[i]
-                if (e_list[x][1]-e_list[x][0])/e_list[x][0]<0:
-                    break
-            # print(update_e, len(update_e), i)
-            update_e = update_e[:i]
-            flip_list = t.maximal_disjoint_convex_quad(update_e, res_e_lists[update_t_ind])
-            local_res_list = []
-            for e in flip_list:
-                local_res_list.append(t.flip(e[0],e[1]))
-            res_e_lists[update_t_ind] = local_res_list
-            print(f"[{step} step] Triangulation {update_t_ind} flipped, {len(local_res_list)} edges")
-            
-
-    def random_move(self):
-        prev_len, old_flip = self.compute_center_dist(self.center)
-        total_best = prev_len
-        T:Triangulation = copy.deepcopy(self.center)
-        print(f"Start with {prev_len}")
-        step = 0
-        total_step = 0
-        edges = list(T.edges.keys())
-        # print(edges)
-        # pdb.set_trace()
-        starting_edge_ind = 0
-        random.shuffle(edges)
-        while total_step<10000*len(self.triangulations)*len(self.pts):
-            total_step+=1
-            random_move = random.random()>0.999**step
-            if random_move or starting_edge_ind==len(edges): 
-                random.shuffle(edges)
-                _e_list = T.maximal_disjoint_convex_quad(edges)
-                random_choice = [random.random() for _ in range(len(_e_list))]
-                e_list = []
-                for i,e in enumerate(_e_list):
-                    if random_choice[i]>0.5:
-                        e_list.append(_e_list[i])
-
-                for e in e_list:
-                    T.flip(e[0], e[1])
-                edges = list(T.edges.keys())
-                random.shuffle(edges)
-                starting_edge_ind = 0
-                new_len, _ = self.compute_center_dist(T)
-                total_best = min(total_best, new_len)
-                print(f"[{self.instance_uid}] Random move! {prev_len}->{new_len} (total best: {total_best})")
-                prev_len = new_len
-                
-                step = 0
-            else:
-                T1 = copy.deepcopy(T)
-                e = edges[starting_edge_ind]
-                if not T1.is_convex_quad(e[0], e[1]):
-                    starting_edge_ind +=1
+    def make_triangulation(self, t):
+        tri = Triangulation()
+        graph = [[] for _ in range(len(self.pts))]
+        for u, v in t:
+            graph[u].append(v)
+            graph[v].append(u)
+            tri.edges.add((min(u, v), max(u, v)))
+        for i in range(len(self.pts)):
+            for j in range(len(graph[i])):
+                v1 = graph[i][j]
+                if v1 < i:
                     continue
-                T1.flip(e[0], e[1])
-                new_len, flip = self.compute_center_dist(T1)
-                if new_len<=prev_len:
-                    step = 0
-                    T = copy.deepcopy(T1)
-                    edges = list(T1.edges.keys())
-                    random.shuffle(edges)
-                    if new_len<prev_len:
-                        self.center = copy.deepcopy(T)
-                        self.dist = new_len
-                        self.flip = flip
-                        total_best = min(new_len, total_best)
-                        print(f"[{self.instance_uid}] {prev_len}->{new_len} (total best: {total_best})")
-                        self.WriteData()
-                        prev_len = new_len
-                        
-                    starting_edge_ind = 0
-                else:
-                    step+=1
-                    starting_edge_ind+=1
-        return self.center
-    
+                for k in range(j + 1, len(graph[i])):
+                    v2 = graph[i][k]
+                    if v2 < i:
+                        continue
+                    if v1 in graph[v2]:
+                        if turn(self.pts[i], self.pts[v1], self.pts[v2]) > 0:
+                            t = Triangle(i, v1, v2)
+                        else:
+                            t = Triangle(i, v2, v1)
+                        flag = False
+                        for l in range(len(graph[i])):
+                            if l == j or l == k:
+                                continue
+                            v3 = graph[i][l]
+                            smallflag = True
+                            for m in range(3):
+                                smallflag &= turn(self.pts[t.pt(m)], self.pts[t.pt(m + 1)], self.pts[v3]) >= 0
+                            if smallflag:
+                                flag = True
+                                break
+                        if flag:
+                            del t
+                            continue
+                        for l in range(3):
+                            tt = tri.find_triangle(t.pt(l + 1), t.pt(l))
+                            if tt:
+                                tt.neis[tt.get_ind(t.pt(l + 1))] = t
+                                t.neis[l] = tt
+                        tri.triangles.add(t)
+        return tri
 
-
-
-    def intersect(self, d11, d12, d21, d22):
-        def _orient(a, b, c) -> float:
-            return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
-        # (d11,d12)와 (d21,d22)가 intersect하는지 확인
-        EPS = 1e-9
-        p1 = self.pts[d11]
-        p2 = self.pts[d12]
-        p3 = self.pts[d21]
-        p4 = self.pts[d22]
-        o1 = _orient(p1, p2, p3)
-        o2 = _orient(p1, p2, p4)
-        o3 = _orient(p3, p4, p1)
-        o4 = _orient(p3, p4, p2)
-
-        # 일반적인 교차 (서로 다른 편에 위치)
-        if (o1 * o2 < -EPS) and (o3 * o4 < -EPS):
-            return True
-        return False      
-        
-    def compute_pfd(self, i, j):
-        T, T1 = copy.deepcopy(self.triangulations[i]), copy.deepcopy(self.triangulations[j])
-        step = 0
-        res_e_list = []
-        flip_list = []
-        while True:
-            E1, E2 = T.find_difference(T1)
-            if not E1:
-                break
-            step+=1
-            e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
-            if not e_list:
-                pdb.set_trace()
-            res_e_list = []
-            flip_iter = []
-            for e in e_list:
-                flip_iter.append([e[0],e[1]])
-                res_e_list.append(T.flip(e[0],e[1]))
-            flip_list.append(flip_iter)
-            # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"step {step}")
-            # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"check")
-        print(f"{i} -> {j} can be done in {step} step!")
-        return step, flip_list, i, j
-
-    def compute_center_dist(self, T1:Triangulation):
-        if not T1:
-            return float("INF")
-        total_length = 0
-        flip = []
-        for i,_T in enumerate(self.triangulations):
-            T = copy.deepcopy(_T)
-            step = 0
-            res_e_list = []
-            flip_list = []
-            while True:
-                E1, E2 = T.find_difference(T1)
-                # print(E1)
-                if not E1:
-                    break
-                step+=1
-                e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
-                if not e_list:
-                    pdb.set_trace()
-                res_e_list = []
-                f_iter = []
-                for e in e_list:
-                    f_iter.append([e[0],e[1]])
-                    res_e_list.append(T.flip(e[0],e[1]))
-                flip_list.append(f_iter)
-                # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"step {step}")
-                # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"check")
-            total_length+=step
-            flip.append(flip_list)
-            # print(f"{i} -> center can be done in {step} step!")
-        return total_length, flip
-    
-    def WriteData(self):
-        inst = dict()
-        inst["content_type"] = "CGSHOP2026_Solution"
-        inst["instance_uid"] = self.instance_uid
-        inst["flips"] = self.flip
-        inst["meta"] = {"dist":self.dist, "input": self.input}
-        folder = "solutions"
-        with open(folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
-            json.dump(inst, f, indent='\t')
-        opt_folder = "opt"
-        opt_list = os.listdir(opt_folder)
-        already_exist = False
-        for sol in opt_list:
-            if self.instance_uid+".solution.json" in sol:
-                already_exist = True
-                with open(opt_folder+"/"+sol, "r", encoding="utf-8") as ff:
-                    root = json.load(ff)
-                    try:
-                        old_score = root["meta"]["dist"]
-                    except:
-                        old_flips = root["flips"]
-                        old_score = len([len(x) for x in old_flips])
-                if old_score>self.dist:
-                    os.remove(opt_folder+"/"+sol)
-                    with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
-                        json.dump(inst, f, indent='\t')
-        if not already_exist:
-            with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
-                json.dump(inst, f, indent='\t')
-
-
-
-        fname = "result.csv"
-        if not os.path.exists(fname):
-            df_dict = dict()
-            df_dict["date"] = datetime.date.today()
-            df_dict[self.instance_uid] = [self.dist]
-            df = DataFrame(df_dict)
-            df.to_csv("result.csv")
+    def resolve_cross(self, tri: Triangulation, con: tuple, t=None):
+        if not t:
+            q1 = con[0]
+            q2 = con[1]
+            for t in tri.triangles:
+                i = t.get_ind(q1)
+                if i != -1:
+                    r1 = self.pts[q1]
+                    r2 = self.pts[t.pt(i + 1)]
+                    r3 = self.pts[t.pt(i + 2)]
+                    r4 = self.pts[q2]
+                    if (turn(r1, r2, r4) < 0 or turn(r1, r3, r4) > 0):
+                        continue
+                    if r2 == r4:
+                        return []
+                    elif r3 == r4:
+                        return []
+                    else:
+                        return self.resolve_cross(tri, con, t)
         else:
-            df = pd.read_csv(fname, index_col = 0)
-            col = df.columns
-            if self.instance_uid not in col:
-                df[self.instance_uid] = float("INF")
-            today = datetime.date.today().isoformat()
-            # pdb.set_trace()
-            if df["date"].iloc[-1]!=today:
-                df.loc[len(df)] = list(df.iloc[-1])
-                df.loc[len(df.index)-1, "date"] = today
-
-            df.loc[len(df.index)-1, self.instance_uid] = min(df.loc[len(df.index)-1, self.instance_uid], self.dist)
-            df.to_csv("result.csv")
-            pass
-
-    def DrawTriangulation(self, T, colored_edges = [], name = "", folder = ""):
-        if name:
-            name = "_" + name
-        minx = min(list(p.x for p in self.pts))
-        miny = min(list(p.y for p in self.pts))
-        maxx = max(list(p.x for p in self.pts))
-        maxy = max(list(p.y for p in self.pts))
-        fontFace = cv2.FONT_HERSHEY_SIMPLEX
-        fontScale = 1
-        thickness = 2
-        lineType = cv2.LINE_AA
-        width = int(maxx-minx)
-        height = int(maxy-miny)
-        rad = 1000/width
-        add_size = 80
-        width = int(width*rad)+add_size
-        height = int(height*rad)+add_size
-        minw = add_size//2-int(minx*rad)
-        minh = height + int(miny*rad)-add_size//2
-        img = np.zeros((height, width, 3),dtype="uint8")+255
-        for e in T.edges.keys():
-            if e in colored_edges:
-                cv2.line(img, (minw+int(rad*self.pts[e[0]].x),minh-int(rad*self.pts[e[0]].y)), (minw+int(rad*self.pts[e[1]].x),minh-int(rad*self.pts[e[1]].y)), (0,0,255), 2)
+            q1 = con[0]
+            q2 = con[1]
+            # print("resolving", q1, q2)
+            # print("----- Starting triangle -----")
+            # self.print_triangle(t)
+            # print("-----------------------------")
+            i = t.get_ind(q1)
+            f = self.flip(tri, t, (i + 1) % 3)
+            r = t.pt(i + 2)
+            if (r == q2):
+                return f
+            elif (turn(self.pts[q2], self.pts[q1], self.pts[r]) < 0):
+                return f + self.resolve_cross(tri, con, t)
             else:
-                cv2.line(img, (minw+int(rad*self.pts[e[0]].x),minh-int(rad*self.pts[e[0]].y)), (minw+int(rad*self.pts[e[1]].x),minh-int(rad*self.pts[e[1]].y)), (0,0,0), 2)
-        for i,p in enumerate(self.pts):
-            cv2.circle(img, (minw+int(rad*p.x),minh-int(rad*p.y)), 5,(255,0,0),-1)
-            cv2.putText(img, str(i), (minw+int(rad*p.x)+10,minh-int(rad*p.y)+10), fontFace, fontScale, (0,0,0), thickness, lineType)
-        if folder:
-            folder = os.path.join(self.application_path, "solutions")
-            os.makedirs(folder, exist_ok=True)
-            cv2.imwrite(folder+"/"+self.instance_uid + ".triangulation" + name + ".png", img)
-        else:
-            loc = os.path.join(self.application_path, "solutions")
-            # print("loc: "+loc)
-            os.makedirs(loc, exist_ok=True)
-            cv2.imwrite(loc+"/"+self.instance_uid + ".triangulation" + name + ".png", img)
+                return f + self.resolve_cross(tri, con, t.nei(i + 2))
+
+    # triangulation tri에서, triangle t의 i번째 edge를 flip
+    def flip(self, tri: Triangulation, t: Triangle, i: int):
+        tt = t.neis[i]
+        j = tt.get_ind(t.pt(i + 1))
+        p = self.pts[t.pt(i + 2)]
+        pr = self.pts[t.pts[i]]
+        pl = self.pts[t.pt(i + 1)]
+        q = self.pts[tt.pt(j + 2)]
+        # self.print_triangle(t)
+        # print("flipping in", i)
+        # self.print_triangle(tt)
+        while True:
+            if turn(p, pr, q) <= 0:
+                t = tt
+                i = (j + 2) % 3
+                pr = q
+            elif turn(self.pts[t.pt(i + 2)], self.pts[t.pts[i]], q) <= 0:
+                t = tt
+                i = (j + 2) % 3
+            elif turn(p, pl, q) >= 0:
+                pl = q
+                t = tt
+                i = (j + 1) % 3
+            elif turn(self.pts[t.pt(i + 2)], self.pts[tt.pts[j]], q) >= 0:
+                t = tt
+                i = (j + 1) % 3
+            else:
+                break
+            tt = t.neis[i]
+            j = tt.get_ind(t.pt(i + 1))
+            q = self.pts[tt.pt(j + 2)]
+        ti = t.nei(i + 1)
+        tj = tt.nei(j + 1)
+        pi = t.pt(i + 2)
+        pj = tt.pt(j + 2)
+        q1, q2 = min(t.pts[i], tt.pts[j]), max(t.pts[i], tt.pts[j])
+        f = [((q1, q2), (min(pi, pj), max(pi, pj)))]
+        tri.edges.remove((q1, q2))
+        tri.edges.add(((min(pi, pj), max(pi, pj))))
+        t.pts[(i + 1) % 3] = pj
+        t.neis[i] = tj
+        if tj:
+            tj.neis[tj.get_ind(pj)] = t
+        t.neis[(i + 1) % 3] = tt
+        tt.pts[(j + 1) % 3] = pi
+        tt.neis[j] = ti
+        if ti:
+            ti.neis[ti.get_ind(pi)] = tt
+        tt.neis[(j + 1) % 3] = t
+        return f
+
+    # 
+    
+    # point-in-polygon 여러 번. point-in-polygon은 halfplane으로.
+    # 삼각형 정렬.
+    def isFlippable((a, b), (c, d)):
+        pass
+    
+    # flip F: ((a, b), (c, d)) 꼴
+    def flip(self, tri: Triangulation, F):
+        tri.find_triangle
+        for t in tri.triangles:
+            for 
         
-
+        # find an edge
+        
+        pass
+    
+    def flip_sequence(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
+        fs = []
+        tri = tri1.copy()
+        edges = list(tri2.edges)
+        random.shuffle(edges)
+        for e in edges:
+            fs += self.resolve_cross(tri, e)
+        del tri
+        return fs
 
     
-    
+    def flip_sequence_new(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
+        # numTrials = 10
+        bestDist = 10000
+        bestSeq = None
+        
+        for i in range(numTrials):
+        
+            fs = []
+            tri = tri1.copy()
+            edges = list(tri2.edges)
+            random.shuffle(edges)
 
-def turn(p1:Point, p2:Point, p3:Point):
+            # list of (triangulation, len(fs) so far)
+            L = []
+            
+            for e in edges:
+
+                before = len(fs)
+                
+                ADDED = self.resolve_cross(tri, e)
+                # print('added length:', len(ADDED))
+                fs += ADDED
+                # fs += self.resolve_cross(tri, e)
+
+                # if something added
+                if len(fs) != before:
+                    L.append([deepcopy(tri), len(fs)])
+                
+            del tri
+    
+            if len(fs) < bestDist:
+                bestDist = len(fs)
+                bestSeq = fs
+        
+        return bestSeq, L
+
+    def parallel_flip_path(self, tri1: Triangulation, tri2: Triangulation):
+        best = []
+        bestscore = len(tri1.edges) * 2
+        trial = 0
+        NUM_TRIAL = len(self.pts) // 10
+        while trial < NUM_TRIAL or bestscore == len(tri1.edges) * 2:
+            trial += 1
+
+            # flip sequence 자체에서 들어감
+            fs = self.flip_sequence(tri1, tri2)
+            done = [False] * len(fs)
+            tri = tri1.copy()
+            pfp = []
+            while not all(done):
+                fps = []
+                usedtri = set()
+                for i in range(len(fs)):
+                    if done[i]: continue
+                    (p1, p2), (p3, p4) = fs[i]
+                    t1 = tri.find_triangle(p1, p2)
+                    if not t1 or t1 in usedtri:
+                        continue
+                    t2 = tri.find_triangle(p2, p1)
+                    assert (t2)
+                    if t2 in usedtri:
+                        continue
+                    p5, p6 = t1.pt(t1.get_ind(p2) + 1), t2.pt(t2.get_ind(p1) + 1)
+                    if (min(p5, p6), max(p5, p6)) != (p3, p4):
+                        continue
+                    done[i] = True
+                    usedtri.add(t1)
+                    usedtri.add(t2)
+                    fps.append(fs[i])
+                for _, con in fps:
+                    self.resolve_cross(tri, con)
+                pfp.append(fps)
+            if len(pfp) < bestscore:
+                best = pfp
+                bestscore = len(pfp)
+                trial = 0
+                
+        return best
+
+    def print_triangle(self, t: Triangle):
+        print("Triangle :", end="")
+        print(t)
+        print(t.pts[0], ":", self.pts[t.pts[0]])
+        print(t.pts[1], ":", self.pts[t.pts[1]])
+        print(t.pts[2], ":", self.pts[t.pts[2]])
+        print(t.neis[0])
+        print(t.neis[1])
+        print(t.neis[2])
+        
+    # parallel 버전으로 바꿔야 함.
+    # w1:w2 내분점에서 가장 가까운 중간 triangulation을 반환
+    def internal_division(self, T1: Triangulation, w1: int, T2: Triangulation, w2: int):
+        # print('internal division start. w1 =', w1, ', w2 =', w2)
+
+        # 이 함수 자체는 sequential로 하는 게 나으려나?
+
+        T1copy = deepcopy(T1)
+        
+        midVal = len(S) * (w1 / (w1 + w2))
+        print('len(S):', len(S), 'w1:', w1, 'w2:', w2, 'midVal:', midVal)
+        
+        # sequential version
+        fs = flip_sequence(T1, T2)
+        use_fs = fs[midVal]
+        for F in use_fs:
+            flip(T1copy, F)
+
+        return T1copy
+
+        '''
+        # parallel version
+        
+        # S, L = self.flip_sequence_new(T1, T2) # S stands for Sequence, List (of triangulations)
+
+        bestT = None # best triangulation
+        bestDiff = 100000000 # 내분점과의 최소거리
+        for pr in L:
+            curDiff = abs(pr[1] - midVal)
+            if curDiff < bestDiff:
+                print('curDiff:', curDiff, 'pr[1]:', pr[1])
+                bestDiff = curDiff
+                bestT = pr[0]
+            
+        return bestT
+        '''
+        
+    # reconstruction이 필요
+    # 우선, 한 번의 diagonal flip이 이루어진 triangulation 계산?
+    
+    def parallel_flip_path_all(self):
+
+        # random.shuffle(self.triangulations)
+        centerT = self.triangulations[0]
+        weight = 1
+        
+        for i in range(1, len(self.triangulations)):
+            nextT = self.triangulations[i]
+            # 내분을 통해 새로운 central triangulation 계산
+            centerT = self.internal_division(centerT, weight, nextT, 1) 
+            weight += 1
+
+        return centerT
+        # local search to move to a certain direction
+
+        # A -> B로 가는 것과 A -> C로 가는 게 비슷하면 좋겠지.
+
+def angle(p1: Point, p2: Point, p3: Point):
+    if p1 == p2:
+        raise Exception("Cannot Calculate Angle")
+    if p2 == p3:
+        raise Exception("Cannot Calculate Angle")
+    p12x = p2.x - p1.x
+    p12y = p2.y - p1.y
+    p23x = p2.x - p3.x
+    p23y = p2.y - p3.y
+    ab = p12x * p23x + p12y * p23y
+    a = p12x * p12x + p12y * p12y
+    b = p23x * p23x + p23y * p23y
+    if (ab >= MyNum(0)):
+        return - ab * ab / a / b
+    else:
+        return ab * ab / a / b
+
+# CCW라면 true 반환, CW라면 false반환
+def turn(p1: Point, p2: Point, p3: Point):
     return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)
-
-def cw_key(center):
-
-    cx, cy = center.x, center.y
-    def key(pt):
-        # 각도 계산
-        angle = math.atan2(pt.y - cy, pt.x - cx)
-        # atan2는 CCW 기준이므로 시계방향으로 바꾸려면 -angle 반환
-        return -angle
-    return key
