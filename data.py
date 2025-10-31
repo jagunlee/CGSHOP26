@@ -240,23 +240,20 @@ class Data:
         tt.neis[(j + 1) % 3] = t
         return f
 
-    # 
-    
+    # flip F: ((a, b), (c, d)) 꼴
     # point-in-polygon 여러 번. point-in-polygon은 halfplane으로.
     # 삼각형 정렬.
-    def isFlippable((a, b), (c, d)):
+    def isFlippable(F):
         pass
     
-    # flip F: ((a, b), (c, d)) 꼴
-    def flip(self, tri: Triangulation, F):
-        tri.find_triangle
-        for t in tri.triangles:
-            for 
+    # flipped diagonal F: ((a, b), (c, d)) 꼴
+    def flipDiagonal(self, tri: Triangulation, F):
+        if not isFlippable(F):
+            return
+
+        T = tri.find_triangle(F)
         
-        # find an edge
-        
-        pass
-    
+            
     def flip_sequence(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
         fs = []
         tri = tri1.copy()

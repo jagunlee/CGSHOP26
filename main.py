@@ -2,16 +2,31 @@ import sys
 import os
 from data import *
 import time
+import csv
 
 if __name__=="__main__":
     argument = sys.argv
+
+
+
+    
+    # list of (instance_name, radius)
+    result = []
+
+    if argument[1] == 'all':
+        os.listdir()
+
     if len(argument)>=2:
         inp = argument[1]
+
     else:
         # inp = "data/examples/example_ps_20_nt2_pfd5_random.json"
-        inp = "data/benchmark_instances/random_instance_4_40_2.json"
+        inp = "data/benchmark_instances/random_instance_36_80_3.json"
     
-    D = Data('random_instance_36_80_3.json')
+    D = Data(inp)
+
+    print('input read')
+    # D = Data('random_instance_36_80_3.json')
     # D = Data('random_instance_90_320_5.json')
 
     # T1 -> T2와 T2 -> T1도 차이 많이 나나?
@@ -34,3 +49,11 @@ if __name__=="__main__":
         
         # print('distance from the center to T', i, ':', len(D.flip_sequence(centerT, D.triangulations[i])[0]))
         # opencv
+
+
+
+    f = open("result.csv", "w")
+    csv.writer(f)
+
+    writer.writerows(data) ## 여기 주목!
+    f.close()
