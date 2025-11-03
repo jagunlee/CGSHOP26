@@ -30,7 +30,6 @@ if __name__=="__main__":
     for instance in instances:
         D = Data(instance)
 
-        '''
         # pairwise distance 비교
         for i in range(len(D.triangulations)):
             for j in range(i+1, len(D.triangulations)):
@@ -40,7 +39,6 @@ if __name__=="__main__":
                 # print('distance from T', i, 'to T', j, ':', len(D.flip_sequence(D.triangulations[i], D.triangulations[j])[0]))
                 
         print()
-        '''
 
         centerT = D.parallel_flip_path_all()
         for i in range(len(D.triangulations)):

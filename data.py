@@ -4,7 +4,7 @@ import random
 from Point import Point
 from Triangulation import Triangle, Triangulation
 from copy import deepcopy
-import cv2
+# import cv2
 
 sys.setrecursionlimit(1000000)
 
@@ -142,7 +142,7 @@ class Data:
                 t = tt
                 i = (j + 1) % 3
             else:
-                t_pts = [t.pts[0], t.pts[1], t.pts[2]]
+                # t_pts = sorted([t.pts[0], t.pts[1], t.pts[2]])
                 break
 
             tt = t.neis[i]
@@ -175,7 +175,9 @@ class Data:
             ti.neis[ti.get_ind(pi)] = tt
         tt.neis[(j + 1) % 3] = t
 
-        return f, t_pts
+        return f
+        # L = [f[0], t_pts]
+        # return L
 
     # flip F: ((a, b), (c, d)) 꼴
     # point-in-polygon 여러 번. point-in-polygon은 halfplane으로.
@@ -183,54 +185,77 @@ class Data:
     def isFlippable(self, F):
         pass
     
-    # def flip(self, tri: Triangulation, t: Triangle, i: int)
-    # flipped diagonal F: ((a, b), (c, d)) 꼴
     def flipDiagonal(self, tri: Triangulation, F):
-
-        '''
-        assert(isFlippable(F)):
-        '''
-
         change = False
 
-        a, b = F[0]
-        print('a:', a, 'b:', b)
-
         for t in tri.triangles:
-            if t.pts[0] == a and t.pts[1] == b:
-                 self.flip(tri, t, 0)
-                 change = True
-                 break
-            elif t.pts[1] == a and t.pts[2] == b:
-                 self.flip(tri, t, 1)
-                 change = True
-                 break
-            elif t.pts[2] == a and t.pts[0] == b:
-                 self.flip(tri, t, 2)
-                 change = True
-                 break
-        
-        if not change:
-            a, b = F[1]
-            print('c:', a, 'd:', b)
+            a, b = F[0]
 
-            for t in tri.triangles:
-                if t.pts[0] == a and t.pts[1] == b:
+            if sorted([t.pts[0], t.pts[1]]) == sorted([a, b]):
                     self.flip(tri, t, 0)
                     change = True
                     break
-                elif t.pts[1] == a and t.pts[2] == b:
-                    self.flip(tri, t, 1)
-                    change = True
-                    break
-                elif t.pts[2] == a and t.pts[0] == b:
-                    self.flip(tri, t, 2)
-                    change = True
-                    break
+            elif sorted([t.pts[1], t.pts[2]]) == sorted([a, b]):
+                self.flip(tri, t, 1)
+                change = True
+                break
+            elif sorted([t.pts[2], t.pts[0]]) == sorted([a, b]):
+                self.flip(tri, t, 2)
+                change = True
+                break
 
         assert(change)
 
-            
+    '''
+    # def flip(self, tri: Triangulation, t: Triangle, i: int)
+    # flipped diagonal F: ((a, b), (c, d)) 꼴
+    def flipDiagonal(self, tri: Triangulation, F, t_pts):
+
+        change = False
+
+        for t in tri.triangles:
+            if t_pts == sorted(t.pts):
+                
+                print('t_pts:', t_pts) 
+                print('t.pts:', t.pts, 'sorted(t.pts):', sorted(t.pts))
+
+                a, b = F[0]
+                print('a:', a, 'b:', b)
+
+                if sorted([t.pts[0], t.pts[1]]) == sorted([a, b]):
+                    self.flip(tri, t, 0)
+                    change = True
+                    break
+                elif sorted([t.pts[1], t.pts[2]]) == sorted([a, b]):
+                    self.flip(tri, t, 1)
+                    change = True
+                    break
+                elif sorted([t.pts[2], t.pts[0]]) == sorted([a, b]):
+                    self.flip(tri, t, 2)
+                    change = True
+                    break
+        
+                if not change:
+                    a, b = F[1]
+                    print('c:', a, 'd:', b)
+
+                    for t in tri.triangles:
+                        if sorted([t.pts[0], t.pts[1]]) == sorted([a, b]):
+                            self.flip(tri, t, 0)
+                            change = True
+                            break
+                        elif sorted([t.pts[1], t.pts[2]]) == sorted([a, b]):
+                            self.flip(tri, t, 1)
+                            change = True
+                            break
+                        elif sorted([t.pts[2], t.pts[0]]) == sorted([a, b]):
+                            self.flip(tri, t, 2)
+                            change = True
+                            break
+
+        assert(change)
+    '''
+                
     def flip_sequence(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
         fs = []
         tri = tri1.copy()
@@ -330,27 +355,41 @@ class Data:
         print(t.neis[1])
         print(t.neis[2])
 
-    # parallel 버전으로 바꿔야 함.
     # w1:w2 내분점에서 가장 가까운 중간 triangulation을 반환
     def internal_division(self, T1: Triangulation, w1: int, T2: Triangulation, w2: int):
-        # print('internal division start. w1 =', w1, ', w2 =', w2)
-
-        # 이 함수 자체는 sequential로 하는 게 나으려나?
 
         T1copy = deepcopy(T1)
         
-        # sequential version 계산
+        # parallel version
+        pfp = self.parallel_flip_path(T1, T2)
+        
+        midVal = int(len(pfp) * (w1 / (w1 + w2)))
+        print('len(pfp):', len(pfp), 'w1:', w1, 'w2:', w2, 'midVal:', midVal)
+
+        # use_pfp: 사용되는 parallel flip들 모음
+        use_pfp = pfp[:midVal]
+
+        for flips in use_pfp:
+            for flip in flips:
+                self.flipDiagonal(T1copy, flip)
+
+        return T1copy
+
+        # sequential version
+        '''
         fs = self.flip_sequence(T1, T2)
 
         midVal = int(len(fs) * (w1 / (w1 + w2)))
         print('len(fs):', len(fs), 'w1:', w1, 'w2:', w2, 'midVal:', midVal)
 
-        # use_fs: 사용되는 flip들 모음
-        use_fs = fs[midVal:]
+        # use_fs: 사용되는 sequential flip들 모음
+        use_fs = fs[:midVal]
+
         for F in use_fs:
             self.flipDiagonal(T1copy, F)
 
         return T1copy
+        '''
         
     # reconstruction이 필요
     # 우선, 한 번의 diagonal flip이 이루어진 triangulation 계산?
