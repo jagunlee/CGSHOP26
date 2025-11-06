@@ -33,8 +33,7 @@ class Data:
         for t in root["triangulations"]:
             self.triangulations.append(self.make_triangulation(t))
 
-    # 
-    def make_triangulation(self, t):
+    def make_triangulation(self, t: Triangulation):
         tri = Triangulation()
         graph = [[] for _ in range(len(self.pts))]
         for u, v in t:
@@ -77,7 +76,7 @@ class Data:
                         tri.triangles.add(t)
         return tri
 
-    # 
+    # con: edge in T2 that may be not in T1
     def resolve_cross(self, tri: Triangulation, con: tuple, t=None):
         if not t:
             q1 = con[0]
