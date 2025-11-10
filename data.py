@@ -5,6 +5,7 @@ from Point import Point
 from Triangulation import Triangle, Triangulation
 from copy import deepcopy
 # import cv2
+import time
 
 sys.setrecursionlimit(1000000)
 
@@ -75,6 +76,9 @@ class Data:
                                 t.neis[l] = tt
                         tri.triangles.add(t)
         return tri
+
+    def resolve_cross_random(self):
+        pass
 
     # con: edge in T2 that may be not in T1
     def resolve_cross(self, tri: Triangulation, con: tuple, t=None):
@@ -395,6 +399,8 @@ class Data:
     
     def parallel_flip_path_all(self):
 
+        start = time.time()
+
         # random.shuffle(self.triangulations)
         centerT = self.triangulations[0]
         weight = 1
@@ -404,6 +410,9 @@ class Data:
             # 내분을 통해 새로운 central triangulation 계산
             centerT = self.internal_division(centerT, weight, nextT, 1) 
             weight += 1
+
+            end = time.time()
+            print('time:', f"{end - start:.5f} sec")
 
         return centerT
         # local search to move to a certain direction
