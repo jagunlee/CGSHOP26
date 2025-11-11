@@ -9,20 +9,25 @@ import time
 import os
 import pandas as pd
 import datetime
+from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
+from cgshop2026_pyutils.geometry import FlippableTriangulation
+from cgshop2026_pyutils.verify import check_for_errors
+# import cgshop2026_pyutils
 
 sys.setrecursionlimit(1000000)
 
 class Edge:
     def __init__(self, ):
-        
         self.endpoints = []
 
 class Data:
     def __init__(self, inp):
         self.input = inp
+        # print('self.input:', self.input)
         self.triangulations = []
         self.ReadData()
-        self.instance_uid = inp.split('\\')[-1]
+        self.instance_uid = (inp.split('\\')[-1]).split('.')[0]
+        print('self.instance_uid:', self.instance_uid)
         # self.distance = []
         # self.pFlips = []
 
@@ -32,11 +37,11 @@ class Data:
         root = json.load(f)
         # print(root)
         self.instance_name = root["instance_uid"]
-        pts_x = root["points_x"]
-        pts_y = root["points_y"]
+        self.pts_x = root["points_x"]
+        self.pts_y = root["points_y"]
         self.pts = []
-        for i in range(len(pts_y)):
-            self.pts.append(Point(pts_x[i], pts_y[i]))
+        for i in range(len(self.pts_y)):
+            self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
         for t in root["triangulations"]:
             self.triangulations.append(self.make_triangulation(t))
 
@@ -170,6 +175,7 @@ class Data:
         pj = tt.pt(j + 2)
         q1, q2 = min(t.pts[i], tt.pts[j]), max(t.pts[i], tt.pts[j])
         f = [((q1, q2), (min(pi, pj), max(pi, pj)))]
+        # f = [(q1, q2)]
 
         # edge update (for the triangulation)
         tri.edges.remove((q1, q2))
@@ -318,6 +324,8 @@ class Data:
         return bestSeq, L
     '''
 
+    # tri1에서 tri2로의 pfp
+    # tri2에서 tri1로 가는 경우 리스트를 반대로 뒤집어야 함
     def parallel_flip_path(self, tri1: Triangulation, tri2: Triangulation):
         best = []
         bestscore = len(tri1.edges) * 2
@@ -439,6 +447,7 @@ class Data:
         inst["content_type"] = "CGSHOP2026_Solution"
         inst["instance_uid"] = self.instance_uid
 
+
         inst["flips"] = self.pFlips
         inst["meta"] = {"dist": sum([len(pFlip) for pFlip in self.pFlips])} # , "input": self.input}
         
@@ -504,15 +513,61 @@ class Data:
 
         for i in range(len(self.triangulations)):
             
-            self.pFlips[i] = self.parallel_flip_path(centerT, self.triangulations[i])
+            self.pFlips[i] = self.parallel_flip_path(self.triangulations[i], centerT)
+
+            '''
+            pfp = self.parallel_flip_path(self.triangulations[i], centerT)
+            self.pFlips[i] = []
+
+            # (a, b), (c, d) 를 (a, b)로 바꿔야 함
+            for round in pfp:
+                roundFlips = []
+                for singleFlip in round:
+                    roundFlips.append(singleFlip[0])
+                self.pFlips[i].append(roundFlips)
+            self.pFlips[i].reverse()
+            '''
+
             print('parallel flip distance from the center to T', i, ':', len(self.pFlips[i]))
             
             end = time.time()
             print('time:', f"{end - start:.5f} sec")
 
+    def verify(self):
+        # Define points (square) and two triangulations that will be flipped to a common form
+        points_x = [0, 1, 0, 1]
+        points_y = [0, 0, 1, 1]
+        '''
+        triangulations = [  # Each triangulation is a list of interior edges
+            [(0, 3)],        # diagonal 0-3
+            [(1, 2)],        # diagonal 1-2 (the flip partner)
+        ]
+        '''
+        instance = CGSHOP2026Instance(
+            instance_uid=self.instance_uid,
+            points_x=self.pts_x,
+            points_y=self.pts_y,
+            triangulations=self.triangulations,
+        )
+
+        # A solution that flips the diagonal in the first triangulation to match the second.
+        # flips is: one list per triangulation -> sequence of parallel flip sets -> each set is a list of edges
+        solution = CGSHOP2026Solution(
+            instance_uid=self.instance_uid,
+            flips=self.pFlips
+            # [ [[(0,3)]] , [] ]  # flip edge (0,3) in triangulation 0; triangulation 1 already in target form
+        )
+
+        errors = check_for_errors(instance, solution)
+        print("Errors:", errors or "None ✔")
 
 # CCW라면 양수 반환, CW라면 음수 반환
 # collinear라면 0 반환
 # https://www.geeksforgeeks.org/dsa/orientation-3-ordered-points/
+
+'''
+def turn(p1: MyPoint, p2: MyPoint, p3: MyPoint):
+    return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)
+'''
 def turn(p1: Point, p2: Point, p3: Point):
     return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)

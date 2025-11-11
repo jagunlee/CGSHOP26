@@ -5,6 +5,7 @@ import time
 import csv
 
 if __name__=="__main__":
+    
     argument = sys.argv
 
     start = time.time()
@@ -24,7 +25,7 @@ if __name__=="__main__":
     # print('time:', f"{end - start:.5f} sec")
 
     # debug
-    # print(instances)
+    print(instances)
 
     # list of (instance_name, radius)
     result = []
@@ -60,6 +61,8 @@ if __name__=="__main__":
         D.computeDistanceSum(centerT)
     
         D.WriteData()
+
+        D.verify()
 
         end = time.time()
         print('total time:', f"{end - start:.5f} sec")

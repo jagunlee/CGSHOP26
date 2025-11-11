@@ -21,6 +21,22 @@ class Triangulation:
         self.triangles = set()
         self.edges = set()
 
+    # need to fix, due to time issue
+    def getEdges(self):
+        edges = []
+
+        for t in self.triangulations:
+            pass
+        
+        for t in self.triangles:
+            edges.append(sorted(t.pts[0], t.pts[1]))
+            edges.append(sorted(t.pts[1], t.pts[2]))
+            edges.append(sorted(t.pts[2], t.pts[0]))
+
+        edges = list(set(edges))
+
+        return edges
+
     def __del__(self):
         for t in self.triangles:
             del t
