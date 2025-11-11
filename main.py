@@ -2,6 +2,12 @@ import sys
 import os
 from data import *
 import time
+from multiprocessing import Process, Pool
+
+def find_dt_center(inp):
+    dt = Data(os.path.join(inp))
+    dt.find_center()
+    dt.WriteData()
 
 if __name__=="__main__":
     argument = sys.argv
@@ -20,9 +26,16 @@ if __name__=="__main__":
         # dt.random_move()
     else:
         json_list = os.listdir(inp)
+        rirs_list = []
         for inp1 in json_list:
             if "json" not in inp1:
                 continue
-            dt = Data(os.path.join(inp,inp1))
-            dt.find_center()
-            dt.WriteData()
+            if "rirs" not in inp1:
+                continue
+            rirs_list.append(os.path.join(inp,inp1))
+            # dt = Data(os.path.join(inp,inp1))
+            # dt.find_center()
+            # dt.WriteData()
+        
+        pool = Pool()
+        pool.map(find_dt_center, rirs_list)

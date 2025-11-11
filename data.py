@@ -280,6 +280,7 @@ class Data:
             with open(self.input, "r", encoding="utf-8") as f:
                 root = json.load(f)
                 self.instance_uid = root["instance_uid"]
+                print(f"instance: {self.instance_uid}")
                 pts_x = root["points_x"]
                 pts_y = root["points_y"]
                 self.pts = []
@@ -299,8 +300,8 @@ class Data:
                 for j in range(i+1, len(self.triangulations)):
                     inp.append((i,j))
             # print(inp)
-            _multi = True
-            _ini_sol = True
+            _multi = False
+            _ini_sol = False
             initial_sol = [0]*len(self.triangulations)
             self.center = self.triangulations[0]
             self.dist = float("INF")
@@ -325,10 +326,12 @@ class Data:
                 print(f"Initial Center: {np.argmax(initial_sol)} (total dist: {max(initial_sol)})")
                 self.center = self.triangulations[np.argmax(initial_sol)]
                 _, self.flip = self.compute_center_dist(self.center)
+                self.WriteData()
         else:
             with open(self.input, "r", encoding="utf-8") as f:
                 root = json.load(f)
                 self.instance_uid = root["instance_uid"]
+                print(f"instance: {self.instance_uid}")
                 self.flip = root["flips"]
                 self.dist = sum([len(x) for x in self.flip])
                 org_input = root["meta"]["input"]
@@ -424,7 +427,7 @@ class Data:
             for e in flip_list:
                 local_res_list.append(t.flip(e[0],e[1]))
             res_e_lists[update_t_ind] = local_res_list
-            print(f"[{step} step] Triangulation {update_t_ind} flipped, {len(local_res_list)} edges")
+            print(f"[{self.instance_uid}, {step} step] Triangulation {update_t_ind} flipped, {len(local_res_list)} edges")
             
 
     def random_move(self):
