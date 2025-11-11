@@ -56,23 +56,20 @@ if __name__=="__main__":
         print()
         '''
 
-        centerT = D.parallel_flip_path_all()
-        for i in range(len(D.triangulations)):
-            pfp = D.parallel_flip_path(centerT, D.triangulations[i])
-            print('parallel flip distance from the center to T', i, ':', len(pfp))
-            
-            end = time.time()
-            print('time:', f"{end - start:.5f} sec")
-
-            # print('distance from the center to T', i, ':', len(D.flip_sequence(centerT, D.triangulations[i])[0]))
-            # opencv
+        centerT = D.findCenter()
+        D.computeDistanceSum(centerT)
+    
+        D.WriteData()
 
         end = time.time()
         print('total time:', f"{end - start:.5f} sec")
 
+    '''
     # 결과 작성
     f = open("result.csv", "a")
-    for instance in instances:
-        wr = csv.writer(f)
-        wr.writerow(result)
+    # for instance in instances:
+    wr = csv.writer(f)
+    for instanceResult in result:
+        wr.writerow(instanceResult)
     f.close()
+    '''

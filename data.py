@@ -6,6 +6,9 @@ from Triangulation import Triangle, Triangulation
 from copy import deepcopy
 # import cv2
 import time
+import os
+import pandas as pd
+import datetime
 
 sys.setrecursionlimit(1000000)
 
@@ -19,6 +22,9 @@ class Data:
         self.input = inp
         self.triangulations = []
         self.ReadData()
+        self.instance_uid = inp.split('\\')[-1]
+        # self.distance = []
+        # self.pFlips = []
 
     def ReadData(self):
         # print("--------------------ReadData--------------------")
@@ -33,6 +39,11 @@ class Data:
             self.pts.append(Point(pts_x[i], pts_y[i]))
         for t in root["triangulations"]:
             self.triangulations.append(self.make_triangulation(t))
+
+        #print(len(self.triangulations))
+        # self.distance = [] * len(self.triangulations)
+        self.pFlips = [None] * len(self.triangulations)
+        # print(len(self.pFlips))
 
     def make_triangulation(self, t: Triangulation):
         tri = Triangulation()
@@ -269,6 +280,7 @@ class Data:
         del tri
         return fs
 
+    '''
     def flip_sequence_new(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
         # numTrials = 10
         bestDist = 10000
@@ -304,12 +316,14 @@ class Data:
                 bestSeq = fs
         
         return bestSeq, L
+    '''
 
     def parallel_flip_path(self, tri1: Triangulation, tri2: Triangulation):
         best = []
         bestscore = len(tri1.edges) * 2
         trial = 0
-        NUM_TRIAL = len(self.pts) // 10
+        # NUM_TRIAL = len(self.pts) // 10
+        NUM_TRIAL = 1
         while trial < NUM_TRIAL or bestscore == len(tri1.edges) * 2:
             trial += 1
 
@@ -397,7 +411,7 @@ class Data:
     # reconstruction이 필요
     # 우선, 한 번의 diagonal flip이 이루어진 triangulation 계산?
     
-    def parallel_flip_path_all(self):
+    def findCenter(self):
 
         start = time.time()
 
@@ -418,6 +432,84 @@ class Data:
         # local search to move to a certain direction
 
         # A -> B로 가는 것과 A -> C로 가는 게 비슷하면 좋겠지.
+
+    def WriteData(self):
+
+        inst = dict()
+        inst["content_type"] = "CGSHOP2026_Solution"
+        inst["instance_uid"] = self.instance_uid
+
+        inst["flips"] = self.pFlips
+        inst["meta"] = {"dist": sum([len(pFlip) for pFlip in self.pFlips])} # , "input": self.input}
+        
+        folder = "solutions"
+        with open(folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+            json.dump(inst, f, indent='\t')
+
+        opt_folder = "opt"
+        opt_list = os.listdir(opt_folder)
+        already_exist = False
+
+        for sol in opt_list:
+            if self.instance_uid+".solution.json" in sol:
+                already_exist = True
+
+                with open(opt_folder+"/"+sol, "r", encoding="utf-8") as ff:
+                    root = json.load(ff)
+                    try:
+                        old_score = root["meta"]["dist"]
+                    except:
+                        old_flips = root["flips"]
+                        old_score = len([len(x) for x in old_flips])
+
+                if old_score>sum([len(pFlip) for pFlip in self.pFlips]): # self.dist:
+                    os.remove(opt_folder+"/"+sol)
+                    with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+                        json.dump(inst, f, indent='\t')
+
+        if not already_exist:
+            with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+                json.dump(inst, f, indent='\t')
+
+        fname = "result.csv"
+        if not os.path.exists(fname):
+            df_dict = dict()
+            df_dict["date"] = datetime.date.today()
+            df_dict[self.instance_uid] = [self.dist]
+            df = DataFrame(df_dict)
+            df.to_csv("result.csv")
+
+        else:
+            df = pd.read_csv(fname, index_col = 0)
+            col = df.columns
+            if self.instance_uid not in col:
+                df[self.instance_uid] = float("INF")
+            today = datetime.date.today().isoformat()
+            # pdb.set_trace()
+            if df["date"].iloc[-1]!=today:
+                df.loc[len(df)] = list(df.iloc[-1])
+                df.loc[len(df.index)-1, "date"] = today
+
+            df.loc[len(df.index)-1, self.instance_uid] = min(df.loc[len(df.index)-1, self.instance_uid], sum([len(pFlip) for pFlip in self.pFlips]))
+            df.to_csv("result.csv")
+            pass
+
+    def computeDistanceSum(self, centerT):
+
+        start = time.time()
+
+        print(self.pFlips)
+        print(len(self.pFlips))
+        print(len(self.triangulations))
+
+        for i in range(len(self.triangulations)):
+            
+            self.pFlips[i] = self.parallel_flip_path(centerT, self.triangulations[i])
+            print('parallel flip distance from the center to T', i, ':', len(self.pFlips[i]))
+            
+            end = time.time()
+            print('time:', f"{end - start:.5f} sec")
+
 
 # CCW라면 양수 반환, CW라면 음수 반환
 # collinear라면 0 반환
