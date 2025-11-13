@@ -436,6 +436,9 @@ class Data:
             end = time.time()
             print('time:', f"{end - start:.5f} sec")
 
+        with open("centers//" + self.instance_uid + ".json", "w", encoding="utf-8") as f:
+            json.dump(list(centerT.edges), f, indent='\t')
+
         return centerT
         # local search to move to a certain direction
 
