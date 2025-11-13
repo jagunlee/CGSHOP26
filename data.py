@@ -513,7 +513,27 @@ class Data:
 
         for i in range(len(self.triangulations)):
             
-            self.pFlips[i] = self.parallel_flip_path(self.triangulations[i], centerT)
+            # list[list[list[int, int]]]
+            self.pFlips[i] = []
+
+            # list[list[list[tuple(int, int), tuple(int, int)]]]
+            pFlips_paired = self.parallel_flip_path(self.triangulations[i], centerT)
+
+            for round in pFlips_paired:
+
+                round_temp = []
+
+                for oneFlip in round:
+                    
+                    # (p1, p2), (p3, p4) = fs[i]
+                    (p1, p2), (p3, p4) = oneFlip
+                
+                    oneFlip_temp = [p1, p2]
+
+                    round_temp.append(oneFlip_temp)
+
+                self.pFlips[i].append(round_temp)
+
 
             '''
             pfp = self.parallel_flip_path(self.triangulations[i], centerT)
@@ -537,17 +557,21 @@ class Data:
         # Define points (square) and two triangulations that will be flipped to a common form
         points_x = [0, 1, 0, 1]
         points_y = [0, 0, 1, 1]
+
         '''
         triangulations = [  # Each triangulation is a list of interior edges
             [(0, 3)],        # diagonal 0-3
             [(1, 2)],        # diagonal 1-2 (the flip partner)
         ]
         '''
+
         instance = CGSHOP2026Instance(
             instance_uid=self.instance_uid,
             points_x=self.pts_x,
             points_y=self.pts_y,
-            triangulations=self.triangulations,
+
+            # triangulations=[T.getEdges() for T in self.triangulations],
+            triangulations=[T.edges for T in self.triangulations],
         )
 
         # A solution that flips the diagonal in the first triangulation to match the second.
@@ -569,5 +593,6 @@ class Data:
 def turn(p1: MyPoint, p2: MyPoint, p3: MyPoint):
     return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)
 '''
+
 def turn(p1: Point, p2: Point, p3: Point):
     return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)

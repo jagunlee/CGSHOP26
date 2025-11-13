@@ -4,6 +4,17 @@ from data import *
 import time
 import csv
 
+def mySort(s : str):
+    if 'woc' in s:
+        return int(s.split('-')[1]) * 5
+    elif 'random' in s:
+        print(s.split('_'))
+        return int(s.split('_')[4]) * int(s.split('_')[5].split('.')[0])
+    elif 'rirs' in s:
+        return int(s.split('-')[1]) * int(s.split('-')[2])
+    else:
+        raise Exception('instance name invalid')
+        
 if __name__=="__main__":
     
     argument = sys.argv
@@ -12,7 +23,9 @@ if __name__=="__main__":
 
     instances = []
 
-    if len(argument)>=2:
+    userInput = False
+
+    if len(argument)==2:
         instances = ['data\\benchmark_instances\\' + argument[1]]
 
     else:
@@ -21,11 +34,22 @@ if __name__=="__main__":
                 pass
             else:
                 instances.append('data\\benchmark_instances\\'+file)
-    
+
+        instances.sort(key = mySort)
+        if len(argument)==3:
+            instances=instances[int(argument[1]):int(argument[2])+1]
+        elif len(argument)==1:
+            pass
+        else:
+            raise Exception('input arguments invalid')
     # print('time:', f"{end - start:.5f} sec")
 
     # debug
-    print(instances)
+
+    # print(instances)
+    # (key=lambda x : int(x.split('_')[-2]) * int(x.split('_')[-1].split('.')[0]))
+
+    # sys.exit()
 
     # list of (instance_name, radius)
     result = []
