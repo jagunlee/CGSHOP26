@@ -983,6 +983,6 @@
 	],
 	"meta": {
 		"dist": 9,
-		"input": ".\\data\\benchmark_instances\\random_instance_482_80_2.json"
+		"input": "./data/benchmark_instances/random_instance_482_80_2.json"
 	}
 }

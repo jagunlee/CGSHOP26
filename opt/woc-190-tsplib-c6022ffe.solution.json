@@ -6579,6 +6579,6 @@
 	],
 	"meta": {
 		"dist": 46,
-		"input": ".\\data\\benchmark_instances\\woc-190-tsplib-c6022ffe.json"
+		"input": "./data/benchmark_instances/woc-190-tsplib-c6022ffe.json"
 	}
 }

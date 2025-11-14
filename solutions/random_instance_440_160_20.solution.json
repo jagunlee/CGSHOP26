@@ -21519,6 +21519,6 @@
 	],
 	"meta": {
 		"dist": 115,
-		"input": ".\\data\\benchmark_instances\\random_instance_440_160_20.json"
+		"input": "./data/benchmark_instances/random_instance_440_160_20.json"
 	}
 }

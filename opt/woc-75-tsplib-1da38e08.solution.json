@@ -2913,6 +2913,6 @@
 	],
 	"meta": {
 		"dist": 31,
-		"input": ".\\data\\benchmark_instances\\woc-75-tsplib-1da38e08.json"
+		"input": "./data/benchmark_instances/woc-75-tsplib-1da38e08.json"
 	}
 }

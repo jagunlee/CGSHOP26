@@ -30103,6 +30103,6 @@
 	],
 	"meta": {
 		"dist": 97,
-		"input": ".\\data\\benchmark_instances\\random_instance_160_320_20.json"
+		"input": "./data/benchmark_instances/random_instance_160_320_20.json"
 	}
 }

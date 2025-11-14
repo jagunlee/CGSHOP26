@@ -6135,6 +6135,6 @@
 	],
 	"meta": {
 		"dist": 62,
-		"input": ".\\data\\benchmark_instances\\woc-155-tsplib-aac644b7.json"
+		"input": "./data/benchmark_instances/woc-155-tsplib-aac644b7.json"
 	}
 }

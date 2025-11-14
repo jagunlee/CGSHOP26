@@ -2783,6 +2783,6 @@
 	],
 	"meta": {
 		"dist": 23,
-		"input": ".\\data\\benchmark_instances\\woc-110-random-e61dabe8.json"
+		"input": "./data/benchmark_instances/woc-110-random-e61dabe8.json"
 	}
 }

@@ -8253,6 +8253,6 @@
 	],
 	"meta": {
 		"dist": 33,
-		"input": ".\\data\\benchmark_instances\\woc-240-tsplib-d96d289b.json"
+		"input": "./data/benchmark_instances/woc-240-tsplib-d96d289b.json"
 	}
 }

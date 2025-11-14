@@ -113,8 +113,27 @@ end
 #end
 
 function generate_center(db, obj::OBJ_TYPE, additional_loops=0)::Vector{OBJ_TYPE}
-    input_path = "/Users/hyeyun/Experiment/PFD/CGSHOP26/data/benchmark_instances/"
-    Tris_file = input_path * "random_instance_4_40_2.json"
+    solution_file = "./opt/random_instance_110_15_3.solution.json"
+    """
+        content_type: CGSHOP2026_Solution,
+        instance_uid: random_instance_110_15_3,
+        flips:[[],[], ..., []]
+        meta:{dist:7, input: ./data/benchmark_instances/random_instance_110_15_3.json}
+    """
+    solution = JSON.parsefile(solution_file)
+
+    input_file = solution["meta"]["input"]
+    """
+        content_type:,
+        instance_uid:,
+        points_x:[,,,,]
+        points_y:[,,,,]
+        triangulations:[[[edge],[edge],..], [], ...]
+    """
+    input = JSON.parsefile(input_file)
+    Tris = input["triangulations"]
+    num_tris = length(Tris[0])
+
 
 
 end

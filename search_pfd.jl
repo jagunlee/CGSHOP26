@@ -47,7 +47,7 @@ function write_output_to_file(db)
     filename = find_next_available_filename(base_name, extension)
     println("hy: filename = ", filename)
     curr_rew_index = 1
-    curr_rew = rewards[1]
+    #curr_rew = rewards[1] #hy: redundant
     lines_written::Int = 0
     open(filename, "w") do file
         while lines_written < final_database_size && curr_rew_index <= length(rewards)
@@ -154,8 +154,7 @@ function initial_lines()
         println("Using input file")
         open(input_file, "r") do file
             for line in eachline(file)
-                #if length(line) == length(empty_starting_point())
-                if length(line) == length(greedy_search_)
+                if length(line) == length(empty_starting_point())
                     push!(lines, line)  # Add each line to the vector
                 end
             end

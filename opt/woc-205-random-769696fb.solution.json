@@ -5317,6 +5317,6 @@
 	],
 	"meta": {
 		"dist": 29,
-		"input": ".\\data\\benchmark_instances\\woc-205-random-769696fb.json"
+		"input": "./data/benchmark_instances/woc-205-random-769696fb.json"
 	}
 }

@@ -443,6 +443,6 @@
 	],
 	"meta": {
 		"dist": 7,
-		"input": ".\\data\\benchmark_instances\\random_instance_547_40_2.json"
+		"input": "./data/benchmark_instances/random_instance_547_40_2.json"
 	}
 }

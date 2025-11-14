@@ -9933,6 +9933,6 @@
 	],
 	"meta": {
 		"dist": 50,
-		"input": ".\\data\\benchmark_instances\\woc-235-tsplib-8c89c7cb.json"
+		"input": "./data/benchmark_instances/woc-235-tsplib-8c89c7cb.json"
 	}
 }

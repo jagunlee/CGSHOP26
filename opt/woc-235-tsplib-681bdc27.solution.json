@@ -10087,6 +10087,6 @@
 	],
 	"meta": {
 		"dist": 43,
-		"input": ".\\data\\benchmark_instances\\woc-235-tsplib-681bdc27.json"
+		"input": "./data/benchmark_instances/woc-235-tsplib-681bdc27.json"
 	}
 }

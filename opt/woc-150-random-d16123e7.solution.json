@@ -7971,6 +7971,6 @@
 	],
 	"meta": {
 		"dist": 50,
-		"input": ".\\data\\benchmark_instances\\woc-150-random-d16123e7.json"
+		"input": "./data/benchmark_instances/woc-150-random-d16123e7.json"
 	}
 }
