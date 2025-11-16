@@ -2,11 +2,51 @@
 from hy_data import *
 
 import numpy as np
+import argparse
+from utils import initialize_exp
 
 class Database:
     def __init__(self, objects:dict, rewards:dict):
         self.objects={}
         self.rewards={}
+
+
+def find_next_available_filename(write_path, base, extension):
+    i=1
+    while True:
+        filename = f"./{write_path}/{base}_{i}.{extension}"
+        if os.path.isfile(filename) == False:
+            return filename
+        i+=1
+
+def write_output_to_file(db, write_path):
+    final_database_size = 50
+    sorted_score = sorted(db.rewards)
+    base_name = "search_output"
+    extension = "txt"
+    filename = find_next_available_filename(write_path, base_name, extension)
+    curr_rew_index = 0
+    lines_written = 0
+    with open(filename, "w") as file:
+        print(filename)
+        while lines_written < final_database_size and curr_rew_index < len(sorted_score):
+            curr_rew = sorted_score[curr_rew_index]
+            for obj in db.rewards[curr_rew][0:min(final_database_size - lines_written, len(db.rewards[curr_rew]))]:
+                file.write(obj + "\n")
+            lines_written += len(db.rewards[curr_rew])
+            curr_rew_index +=1
+    file.close()
+    print(f"Data written to {filename}")
+    print(f"An example of an object with maximum reward ({str(sorted_score[0])}):")
+    print(db.rewards[sorted_score[0]][0])
+
+    #print("Read file..")
+    #with open(filename, "r") as file:
+    #    print(file.read())
+    #file.close()
+
+
+
 
 
 def read_center(input_file):
@@ -49,11 +89,15 @@ def add_db(db, list_obj, list_rew):
 def my_print_db(db):
     sorted_score = sorted(db.rewards)
     print(sorted_score)
-    for sc in sorted_score:
-        v = db.rewards[sc]
-        print(f"score {sc}: {len(v)}")
-    #for k, v in db.rewards.items():
-    #    print(f"score {k}: {len(v)}")
+    #for sc in sorted_score:
+    #    v = db.rewards[sc]
+    #    print(f"score {sc}: {len(v)}")
+    db_size =0
+    for r in sorted_score:
+        db_size += len(db.rewards[r]) # number of objects with same reward
+    # shrink database if necessary
+    #if db_size > 2*target_db_size: #target_db_size: size of caache during local search loop, should be larger than training set size
+
 
 
 def convert_to_string(center):
@@ -78,7 +122,7 @@ def local_search_on_object(db, dt, center):
     rewards=[]
     origin_center = center
     # Perturbe C
-    center.random_flip(10)
+    center.random_flip(10) # Need to modify!!! It produces not flippable edge.
 
     # Compute pfd(T,C), save it as a rewards for sorting
     dist, _ = dt.compute_center_dist(center)
@@ -97,7 +141,7 @@ def local_search_on_object(db, dt, center):
     #center = origin_center #hy: maybe not helpful?
     # Save perturbed Cs in 'search_output_{i}.txt'
 
-def local_search(db, input_file):
+def local_search(db, path, input_file):
     if 'solution' not in input_file:
         center, dt = read_center(input_file) # './centers/~'
     elif 'solution' in input_file:
@@ -110,27 +154,63 @@ def local_search(db, input_file):
     single_thread_obj=[]
     single_thread_rew =[]
     for i in range(2):
-       # print(f"{i}th local_search_on_object")
         obj, rew = local_search_on_object(db, dt, center)
         single_thread_obj.append(obj)
         single_thread_rew.append(rew)
 
-    # now add_db! part
+    # add_db! part
     add_db(db, single_thread_obj, single_thread_rew)
-    my_print_db(db)
+
     # print_db part
+    #my_print_db(db)
+
+    # Write search_output.txt file
+    write_output_to_file(db, path)
+    # Write plot file
+
+def get_parser():
+    # For mkdirs in checkpoint/debug/
+    parser.add_argument('--max_epochs', type=int, default= 10, help='number of epochs')
+    parser = argparse.ArgumentParser('Generate training sample of low braids via reservoir sampling')
+    parser.add_argument("--dump_path", type=str, default="checkpoint",
+                        help="Experiment dump path")
+    parser.add_argument("--exp_name", type=str, default="debug",
+                        help="Experiment name")
+    parser.add_argument("--exp_id", type=str, default="",
+                        help="Experiment ID")
+    #dump_path
+    #command
+    #exp_name
+    #pkl
+    #exp_id
+    return parser
 
 
 if __name__ == '__main__':
+    parser = get_parser()
+    args = parser.parse_args()
+    logger = initialize_exp(args)
+    if not os.path.exists(args.dump_path):
+        os.makedirs(args.dump_path)
+
     Tris_path = './data/benchmark_instances/'
     input_file = 'random_instance_110_15_3.json'
 
+
+
     db = Database({},{})
-    print("from taehoon_hwi center file...")
-    local_search(db, input_file)
+    for i in range(1, args.max_epochs):
+        if not os.path.isfile(f"{args.dump_path}/search_output_{i}-tokenized.txt"):
+            break
+    initial_gen = i-1
+    if initial_gen ==0:
+        print("from taehoon_hwi center file...")
+        local_search(db, args.dump_path, input_file)
+        tokenize(f"{args.dump_path}/search_output_1.txt", args.n_tokens)
+        initial_gen = 1
 
     print()
     print("from pohang center file...")
     input_file = 'random_instance_110_15_3.solution.json'
-    local_search(db, input_file)
+    local_search(db, args.dump_path, input_file)
 
