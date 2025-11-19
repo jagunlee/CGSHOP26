@@ -28,12 +28,12 @@ if __name__=="__main__":
         json_list = os.listdir(inp)
         rirs_list = []
         for inp1 in json_list:
-            if "json" not in inp1:
-                continue
-            if "rirs" not in inp1:
-                continue
-            if "-20-" in inp1:
-                continue
+            # if "json" not in inp1:
+            #     continue
+            # if "rirs" not in inp1:
+            #     continue
+            # if "-20-" in inp1:
+            #     continue
             rirs_list.append(os.path.join(inp,inp1))
             # dt = Data(os.path.join(inp,inp1))
             # dt.find_center()
