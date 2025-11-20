@@ -313,7 +313,7 @@ class Data:
                     inp.append((i,j))
             # print(inp)
             _multi = False
-            _ini_sol = True
+            _ini_sol = False
             initial_sol = [0]*len(self.triangulations)
             self.center = self.triangulations[0]
             self.dist = float("INF")
@@ -452,12 +452,14 @@ class Data:
         weight = (inter - usage) / usage
         prev_weight = sum(weight)
 
-        # T_val = np.zeros(len(T), dtype=np.float64)
-        # for i, edges in enumerate(tri_edges):
-        #     T_val[i] = weight[edges].sum()
+        T_val = np.zeros(len(T), dtype=np.float64)
+        for i, edges in enumerate(tri_edges):
+            T_val[i] = weight[edges].sum()
         
         while True:
             # print(T_val)
+            # print(res_e_lists)
+            if step>60: break
             done = True
             set_list = [set(t.edges.keys()) for t in T]
             base_set = set_list[0]
@@ -474,38 +476,38 @@ class Data:
                 return T[0], dist
             # pdb.set_trace()
             step+=1
-            update_t_ind = -1
-            update_t_val = -float("INF")
-            flip_list = []
-            for t_ind, t in enumerate(T):
-                t_val = 0
-                t_edges = sorted(tri_edges[t_ind], key=lambda x:-weight[x])
-                for i in range(len(t_edges)):
-                    if weight[t_edges[i]]<=0:
-                        break
-                update_e = [idx_to_edge[j] for j in t_edges[:i]]
-                _flip_list = t.maximal_disjoint_convex_quad(update_e, res_e_lists[t_ind])
-                for e in _flip_list:
-                    t_val+=weight[edge_to_idx[e]]
-                if t_val>update_t_val:
-                    update_t_ind = t_ind
-                    update_t_val = t_val
-                    flip_list = _flip_list
+            # update_t_ind = -1
+            # update_t_val = -float("INF")
+            # flip_list = []
+            # for t_ind, t in enumerate(T):
+            #     t_val = 0
+            #     t_edges = sorted(tri_edges[t_ind], key=lambda x:-weight[x])
+            #     for i in range(len(t_edges)):
+            #         if weight[t_edges[i]]<0:
+            #             break
+            #     update_e = [idx_to_edge[j] for j in t_edges[:i]]
+            #     _flip_list = t.maximal_disjoint_convex_quad(update_e, res_e_lists[t_ind])
+            #     for e in _flip_list:
+            #         t_val+=weight[edge_to_idx[e]]
+            #     if t_val>update_t_val:
+            #         update_t_ind = t_ind
+            #         update_t_val = t_val
+            #         flip_list = _flip_list
                 
-            # update_t_ind = np.argmax(T_val)
+            update_t_ind = np.argmax(T_val)
             t:Triangulation = T[update_t_ind]
-            # t_edges = sorted(tri_edges[update_t_ind], key=lambda x:-weight[x])
-            # for i in range(len(t_edges)):
-            #     if weight[t_edges[i]]<=0:
-            #         break
-            # update_e = [idx_to_edge[j] for j in t_edges[:i]]
-            # if not update_e: pdb.set_trace()
-            # flip_list = t.maximal_disjoint_convex_quad(update_e, res_e_lists[update_t_ind])
+            t_edges = sorted(tri_edges[update_t_ind], key=lambda x:-weight[x])
+            for i in range(len(t_edges)):
+                if weight[t_edges[i]]<0:
+                    break
+            update_e = [idx_to_edge[j] for j in t_edges[:i]]
+            if not update_e: pdb.set_trace()
+            flip_list = t.maximal_disjoint_convex_quad(update_e, res_e_lists[update_t_ind])
             local_res_list = []
             for e in flip_list:
                 local_res_list.append(t.flip(e[0],e[1]))
             res_e_lists[update_t_ind] = local_res_list
-            # print(flip_list, local_res_list)
+            print(flip_list, local_res_list)
             removed_idx = []
             for e in flip_list:
                 removed_idx.append(edge_to_idx[e])
@@ -549,12 +551,12 @@ class Data:
                 tri_set.add(idx)
             tri_edges[update_t_ind] = list(tri_set)
 
-            weight = np.full_like(usage, fill_value=-1, dtype=np.float64)
+            weight = np.full_like(usage, fill_value=0, dtype=np.float64)
             mask = (usage > 0)
             weight[mask] = (inter[mask] - usage[mask]) / usage[mask]
-            # T_val = np.zeros(len(T), dtype=np.float64)
-            # for i, edges in enumerate(tri_edges):
-            #     T_val[i] = weight[edges].sum()
+            T_val = np.zeros(len(T), dtype=np.float64)
+            for i, edges in enumerate(tri_edges):
+                T_val[i] = weight[edges].sum()
             # e_list = dict()
             # for t in T:
             #     for e in t.edges:

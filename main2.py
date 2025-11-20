@@ -15,7 +15,7 @@ if __name__=="__main__":
         inp = argument[1]
     else:
         # inp = "data/examples/example_ps_20_nt2_pfd5_random.json"
-        inp = "data/benchmark_instances/random_instance_4_40_2.json"
+        inp = "data/benchmark_instances/woc-60-tsplib-63f3f788.json"
     if "json" in inp:
         start = time.time()
         dt = Data(inp)

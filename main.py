@@ -15,7 +15,7 @@ if __name__=="__main__":
         inp = argument[1]
     else:
         # inp = "data/examples/example_ps_20_nt2_pfd5_random.json"
-        inp = "data/benchmark_instances/random_instance_4_40_2.json"
+        inp = "data/benchmark_instances/woc-60-tsplib-63f3f788.json"
     if "json" in inp:
         start = time.time()
         dt = Data(inp)
@@ -30,8 +30,8 @@ if __name__=="__main__":
         for inp1 in json_list:
             # if "json" not in inp1:
             #     continue
-            # if "rirs" not in inp1:
-            #     continue
+            if "rirs" in inp1:
+                continue
             # if "-20-" in inp1:
             #     continue
             rirs_list.append(os.path.join(inp,inp1))
