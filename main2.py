@@ -6,7 +6,7 @@ from multiprocessing import Process, Pool
 
 def find_dt_center(inp):
     dt = Data(os.path.join(inp))
-    # dt.find_center_fast()
+    dt.find_center_np()
     dt.WriteData()
 
 if __name__=="__main__":
