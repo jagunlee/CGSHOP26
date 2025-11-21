@@ -391,7 +391,7 @@ class Data:
             return True
         return False
     
-    def find_center_np(self):
+    def find_center_np(self, debug=False):
         step = 0
         T = [copy.deepcopy(t) for t in self.triangulations]
         res_e_lists = [[] for _ in range(len(self.triangulations))]
@@ -422,7 +422,7 @@ class Data:
         tree = STRtree(segments)
         for edges in tri_edges:
             usage[edges] += 1
-        neighbors = [[] for _ in range(M)]
+        neighbors = [set() for _ in range(M)]
         for i,seg in enumerate(segments):
             cand = tree.query(seg)
             for j in cand:
@@ -431,8 +431,8 @@ class Data:
                 if idx_to_edge[i][0]==idx_to_edge[j][0] or idx_to_edge[i][1]==idx_to_edge[j][0] or idx_to_edge[i][0]==idx_to_edge[j][1] or idx_to_edge[i][1]==idx_to_edge[j][1]:
                     continue
                 if seg.intersects(segments[j]):
-                    neighbors[i].append(j)
-                    neighbors[j].append(i)
+                    neighbors[i].add(int(j))
+                    neighbors[j].add(int(i))
                     inter[i]+=usage[j]
                     inter[j]+=usage[i]
         # rows = []
@@ -449,7 +449,7 @@ class Data:
 
         
         # inter = A.dot(usage)   # inter_num
-        weight = (inter - usage) / usage
+        weight = (inter/2 - usage) / usage
         prev_weight = sum(weight)
 
         T_val = np.zeros(len(T), dtype=np.float64)
@@ -457,9 +457,10 @@ class Data:
             T_val[i] = weight[edges].sum()
         
         while True:
-            # print(T_val)
+            if debug: print(T_val)
             # print(res_e_lists)
-            if step>60: break
+            if debug: 
+                if step>60: break
             done = True
             set_list = [set(t.edges.keys()) for t in T]
             base_set = set_list[0]
@@ -507,7 +508,8 @@ class Data:
             for e in flip_list:
                 local_res_list.append(t.flip(e[0],e[1]))
             res_e_lists[update_t_ind] = local_res_list
-            print(flip_list, local_res_list)
+            if debug: print(flip_list, local_res_list)
+            # print(flip_list, local_res_list)
             removed_idx = []
             for e in flip_list:
                 removed_idx.append(edge_to_idx[e])
@@ -523,13 +525,13 @@ class Data:
 
                     usage = np.append(usage, 0)
                     inter = np.append(inter, 0)
-                    neighbors.append([])
+                    neighbors.append(set())
                     for other_idx, other_key in enumerate(idx_to_edge[:-1]):
                         # if e[0]==other_key[0] or e[1]==other_key[0] or e[0]==other_key[1] or e[1]==other_key[1]:
                         #     continue
                         if self.intersect(e[0], e[1], other_key[0], other_key[1]):
-                            neighbors[new_idx].append(other_idx)
-                            neighbors[other_idx].append(new_idx)
+                            neighbors[new_idx].add(int(other_idx))
+                            neighbors[other_idx].add(int(new_idx))
                             inter[new_idx] += usage[other_idx]*2
             delta_usage = defaultdict(int)
             for idx in removed_idx:
@@ -542,7 +544,7 @@ class Data:
                     continue
                 usage[e_idx]+=d
                 for f_idx in neighbors[e_idx]:
-                    inter[f_idx]+=d
+                    inter[f_idx]+=d*2
             tri_set = set(tri_edges[update_t_ind])
             for idx in removed_idx:
                 if idx in tri_set:
@@ -550,30 +552,39 @@ class Data:
             for idx in added_idx:
                 tri_set.add(idx)
             tri_edges[update_t_ind] = list(tri_set)
+            if debug:
+                for edge in t.edges:
+                    if edge_to_idx[edge] not in tri_edges[update_t_ind]:
+                        pdb.set_trace()
+                for e_ind in tri_edges[update_t_ind]:
+                    if idx_to_edge[e_ind] not in t.edges:
+                        pdb.set_trace()
+
 
             weight = np.full_like(usage, fill_value=0, dtype=np.float64)
             mask = (usage > 0)
-            weight[mask] = (inter[mask] - usage[mask]) / usage[mask]
+            weight[mask] = (inter[mask]/2 - usage[mask]) / usage[mask]
             T_val = np.zeros(len(T), dtype=np.float64)
             for i, edges in enumerate(tri_edges):
                 T_val[i] = weight[edges].sum()
-            # e_list = dict()
-            # for t in T:
-            #     for e in t.edges:
-            #         if e in e_list.keys():
-            #             e_list[e][0]+=1
-            #         else:
-            #             e_list[e] = [1,0]
-            # for e1 in e_list.keys():
-            #     for e2 in e_list.keys():
-            #         if e1==e2: continue
-            #         if self.intersect(e1[0], e1[1], e2[0], e2[1]):
-            #             e_list[e1][1]+=e_list[e2][0]
-            #             e_list[e2][1]+=e_list[e1][0]
-            # for e in e_list.keys():
-            #     e_ind = edge_to_idx[e]
-            #     if e_list[e][0]!=usage[e_ind]: pdb.set_trace()
-            #     if e_list[e][1]/2!=inter[e_ind]: pdb.set_trace()
+            if debug:
+                e_list = dict()
+                for t in T:
+                    for e in t.edges:
+                        if e in e_list.keys():
+                            e_list[e][0]+=1
+                        else:
+                            e_list[e] = [1,0]
+                for e1 in e_list.keys():
+                    for e2 in e_list.keys():
+                        if e1==e2: continue
+                        if self.intersect(e1[0], e1[1], e2[0], e2[1]):
+                            e_list[e1][1]+=e_list[e2][0]
+                            e_list[e2][1]+=e_list[e1][0]
+                for e in e_list.keys():
+                    e_ind = edge_to_idx[e]
+                    if e_list[e][0]!=usage[e_ind]: pdb.set_trace()
+                    if e_list[e][1]!=inter[e_ind]: pdb.set_trace()
             # _T_val = [0]*len(T)
             # for i, t in enumerate(T):
             #     for e in t.edges:
