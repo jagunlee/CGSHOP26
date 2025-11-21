@@ -666,7 +666,7 @@ class InfiniteDataLoader:
 
     def __init__(self, dataset, **kwargs):
         #train_sampler = torch.utils.data.RandomSampler(dataset, replacement=True, num_samples=int(1e10))#hy
-        print(len(dataset))
+        #print(len(dataset))
         train_sampler = torch.utils.data.RandomSampler(dataset, replacement=True, num_samples=len(dataset))
         self.train_loader = DataLoader(dataset, sampler=train_sampler, **kwargs)
         self.data_iter = iter(self.train_loader)
@@ -707,7 +707,7 @@ if __name__ == '__main__':
     parser.add_argument('--weight-decay', '-w', type=float, default=0.01, help="weight decay")
     # evaluation against known "good sequences"
     parser.add_argument('--eval-file', type=str, default=None, help="file with braids to evaluate logprobs against")
-    
+
     args = parser.parse_args()
     print(vars(args))
 

@@ -1,0 +1,10 @@
+INFO - 11/19/25 12:44:04 - 0:00:00 - ============ Initialized logger ============
+INFO - 11/19/25 12:44:04 - 0:00:00 - command: python cgshop.py --exp_id "bc3da8dd8a"
+                                     dump_path: checkpoint/debug/bc3da8dd8a
+                                     exp_id: bc3da8dd8a
+                                     exp_name: debug
+                                     max_epochs: 10
+INFO - 11/19/25 12:44:04 - 0:00:00 - The experiment will be stored in checkpoint/debug/bc3da8dd8a
+                                     
+INFO - 11/19/25 12:44:04 - 0:00:00 - Running command: python cgshop.py
+

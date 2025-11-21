@@ -1,0 +1,22 @@
+INFO - 11/19/25 12:59:20 - 0:00:00 - ============ Initialized logger ============
+INFO - 11/19/25 12:59:20 - 0:00:00 - command: python cgshop.py --exp_id "g0ogex28k4"
+                                     dump_path: checkpoint/debug/g0ogex28k4
+                                     exp_id: g0ogex28k4
+                                     exp_name: debug
+                                     max_epochs: 10
+                                     max_output_length: 160
+                                     n_tokens: 100
+INFO - 11/19/25 12:59:20 - 0:00:00 - The experiment will be stored in checkpoint/debug/g0ogex28k4
+                                     
+INFO - 11/19/25 12:59:20 - 0:00:00 - Running command: python cgshop.py
+
+INFO - 11/19/25 12:59:21 - 0:00:01 - Created checkpoint/debug/g0ogex28k4/temp.txt and training tokenizer...
+INFO - 11/19/25 12:59:21 - 0:00:01 - Directory 'checkpoint/debug/g0ogex28k4/tokenizer_data' created.
+INFO - 11/19/25 12:59:21 - 0:00:01 - File 'checkpoint/debug/g0ogex28k4/temp.txt' has been deleted.
+INFO - 11/19/25 12:59:21 - 0:00:01 - 0 / 20
+INFO - 11/19/25 12:59:21 - 0:00:01 - initializing at generation: 1
+INFO - 11/19/25 12:59:21 - 0:00:01 - number of examples in the dataset: 20
+INFO - 11/19/25 12:59:21 - 0:00:01 - max word length: 36
+INFO - 11/19/25 12:59:21 - 0:00:01 - number of unique characters in the vocabulary: 93
+INFO - 11/19/25 12:59:21 - 0:00:01 - vocabulary:
+INFO - 11/19/25 12:59:21 - 0:00:01 - ['V0', 'V1', 'V2', 'V3', 'V4', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17', 'V18', 'V19', 'V20', 'V22', 'V23', 'V24', 'V25', 'V26', 'V27', 'V28', 'V29', 'V30', 'V31', 'V32', 'V33', 'V34', 'V35', 'V36', 'V37', 'V38', 'V39', 'V40', 'V41', 'V42', 'V43', 'V44', 'V46', 'V47', 'V48', 'V49', 'V50', 'V51', 'V52', 'V53', 'V54', 'V55', 'V56', 'V57', 'V58', 'V59', 'V60', 'V63', 'V64', 'V65', 'V66', 'V67', 'V68', 'V70', 'V71', 'V72', 'V73', 'V74', 'V76', 'V77', 'V78', 'V79', 'V80', 'V81', 'V82', 'V83', 'V84', 'V85', 'V86', 'V87', 'V88', 'V89', 'V90', 'V91', 'V92', 'V93', 'V94', 'V95', 'V96', 'V97', 'V98', 'V99']

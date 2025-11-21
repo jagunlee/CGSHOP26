@@ -1,0 +1,52 @@
+INFO - 11/20/25 10:27:00 - 0:00:00 - ============ Initialized logger ============
+INFO - 11/20/25 10:27:00 - 0:00:00 - batch_size: 32
+                                     command: python cgshop.py --exp_id "znp6vyh22j"
+                                     cpu: True
+                                     dump_path: checkpoint/debug/znp6vyh22j
+                                     exp_id: znp6vyh22j
+                                     exp_name: debug
+                                     gen_batch_size: 10
+                                     learning_rate: 0.0005
+                                     max_epochs: 10
+                                     max_output_length: 160
+                                     max_steps: 200
+                                     n_embd: 64
+                                     n_embd2: 32
+                                     n_head: 8
+                                     n_layer: 2
+                                     n_tokens: 100
+                                     sample_only: 500
+                                     temperature: 1.0
+                                     top_k: -1
+                                     type: transformer
+                                     weight_decay: 0.01
+INFO - 11/20/25 10:27:00 - 0:00:00 - The experiment will be stored in checkpoint/debug/znp6vyh22j
+                                     
+INFO - 11/20/25 10:27:00 - 0:00:00 - Running command: python cgshop.py
+
+INFO - 11/20/25 10:27:05 - 0:00:05 - Created checkpoint/debug/znp6vyh22j/temp.txt and training tokenizer...
+INFO - 11/20/25 10:27:05 - 0:00:05 - Directory 'checkpoint/debug/znp6vyh22j/tokenizer_data' created.
+INFO - 11/20/25 10:27:05 - 0:00:05 - File 'checkpoint/debug/znp6vyh22j/temp.txt' has been deleted.
+INFO - 11/20/25 10:27:05 - 0:00:05 - 0 / 20
+INFO - 11/20/25 10:27:05 - 0:00:05 - initializing at generation: 1
+INFO - 11/20/25 10:27:05 - 0:00:05 - number of examples in the dataset: 20
+INFO - 11/20/25 10:27:05 - 0:00:05 - max word length: 34
+INFO - 11/20/25 10:27:05 - 0:00:05 - number of unique characters in the vocabulary: 87
+INFO - 11/20/25 10:27:05 - 0:00:05 - vocabulary:
+INFO - 11/20/25 10:27:05 - 0:00:05 - ['V0', 'V1', 'V2', 'V3', 'V4', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V14', 'V15', 'V16', 'V17', 'V18', 'V19', 'V20', 'V21', 'V22', 'V23', 'V24', 'V25', 'V26', 'V27', 'V29', 'V30', 'V31', 'V32', 'V33', 'V34', 'V35', 'V36', 'V37', 'V38', 'V39', 'V40', 'V41', 'V42', 'V43', 'V44', 'V45', 'V46', 'V47', 'V48', 'V49', 'V51', 'V52', 'V53', 'V54', 'V55', 'V56', 'V57', 'V59', 'V61', 'V63', 'V64', 'V65', 'V66', 'V67', 'V68', 'V71', 'V73', 'V74', 'V76', 'V78', 'V79', 'V80', 'V81', 'V82', 'V83', 'V84', 'V85', 'V86', 'V87', 'V88', 'V89', 'V90', 'V91', 'V92', 'V93', 'V94', 'V95', 'V96', 'V97', 'V98', 'V99']
+INFO - 11/20/25 10:27:05 - 0:00:05 - split up the dataset into 18 training examples and 2 test examples
+INFO - 11/20/25 10:27:05 - 0:00:05 - dataset determined that: vocab_size=88, block_size=161
+INFO - 11/20/25 10:27:05 - 0:00:05 - model #params: 121664
+INFO - 11/20/25 10:27:05 - 0:00:05 - ============ Start of generation 1 ============
+INFO - 11/20/25 10:27:05 - 0:00:05 - cuda Memory allocated:  0.00MB, cuda reserved: 0.00MB
+INFO - 11/20/25 10:27:05 - 0:00:05 - training
+INFO - 11/20/25 10:27:05 - 0:00:05 - step 0/200 | loss 4.7335 | step time 44.70ms
+INFO - 11/20/25 10:27:07 - 0:00:07 - step 100/200 | loss 1.4657 | step time 18.77ms
+INFO - 11/20/25 10:27:09 - 0:00:09 - Memory allocated:  0.00MB, reserved: 0.00MB
+INFO - 11/20/25 10:27:09 - 0:00:09 - generating
+INFO - 11/20/25 10:27:38 - 0:00:38 - distribution of sample lengths: average: 101.872 max: 297
+INFO - 11/20/25 10:27:38 - 0:00:38 - decoding
+INFO - 11/20/25 10:27:38 - 0:00:38 - Decoding complete. Check the output in checkpoint/debug/znp6vyh22j/transformer-output-decoded.txt
+INFO - 11/20/25 10:27:38 - 0:00:38 - Memory allocated:  0.00MB, reserved: 0.00MB
+INFO - 11/20/25 10:27:38 - 0:00:38 - ============ End of generation 1 ============
+INFO - 11/20/25 10:27:38 - 0:00:38 - launching search.jl

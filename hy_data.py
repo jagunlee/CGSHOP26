@@ -13,7 +13,8 @@ import pandas as pd
 import pdb
 import random
 import time
-from cgshop2026_pyutils.geometry import is_triangulation, Point
+from cgshop2026_pyutils.geometry import is_triangulation, FlippableTriangulation, expand_edges_by_convex_hull_edges
+from cgshop2026_pyutils.geometry import Point as cgPoint
 
 class Point:
     def __init__(self,x,y):
@@ -48,15 +49,16 @@ class Triangulation:
             print(i)
 
     def make_triangulation(self, T):
-        edges = dict()
-        for e in T:
-            edges[(min(e[0],e[1]),max(e[0],e[1]))] = Diag(min(e[0],e[1]),max(e[0],e[1]))
         nei_dict = dict()
         for i in range(len(self.pts)):
             nei_dict[i] = []
         for e in T:
             nei_dict[e[0]].append(e[1])
             nei_dict[e[1]].append(e[0])
+
+        edges = dict()
+        for e in T:
+            edges[(min(e[0],e[1]),max(e[0],e[1]))] = Diag(min(e[0],e[1]),max(e[0],e[1]))
         for i in range(len(self.pts)):
             nei_dict[i], _, found = self.sort_cw_with_half_circle(nei_dict[i], i)
             for j in range(len(nei_dict[i])-1):
@@ -70,16 +72,19 @@ class Triangulation:
                 else:
                     edges[(nei_dict[i][len(nei_dict[i])-1],i)].nei_pts[0] = nei_dict[i][0]
         self.edges = edges
+        #print("make_triangulation: edges")
+        #print(list(edges))
+        #exit(0)
 
     def sort_cw_with_half_circle(self, pts, center):
         cx, cy = self.pts[center].x, self.pts[center].y
         with_angles = [(pt, math.atan2(self.pts[pt].y - cy, self.pts[pt].x - cx)) for pt in pts]
         with_angles.sort(key=lambda pa: -pa[1])
-        n = len(with_angles)
         angles = [a for _, a in with_angles]
         best_start = 0
         found = False
         doubled = angles + [a - 2*math.pi for a in angles]  # wrap-around
+        n = len(with_angles)
         for i in range(n):
             j = i + n - 1
             if doubled[i] - doubled[j] <= math.pi + 1e-12:
@@ -243,23 +248,42 @@ class Triangulation:
 
     #hy
     def random_flip(self, m):
-        edges = list(self.edges.keys())
+        points_=[]
+        for v in self.pts:
+            points_.append(cgPoint(v.x, v.y))
+        triang = list(self.edges.keys())
+        triang_ = expand_edges_by_convex_hull_edges(points_, triang)
+        flippable_triang = FlippableTriangulation.from_points_edges(points_, triang)
+        #print("flippable_triang = ")
+        #print(type(flippable_triang.possible_flips()))
+        edges = flippable_triang.possible_flips()
         random.shuffle(edges)
-        flip_times=0
-        tried=0
+
+        flip_times=1
+        tried=1
         while True:
-            for i,j in edges:
-                flipped, _ = self.flip(i,j)
+            _e_list = self.maximal_disjoint_convex_quad(edges)
+            random_choice = [random.random() for _ in range(len(_e_list))]
+            e_list = []
+            for i,e in enumerate(_e_list):
+                if random_choice[i]>0.5:
+                    e_list.append(_e_list[i])
+            for e in e_list:
+            #for e in edges:
+                flipped, _ = self.flip(e[0], e[1])
+                tried+=1
                 if flipped > -1:
                     flip_times+=1
-                    tried+=1
-                if flip_times == m-1: break
-            if tried == m: break
-            if flip_times < m-1:
+                if flip_times == m:
+                    break
+            if flip_times == m or tried >= m*2: break
+            if flip_times < m:
+                triang = list(self.edges.keys())
+                triang_ = expand_edges_by_convex_hull_edges(points_, triang)
+                flippable_triang = FlippableTriangulation.from_points_edges(points_, triang)
+                edges = flippable_triang.possible_flips()
                 random.shuffle(edges)
-            else:
-                break
-            print("flip times = ", flip_times, ", tried = ", tried)
+        #print("flip times = ", flip_times, ", tried = ", tried)
 
 
     def find_difference(self, T):
@@ -349,8 +373,8 @@ class Data:
                         for j in range(i+1, len(self.triangulations)):
                             pfd, *_ = self.compute_pfd(i,j)
                             max_pfd = max(max_pfd, pfd)
-                            initial_sol[i]+=res1[0]
-                            initial_sol[j]+=res1[0]
+                            initial_sol[i]+=pfd
+                            initial_sol[j]+=pfd
                     #print(f"Maximum Parallel flip distance: {max_pfd}")
                 #print(f"Initial Center: {np.argmax(initial_sol)} (total dist: {max(initial_sol)})")
                 self.center = self.triangulations[np.argmax(initial_sol)]
@@ -459,15 +483,13 @@ class Data:
 
 
     def random_move(self):
+        #hy: This random_move also changes the center!
         prev_len, old_flip = self.compute_center_dist(self.center)
         total_best = prev_len
         T:Triangulation = copy.deepcopy(self.center)
-        #print(f"Start with {prev_len}")
         step = 0
         total_step = 0
         edges = list(T.edges.keys())
-        # print(edges)
-        # pdb.set_trace()
         starting_edge_ind = 0
         random.shuffle(edges)
         find_better=False#hy
@@ -490,10 +512,12 @@ class Data:
                 edges = list(T.edges.keys())
                 random.shuffle(edges)
                 starting_edge_ind = 0
-                new_len, _ = self.compute_center_dist(T)
+                new_len, flip = self.compute_center_dist(T)
                 #hy
                 tried+=1
                 if new_len < total_best:
+                    self.dist = new_len
+                    self.flip = flip
                     find_better=True
 
                 total_best = min(total_best, new_len)
@@ -501,7 +525,7 @@ class Data:
                 #print(f"[{self.instance_uid}] Random move! {prev_len}->{new_len} (total best: {total_best})")
                 prev_len = new_len
                 step = 0
-                if tried>len(_e_list): break #hy
+                if tried > 2*len(_e_list): break #hy
             else:
                 T1 = copy.deepcopy(T)
                 e = edges[starting_edge_ind]
@@ -523,21 +547,21 @@ class Data:
                         tried+=1
                         if new_len < total_best:
                             find_better=True
+                            #self.WriteData()
 
                         total_best = min(new_len, total_best)
                         dist = total_best
                         #print(f"[{self.instance_uid}] {prev_len}->{new_len} (total best: {total_best})")
-                        self.WriteData()
+                        #self.WriteData()
                         prev_len = new_len
 
                     starting_edge_ind = 0
                 else:
                     step+=1
                     starting_edge_ind+=1
-            if find_better or tried>len(edges): break#hy
+            if find_better or tried > 2*len(edges): break#hy
         #return self.center
-        return self.center, dist #hy
-
+        return self.center, self.dist, self.flip #hy
 
 
 
@@ -557,7 +581,7 @@ class Data:
 
         # 일반적인 교차 (서로 다른 편에 위치)
         if (o1 * o2 < -EPS) and (o3 * o4 < -EPS):
-            return True
+            return True #hy: True means "no intersect!"
         return False
 
     def compute_pfd(self, i, j):
@@ -622,11 +646,11 @@ class Data:
         inst["instance_uid"] = self.instance_uid
         inst["flips"] = self.flip
         inst["meta"] = {"dist":self.dist, "input": self.input}
-        folder = "solutions"
+        folder = "hy_solutions"
         with open(folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
             json.dump(inst, f, indent='\t')
 
-        opt_folder = "opt"
+        opt_folder = "hy_opt"
         opt_list = os.listdir(opt_folder)
         already_exist = False
         for sol in opt_list:
