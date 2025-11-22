@@ -6,8 +6,14 @@ from multiprocessing import Process, Pool
 
 def find_dt_center(inp):
     dt = Data(os.path.join(inp))
-    dt.find_center_np()
-    dt.WriteData()
+    sol_list = os.listdir("opt")
+    for sol in sol_list:
+        if dt.instance_uid in sol:
+            print(f"{dt.instance_uid} already done!")
+            return
+    res = dt.find_center_np()
+    if res[0]!=-1:
+        dt.WriteData()
 
 if __name__=="__main__":
     argument = sys.argv
@@ -26,6 +32,7 @@ if __name__=="__main__":
         # dt.random_move()
     else:
         json_list = os.listdir(inp)
+        sol_list = os.listdir("opt")
         rirs_list = []
         for inp1 in json_list:
             if "json" not in inp1:
@@ -39,5 +46,5 @@ if __name__=="__main__":
             # dt.find_center_np()
             # dt.WriteData()
         
-        pool = Pool(10)
+        pool = Pool(4)
         pool.map(find_dt_center, rirs_list)

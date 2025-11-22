@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, deque
 import copy
 import cv2
 import datetime
@@ -455,7 +455,7 @@ class Data:
         T_val = np.zeros(len(T), dtype=np.float64)
         for i, edges in enumerate(tri_edges):
             T_val[i] = weight[edges].sum()
-        
+        t_upt_list = []
         while True:
             if debug: print(T_val)
             # print(res_e_lists)
@@ -591,6 +591,18 @@ class Data:
             #         exs_num, inter_num = e_list[e]
             #         _T_val[i]+=(inter_num-exs_num)/exs_num
             print(f"[{self.instance_uid}, {step} step] Triangulation {update_t_ind} flipped, {len(local_res_list)} edges")
+            if step<100:
+                t_upt_list.append(update_t_ind)
+            else:
+                t_upt_list.pop(0)
+                t_upt_list.append(update_t_ind)
+                end = True
+                for tt in t_upt_list:
+                    if tt!=t_upt_list[0]:
+                        end = False
+                        break
+                if end: return (-1,-1)
+            
         # dist, flip = self.compute_center_dist(T[0])
         # print(f"Total distance from center: {self.dist} -> {dist}")
         # self.center = T[0]
