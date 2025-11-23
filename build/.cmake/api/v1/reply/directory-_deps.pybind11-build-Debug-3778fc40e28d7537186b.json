@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "_deps/pybind11-build",
+		"source" : "C:/Users/ALGO_SERVER/Desktop/PFD/CGSHOP26/build/_deps/pybind11-src"
+	}
+}

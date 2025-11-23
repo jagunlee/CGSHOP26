@@ -1,0 +1,1 @@
+ "C:/vcpkg/installed/x64-windows/debug/lib/fmtd.lib" C:/Users/ALGO_SERVER/anaconda3/libs/python313.lib "C:/vcpkg/installed/x64-windows/debug/lib/gmpxx.lib" "C:/vcpkg/installed/x64-windows/debug/lib/mpfr.lib" "C:/vcpkg/installed/x64-windows/debug/lib/gmp.lib" -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 
