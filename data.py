@@ -767,7 +767,7 @@ class Data:
             flip_list.append(flip_iter)
             # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"step {step}")
             # self.DrawTriangulation(T, colored_edges=res_e_list,name=f"check")
-        print(f"{i} -> {j} can be done in {step} step!")
+        # print(f"{i} -> {j} can be done in {step} step!")
         return step, flip_list, i, j
 
     def compute_center_dist(self, T1:Triangulation):

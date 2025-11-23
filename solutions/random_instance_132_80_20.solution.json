@@ -7294,5 +7294,9 @@
 				35
 			]
 		]
+	],
+	"meta": {
+		"dist": 98,
+		"input": "data/benchmark_instances/random_instance_132_80_20.json"
 	}
 }
