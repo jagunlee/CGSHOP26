@@ -1,0 +1,26 @@
+[
+{
+  "directory": "C:/Users/ALGO_SERVER/Desktop/PFD/CGSHOP26/build/src/cgshop2026_pyutils/geometry",
+  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE -DCGAL_USE_GMPXX=1 -DFMT_SHARED -DPYBIND11_DETAILED_ERROR_MESSAGES -DPy_NO_LINK_LIB -D_bindings_EXPORTS @CMakeFiles/_bindings.dir/includes_CXX.rsp -g -std=gnu++17 -fvisibility=hidden -Wall -frounding-math -o CMakeFiles\\_bindings.dir\\_bindings.cpp.obj -c C:\\Users\\ALGO_SERVER\\Desktop\\PFD\\CGSHOP26\\pyutils26\\src\\cgshop2026_pyutils\\geometry\\_bindings.cpp",
+  "file": "C:/Users/ALGO_SERVER/Desktop/PFD/CGSHOP26/pyutils26/src/cgshop2026_pyutils/geometry/_bindings.cpp",
+  "output": "src/cgshop2026_pyutils/geometry/CMakeFiles/_bindings.dir/_bindings.cpp.obj"
+},
+{
+  "directory": "C:/Users/ALGO_SERVER/Desktop/PFD/CGSHOP26/build/src/cgshop2026_pyutils/geometry",
+  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE -DCGAL_USE_GMPXX=1 -DFMT_SHARED -DPYBIND11_DETAILED_ERROR_MESSAGES -DPy_NO_LINK_LIB -D_bindings_EXPORTS @CMakeFiles/_bindings.dir/includes_CXX.rsp -g -std=gnu++17 -fvisibility=hidden -Wall -frounding-math -o CMakeFiles\\_bindings.dir\\cgal_utils.cpp.obj -c C:\\Users\\ALGO_SERVER\\Desktop\\PFD\\CGSHOP26\\pyutils26\\src\\cgshop2026_pyutils\\geometry\\cgal_utils.cpp",
+  "file": "C:/Users/ALGO_SERVER/Desktop/PFD/CGSHOP26/pyutils26/src/cgshop2026_pyutils/geometry/cgal_utils.cpp",
+  "output": "src/cgshop2026_pyutils/geometry/CMakeFiles/_bindings.dir/cgal_utils.cpp.obj"
+},
+{
+  "directory": "C:/Users/ALGO_SERVER/Desktop/PFD/CGSHOP26/build/src/cgshop2026_pyutils/geometry",
+  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE -DCGAL_USE_GMPXX=1 -DFMT_SHARED -DPYBIND11_DETAILED_ERROR_MESSAGES -DPy_NO_LINK_LIB -D_bindings_EXPORTS @CMakeFiles/_bindings.dir/includes_CXX.rsp -g -std=gnu++17 -fvisibility=hidden -Wall -frounding-math -o CMakeFiles\\_bindings.dir\\geometry_operations.cpp.obj -c C:\\Users\\ALGO_SERVER\\Desktop\\PFD\\CGSHOP26\\pyutils26\\src\\cgshop2026_pyutils\\geometry\\geometry_operations.cpp",
+  "file": "C:/Users/ALGO_SERVER/Desktop/PFD/CGSHOP26/pyutils26/src/cgshop2026_pyutils/geometry/geometry_operations.cpp",
+  "output": "src/cgshop2026_pyutils/geometry/CMakeFiles/_bindings.dir/geometry_operations.cpp.obj"
+},
+{
+  "directory": "C:/Users/ALGO_SERVER/Desktop/PFD/CGSHOP26/build/src/cgshop2026_pyutils/geometry",
+  "command": "C:\\PROGRA~1\\mingw64\\bin\\G__~1.EXE -DCGAL_USE_GMPXX=1 -DFMT_SHARED -DPYBIND11_DETAILED_ERROR_MESSAGES -DPy_NO_LINK_LIB -D_bindings_EXPORTS @CMakeFiles/_bindings.dir/includes_CXX.rsp -g -std=gnu++17 -fvisibility=hidden -Wall -frounding-math -o CMakeFiles\\_bindings.dir\\triangulation_validation.cpp.obj -c C:\\Users\\ALGO_SERVER\\Desktop\\PFD\\CGSHOP26\\pyutils26\\src\\cgshop2026_pyutils\\geometry\\triangulation_validation.cpp",
+  "file": "C:/Users/ALGO_SERVER/Desktop/PFD/CGSHOP26/pyutils26/src/cgshop2026_pyutils/geometry/triangulation_validation.cpp",
+  "output": "src/cgshop2026_pyutils/geometry/CMakeFiles/_bindings.dir/triangulation_validation.cpp.obj"
+}
+]

@@ -1,0 +1,56 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install"
+		],
+		"files" : 
+		[
+			"src/cgshop2026_pyutils/geometry/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 23,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"destination" : "src/cgshop2026_pyutils/geometry",
+			"paths" : 
+			[
+				"src/cgshop2026_pyutils/geometry/_bindings.cp313-win_amd64.pyd"
+			],
+			"targetId" : "_bindings::@d4053612213bea829623",
+			"targetIndex" : 0,
+			"type" : "target"
+		},
+		{
+			"backtrace" : 1,
+			"component" : "Unspecified",
+			"cxxModuleBmiTarget" : 
+			{
+				"id" : "_bindings::@d4053612213bea829623",
+				"index" : 0
+			},
+			"destination" : "src/cgshop2026_pyutils/geometry",
+			"type" : "cxxModuleBmi"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "src/cgshop2026_pyutils/geometry",
+		"source" : "src/cgshop2026_pyutils/geometry"
+	}
+}

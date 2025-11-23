@@ -1,5 +1,14 @@
 {
     "python.analysis.extraPaths": [
         "./pyutils26/src"
+    ],
+    "cmake.sourceDirectory": "C:/Users/ALGO_SERVER/Desktop/PFD/CGSHOP26/pyutils26",
+    "cmake.configureSettings": {
+        // CGALConfig.cmake 가 들어있는 디렉토리
+        "CGAL_DIR": "C:/vcpkg/installed/x64-windows/share/cgal"
+    },
+    "cmake.configureArgs": [
+    "-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake",
+    "-DVCPKG_TARGET_TRIPLET=x64-windows"
     ]
 }
