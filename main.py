@@ -4,8 +4,8 @@ from data import *
 import time
 import csv
 
-def mySort(s : str):
-    if 'woc' in s:
+def mySort(s : str): 
+    if 'woc' in s: 
         return int(s.split('-')[1]) * 5
     elif 'random' in s:
         print(s.split('_'))
@@ -17,7 +17,7 @@ def mySort(s : str):
         
 if __name__=="__main__":
     
-    argument = sys.argv
+    argument = sys.argv 
 
     start = time.time()
 
@@ -26,14 +26,14 @@ if __name__=="__main__":
     userInput = False
 
     if len(argument)==2:
-        instances = ['data\\benchmark_instances\\' + argument[1]]
+        instances = ['data/benchmark_instances/' + argument[1]]
 
     else:
-        for file in os.listdir(os.path.dirname(__file__) + '\\data\\benchmark_instances'):
+        for file in os.listdir(os.path.dirname(__file__) + '/data/benchmark_instances'):
             if 'pdf' == file[len(file)-3:]:
                 pass
             else:
-                instances.append('data\\benchmark_instances\\'+file)
+                instances.append('data/benchmark_instances/'+file)
 
         instances.sort(key = mySort)
         if len(argument)==3:
@@ -80,7 +80,7 @@ if __name__=="__main__":
 
         print()
         '''
-
+        
         centerT = D.findCenter()
         D.computeDistanceSum(centerT)
     

@@ -9,9 +9,9 @@ import time
 import os
 import pandas as pd
 import datetime
-from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
-from cgshop2026_pyutils.geometry import FlippableTriangulation
-from cgshop2026_pyutils.verify import check_for_errors
+# from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
+# from cgshop2026_pyutils.geometry import FlippableTriangulation
+# from cgshop2026_pyutils.verify import check_for_errors
 # import cgshop2026_pyutils
 
 sys.setrecursionlimit(1000000)
@@ -26,7 +26,7 @@ class Data:
         # print('self.input:', self.input)
         self.triangulations = []
         self.ReadData()
-        self.instance_uid = (inp.split('\\')[-1]).split('.')[0]
+        self.instance_uid = (inp.split('/')[-1]).split('.')[0]
         print('self.instance_uid:', self.instance_uid)
         # self.distance = []
         # self.pFlips = []
@@ -44,6 +44,7 @@ class Data:
             self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
         for t in root["triangulations"]:
             self.triangulations.append(self.make_triangulation(t))
+            print(len(self.triangulations),"/",len(root["triangulations"]))
 
         #print(len(self.triangulations))
         # self.distance = [] * len(self.triangulations)
@@ -86,6 +87,7 @@ class Data:
                             del t
                             continue
                         for l in range(3):
+                            tri.dict[t.pt(l), t.pt(l + 1)] = t
                             tt = tri.find_triangle(t.pt(l + 1), t.pt(l))
                             if tt:
                                 tt.neis[tt.get_ind(t.pt(l + 1))] = t
@@ -176,6 +178,8 @@ class Data:
         q1, q2 = min(t.pts[i], tt.pts[j]), max(t.pts[i], tt.pts[j])
         f = [((q1, q2), (min(pi, pj), max(pi, pj)))]
         # f = [(q1, q2)]
+        del(tri.dict[(q1, q2)])
+        del(tri.dict[(q2, q1)])
 
         # edge update (for the triangulation)
         tri.edges.remove((q1, q2))
@@ -187,6 +191,8 @@ class Data:
         if tj:
             tj.neis[tj.get_ind(pj)] = t
         t.neis[(i + 1) % 3] = tt
+        tri.dict[(t.pt(i), t.pt(i+1))] = t
+        tri.dict[(t.pt(i+1), t.pt(i+2))] = t
 
         # incidence update for tt
         tt.pts[(j + 1) % 3] = pi
@@ -194,7 +200,8 @@ class Data:
         if ti:
             ti.neis[ti.get_ind(pi)] = tt
         tt.neis[(j + 1) % 3] = t
-
+        tri.dict[(tt.pt(j), tt.pt(j+1))] = tt
+        tri.dict[(tt.pt(j+1), tt.pt(j+2))] = tt
         return f
         # L = [f[0], t_pts]
         # return L
@@ -212,9 +219,9 @@ class Data:
             a, b = F[0]
 
             if sorted([t.pts[0], t.pts[1]]) == sorted([a, b]):
-                    self.flip(tri, t, 0)
-                    change = True
-                    break
+                self.flip(tri, t, 0)
+                change = True
+                break
             elif sorted([t.pts[1], t.pts[2]]) == sorted([a, b]):
                 self.flip(tri, t, 1)
                 change = True
@@ -278,14 +285,88 @@ class Data:
                 
     def flip_sequence(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
         fs = []
-        tri = tri1.copy()
+        tri = deepcopy(tri1)
         edges = list(tri2.edges)
         random.shuffle(edges)
+        cnt = 0
         for e in edges:
             fs += self.resolve_cross(tri, e)
+            cnt += 1
+            if cnt % 100 == 0:
+                print(cnt, "/", len(edges))
         del tri
         return fs
 
+
+    def resolve_cross_new(self, tri: Triangulation, con: tuple, t=None):
+        if not t:
+            q1 = con[0]
+            q2 = con[1]
+            for t in tri.triangles:
+                i = t.get_ind(q1)
+                if i != -1:
+                    r1 = self.pts[q1]
+                    r2 = self.pts[t.pt(i + 1)]
+                    r3 = self.pts[t.pt(i + 2)]
+                    r4 = self.pts[q2]
+                    if (turn(r1, r2, r4) < 0 or turn(r1, r3, r4) > 0):
+                        continue
+                    if r2 == r4:
+                        return []
+                    elif r3 == r4:
+                        return []
+                    else:
+                        return self.resolve_cross(tri, con, t)
+        else:
+            q1 = con[0]
+            q2 = con[1]
+            # print("resolving", q1, q2)
+            # print("----- Starting triangle -----")
+            # self.print_triangle(t)
+            # print("-----------------------------")
+            
+            i = t.get_ind(q1)
+            ts = [(t, (i + 1) % 3)]
+            while True:
+                tt, j = ts[-1]
+                ttt = tt.neis[j]
+                k = (ttt.get_ind(tt.pts[j]) + 1) % 3
+                if turn(self.pts[q1], self.pts[q2], self.pts[ttt.pts[k]]) <= 0:
+                    ts.append((ttt, k))
+                else:
+                    ts.append((ttt, (k-1)%3))
+                if ttt.pts[k] == q2:
+                    break
+            ind = 0
+            f = []
+            while ind < len(ts) - 1:
+                tt, j = ts[ind]
+                ttt = tt.neis[j]
+                k = (ttt.get_ind(tt.pts[j]) + 1) % 3
+                r1 = self.pts[tt.pt(j - 1)]
+                r2 = self.pts[tt.pt(j)]
+                r3 = self.pts[tt.pt(j + 1)]
+                r4 = self.pts[ttt.pt(k)]
+                if (turn(r1, r2, r4) <= 0 or turn(r1, r3, r4) >= 0):
+                    ind += 1
+                    continue
+                if ind > 0:
+                    tb, ib = ts[ind - 1]
+                    r1 = self.pts[tb.pt(ib - 1)]
+                    r2 = self.pts[tb.pt(ib)]
+                    r3 = self.pts[tb.pt(ib + 1)]
+                    if (turn(r1, r2, r4) <= 0 or turn(r1, r3, r4) >= 0):
+                        ind += 1
+                        continue
+                f += self.flip(tri, tt, j)
+                ind += 2
+            r = t.pt(i + 2)
+            if (r == q2):
+                return f
+            elif (turn(self.pts[q2], self.pts[q1], self.pts[r]) < 0):
+                return f + self.resolve_cross(tri, con, t)
+            else:
+                return f + self.resolve_cross(tri, con, t.nei(i + 2))
     '''
     def flip_sequence_new(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
         # numTrials = 10
@@ -333,13 +414,15 @@ class Data:
         # NUM_TRIAL = len(self.pts) // 10
         NUM_TRIAL = 1
         while trial < NUM_TRIAL or bestscore == len(tri1.edges) * 2:
+            
             trial += 1
 
             # flip sequence 자체에서 들어감
             fs = self.flip_sequence(tri1, tri2)
             done = [False] * len(fs)
-            tri = tri1.copy()
+            tri = deepcopy(tri1)
             pfp = []
+            donenum = 0
             while not all(done):
                 fps = []
                 usedtri = set()
@@ -360,6 +443,8 @@ class Data:
                     usedtri.add(t1)
                     usedtri.add(t2)
                     fps.append(fs[i])
+                donenum += len(fps)
+                print(donenum, "/", len(done))
                 for _, con in fps:
                     self.resolve_cross(tri, con)
                 pfp.append(fps)
@@ -367,7 +452,7 @@ class Data:
                 best = pfp
                 bestscore = len(pfp)
                 trial = 0
-                
+        print(len(best))
         return best
 
     def print_triangle(self, t: Triangle):
@@ -387,8 +472,7 @@ class Data:
         
         # parallel version
         pfp = self.parallel_flip_path(T1, T2)
-        
-        midVal = int(len(pfp) * (w1 / (w1 + w2)))
+        midVal = int(len(pfp) * (w2 / (w1 + w2)))
         print('len(pfp):', len(pfp), 'w1:', w1, 'w2:', w2, 'midVal:', midVal)
 
         # use_pfp: 사용되는 parallel flip들 모음
@@ -396,6 +480,7 @@ class Data:
 
         for flips in use_pfp:
             for flip in flips:
+                
                 self.flipDiagonal(T1copy, flip)
 
         return T1copy
@@ -428,6 +513,7 @@ class Data:
         weight = 1
         
         for i in range(1, len(self.triangulations)):
+            print(i,"th triangle")
             nextT = self.triangulations[i]
             # 내분을 통해 새로운 central triangulation 계산
             centerT = self.internal_division(centerT, weight, nextT, 1) 
@@ -436,7 +522,7 @@ class Data:
             end = time.time()
             print('time:', f"{end - start:.5f} sec")
 
-        with open("centers//" + self.instance_uid + ".json", "w", encoding="utf-8") as f:
+        with open("centers/" + self.instance_uid + ".json", "w", encoding="utf-8") as f:
             json.dump(list(centerT.edges), f, indent='\t')
 
         return centerT
@@ -557,36 +643,38 @@ class Data:
             print('time:', f"{end - start:.5f} sec")
 
     def verify(self):
-        # Define points (square) and two triangulations that will be flipped to a common form
-        points_x = [0, 1, 0, 1]
-        points_y = [0, 0, 1, 1]
+        pass
 
-        '''
-        triangulations = [  # Each triangulation is a list of interior edges
-            [(0, 3)],        # diagonal 0-3
-            [(1, 2)],        # diagonal 1-2 (the flip partner)
-        ]
-        '''
+        # # Define points (square) and two triangulations that will be flipped to a common form
+        # points_x = [0, 1, 0, 1]
+        # points_y = [0, 0, 1, 1]
 
-        instance = CGSHOP2026Instance(
-            instance_uid=self.instance_uid,
-            points_x=self.pts_x,
-            points_y=self.pts_y,
+        # '''
+        # triangulations = [  # Each triangulation is a list of interior edges
+        #     [(0, 3)],        # diagonal 0-3
+        #     [(1, 2)],        # diagonal 1-2 (the flip partner)
+        # ]
+        # '''
 
-            # triangulations=[T.getEdges() for T in self.triangulations],
-            triangulations=[T.edges for T in self.triangulations],
-        )
+        # instance = CGSHOP2026Instance(
+        #     instance_uid=self.instance_uid,
+        #     points_x=self.pts_x,
+        #     points_y=self.pts_y,
 
-        # A solution that flips the diagonal in the first triangulation to match the second.
-        # flips is: one list per triangulation -> sequence of parallel flip sets -> each set is a list of edges
-        solution = CGSHOP2026Solution(
-            instance_uid=self.instance_uid,
-            flips=self.pFlips
-            # [ [[(0,3)]] , [] ]  # flip edge (0,3) in triangulation 0; triangulation 1 already in target form
-        )
+        #     # triangulations=[T.getEdges() for T in self.triangulations],
+        #     triangulations=[T.edges for T in self.triangulations],
+        # )
 
-        errors = check_for_errors(instance, solution)
-        print("Errors:", errors or "None ✔")
+        # # A solution that flips the diagonal in the first triangulation to match the second.
+        # # flips is: one list per triangulation -> sequence of parallel flip sets -> each set is a list of edges
+        # solution = CGSHOP2026Solution(
+        #     instance_uid=self.instance_uid,
+        #     flips=self.pFlips
+        #     # [ [[(0,3)]] , [] ]  # flip edge (0,3) in triangulation 0; triangulation 1 already in target form
+        # )
+
+        # errors = check_for_errors(instance, solution)
+        # print("Errors:", errors or "None ✔")
 
 # CCW라면 양수 반환, CW라면 음수 반환
 # collinear라면 0 반환

@@ -20,6 +20,7 @@ class Triangulation:
     def __init__(self):
         self.triangles = set()
         self.edges = set()
+        self.dict = dict()
 
     # need to fix, due to time issue
     def getEdges(self):
@@ -47,13 +48,10 @@ class Triangulation:
             del t
 
     def find_triangle(self, q1: int, q2: int):
-        for t in self.triangles:
-            if t.pts[0] == q1 and t.pts[1] == q2:
-                return t
-            if t.pts[1] == q1 and t.pts[2] == q2:
-                return t
-            if t.pts[2] == q1 and t.pts[0] == q2:
-                return t
+        if (q1, q2) in self.dict:
+            return self.dict[(q1,q2)]
+        else:
+            return None
         return None
 
     def copy(self):
