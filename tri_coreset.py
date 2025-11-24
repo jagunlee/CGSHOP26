@@ -193,14 +193,24 @@ def compare_center_with_coreset(
     # print(f"비율(coreset/full): {ratio:.6f}")
     # print(f"상대 오차(rel_error): {ratio - 1.0:.6f}")
 
-
 if __name__ == "__main__":
     # 인스턴스 경로는 실제 위치에 맞게 수정해줘
     compare_center_with_coreset(
-        instance_path="./data/benchmark_instances/rirs-500-75-9322678f.json",
+        instance_path="./data/benchmark_instances/rirs-5000-75-9bd3bd51.json",
         eps=0.4,
         alpha=8.0,
         alpha_min=16.0,
         center_candidates=5,
     )
+
+
+# if __name__ == "__main__":
+#     # 인스턴스 경로는 실제 위치에 맞게 수정해줘
+#     compare_center_with_coreset(
+#         instance_path="./data/benchmark_instances/rirs-500-75-9322678f.json",
+#         eps=0.4,
+#         alpha=8.0,
+#         alpha_min=16.0,
+#         center_candidates=5,
+#     )
 
