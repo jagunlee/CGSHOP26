@@ -137,22 +137,26 @@ class Triangulation:
     def maximal_disjoint_convex_quad(self, E:list[(int, int)], prev_use=[]):
         res = []
         second_best = None
-        used = [[False]*len(self.pts) for _ in range(len(self.pts))]
+        edge_to_idx = {}
+        idx_to_edge = []
+        for e in self.edges:
+            u, v = e[0], e[1]
+            key = (u, v) if u < v else (v, u)
+            edge_to_idx[key] = len(edge_to_idx)
+            idx_to_edge.append(key)
+        used = [False]*len(idx_to_edge)
+        def order(a,b):
+            return edge_to_idx[(min(a,b), max(a,b))]
         if not E: return res
         for i, e in enumerate(E):
             if self.is_convex_quad(e[0], e[1]):
                 if e not in prev_use:
                     res.append(e)
-                    used[e[0]][e[1]] = True
-                    used[e[1]][e[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[1]] = True
-                    used[e[1]][self.edges[e].nei_pts[0]] = True
-                    used[e[1]][self.edges[e].nei_pts[1]] = True
-                    used[self.edges[e].nei_pts[0]][e[0]] = True
-                    used[self.edges[e].nei_pts[1]][e[0]] = True
-                    used[self.edges[e].nei_pts[0]][e[1]] = True
-                    used[self.edges[e].nei_pts[1]][e[1]] = True
+                    used[order(e[0],e[1])] = True
+                    used[order(e[0],self.edges[e].nei_pts[0])] = True
+                    used[order(e[0],self.edges[e].nei_pts[1])] = True
+                    used[order(e[1],self.edges[e].nei_pts[0])] = True
+                    used[order(e[1],self.edges[e].nei_pts[1])] = True
                     break
                 else:
                     second_best = e
@@ -160,65 +164,45 @@ class Triangulation:
             e = second_best
             if e==None: return res
             res.append(e)
-            used[e[0]][e[1]] = True
-            used[e[1]][e[0]] = True
-            used[e[0]][self.edges[e].nei_pts[0]] = True
-            used[e[0]][self.edges[e].nei_pts[1]] = True
-            used[e[1]][self.edges[e].nei_pts[0]] = True
-            used[e[1]][self.edges[e].nei_pts[1]] = True
-            used[self.edges[e].nei_pts[0]][e[0]] = True
-            used[self.edges[e].nei_pts[1]][e[0]] = True
-            used[self.edges[e].nei_pts[0]][e[1]] = True
-            used[self.edges[e].nei_pts[1]][e[1]] = True
+            used[order(e[0],e[1])] = True
+            used[order(e[0],self.edges[e].nei_pts[0])] = True
+            used[order(e[0],self.edges[e].nei_pts[1])] = True
+            used[order(e[1],self.edges[e].nei_pts[0])] = True
+            used[order(e[1],self.edges[e].nei_pts[1])] = True
             for j in range(len(E)):
                 e = E[j]
                 if self.is_convex_quad(e[0], e[1]):
-                    if used[e[0]][e[1]]==True:
+                    if used[order(e[0],e[1])]==True:
                         continue
-                    used[e[0]][e[1]] = True
-                    used[e[1]][e[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[1]] = True
-                    used[e[1]][self.edges[e].nei_pts[0]] = True
-                    used[e[1]][self.edges[e].nei_pts[1]] = True
-                    used[self.edges[e].nei_pts[0]][e[0]] = True
-                    used[self.edges[e].nei_pts[1]][e[0]] = True
-                    used[self.edges[e].nei_pts[0]][e[1]] = True
-                    used[self.edges[e].nei_pts[1]][e[1]] = True
+                    used[order(e[0],e[1])] = True
+                    used[order(e[0],self.edges[e].nei_pts[0])] = True
+                    used[order(e[0],self.edges[e].nei_pts[1])] = True
+                    used[order(e[1],self.edges[e].nei_pts[0])] = True
+                    used[order(e[1],self.edges[e].nei_pts[1])] = True
                     res.append(E[j])
         else:
             for j in range(len(E)):
                 e = E[j]
                 if e not in prev_use:
                     if self.is_convex_quad(e[0], e[1]):
-                        if used[e[0]][e[1]]==True:
+                        if used[order(e[0],e[1])]==True:
                             continue
-                        used[e[0]][e[1]] = True
-                        used[e[1]][e[0]] = True
-                        used[e[0]][self.edges[e].nei_pts[0]] = True
-                        used[e[0]][self.edges[e].nei_pts[1]] = True
-                        used[e[1]][self.edges[e].nei_pts[0]] = True
-                        used[e[1]][self.edges[e].nei_pts[1]] = True
-                        used[self.edges[e].nei_pts[0]][e[0]] = True
-                        used[self.edges[e].nei_pts[1]][e[0]] = True
-                        used[self.edges[e].nei_pts[0]][e[1]] = True
-                        used[self.edges[e].nei_pts[1]][e[1]] = True
+                        used[order(e[0],e[1])] = True
+                        used[order(e[0],self.edges[e].nei_pts[0])] = True
+                        used[order(e[0],self.edges[e].nei_pts[1])] = True
+                        used[order(e[1],self.edges[e].nei_pts[0])] = True
+                        used[order(e[1],self.edges[e].nei_pts[1])] = True
                         res.append(E[j])
             for j in range(len(E)):
                 e = E[j]
                 if self.is_convex_quad(e[0], e[1]):
-                    if used[e[0]][e[1]]==True:
+                    if used[order(e[0],e[1])]==True:
                         continue
-                    used[e[0]][e[1]] = True
-                    used[e[1]][e[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[0]] = True
-                    used[e[0]][self.edges[e].nei_pts[1]] = True
-                    used[e[1]][self.edges[e].nei_pts[0]] = True
-                    used[e[1]][self.edges[e].nei_pts[1]] = True
-                    used[self.edges[e].nei_pts[0]][e[0]] = True
-                    used[self.edges[e].nei_pts[1]][e[0]] = True
-                    used[self.edges[e].nei_pts[0]][e[1]] = True
-                    used[self.edges[e].nei_pts[1]][e[1]] = True
+                    used[order(e[0],e[1])] = True
+                    used[order(e[0],self.edges[e].nei_pts[0])] = True
+                    used[order(e[0],self.edges[e].nei_pts[1])] = True
+                    used[order(e[1],self.edges[e].nei_pts[0])] = True
+                    used[order(e[1],self.edges[e].nei_pts[1])] = True
                     res.append(E[j])
                 
         return res
@@ -456,6 +440,14 @@ class Data:
         for i, edges in enumerate(tri_edges):
             T_val[i] = weight[edges].sum()
         t_upt_list = []
+        # def update_tri_signature(ti, removed_idx, added_idx):
+        #     h = tri_hash[ti]
+        #     for e in removed_idx:
+        #         h ^= edge_hash[e]
+        #     for e in added_idx:
+        #         h ^= edge_hash[e]
+        #     tri_hash[ti] = h
+        #     tri_size[ti] += (len(added_idx) - len(removed_idx))
         while True:
             if debug: print(T_val)
             # print(res_e_lists)
@@ -469,6 +461,22 @@ class Data:
                     done = False
                     break
             if done:
+            # rng = np.random.default_rng(0)
+            # edge_hash = rng.integers(1, np.iinfo(np.uint64).max, size=M, dtype=np.uint64)
+
+            # tri_hash = np.zeros(len(T), dtype=np.uint64)
+            # tri_size = np.zeros(len(T), dtype=np.int32)
+
+            # for ti, edges in enumerate(tri_edges):
+            #     tri_size[ti] = len(edges)
+            #     h = np.uint64(0)
+            #     for e in edges:
+            #         h ^= edge_hash[e]
+            #     tri_hash[ti] = h
+
+            # def all_same_triangulation():
+            #     return np.all(tri_hash == tri_hash[0]) and np.all(tri_size == tri_size[0])
+            # if all_same_triangulation():
                 dist, flip = self.compute_center_dist(T[0])
                 print(f"Total distance from center: {self.dist} -> {dist}")
                 self.center = T[0]
@@ -538,6 +546,7 @@ class Data:
                 delta_usage[idx]-=1
             for idx in added_idx:
                 delta_usage[idx]+=1
+            # update_tri_signature(update_t_ind, removed_idx,added_idx)
 
             for e_idx, d in delta_usage.items():
                 if d==0:

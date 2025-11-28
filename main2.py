@@ -39,12 +39,24 @@ if __name__=="__main__":
                 continue
             if "rirs" not in inp1:
                 continue
+            if "1000-75-" in inp1:
+                continue
             # if "-20-" in inp1:
             #     continue
-            rirs_list.append(os.path.join(inp,inp1))
-            # dt = Data(os.path.join(inp,inp1))
-            # dt.find_center_np()
-            # dt.WriteData()
+            # rirs_list.append(os.path.join(inp,inp1))
+            dt = Data(os.path.join(inp,inp1))
+            done = False
+            for sol in sol_list:
+                if dt.instance_uid in sol:
+                    print(f"{dt.instance_uid} already done!")
+                    done = True
+                    break
+            if done: continue
+            start = time.time()
+            dt.find_center_np()
+            dt.WriteData()
+            end = time.time()
+            print(f"{dt.instance_uid} done! total time: {end-start}s")
         
-        pool = Pool(4)
-        pool.map(find_dt_center, rirs_list)
+        # pool = Pool(4)
+        # pool.map(find_dt_center, rirs_list)
