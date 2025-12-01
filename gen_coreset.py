@@ -1,6 +1,9 @@
 import copy
 import math
+import time   # ★ 추가
 import numpy as np
+from pathlib import Path
+import json
 from data import Data
 
 # -------------------------------------------------------
@@ -58,7 +61,6 @@ def build_triangulation_coreset_practical(
         idx_list = rng.choice(n, size=sample_size, replace=False)
     m = len(idx_list)
 
-    # RNG 하나 더 쓰고 싶지 않으면 위에서 만든 rng 재사용
     rng = np.random.default_rng(center_seed)
 
     # ---------------------------------------------------
@@ -85,7 +87,6 @@ def build_triangulation_coreset_practical(
 
     # 샘플들 기준으로도 center에 너무 다 붙어 있으면 → center 하나로 요약
     if Dmax < R:
-        # 이때 weight는 전체 n개를 대표한다고 보는게 자연스러움
         return np.array([center_idx], dtype=int), np.array([n], dtype=int)
 
     # ---------------------------------------------------
@@ -134,14 +135,12 @@ def build_triangulation_coreset_practical(
 
         for rep_idx, cnt in buckets.values():
             reps.append(rep_idx)
-            # 샘플에서 cnt개면, 전체에서는 대략 cnt * (n/m) 개라고 근사
             approx_weight = max(1, int(round(cnt * scale)))
             wts.append(approx_weight)
 
         S_idx = np.array(reps, dtype=int)
         S_weights = np.array(wts, dtype=int)
     else:
-        # 이론상 거의 안 나오는 경우지만, 방어적으로
         S_idx = np.array([center_idx], dtype=int)
         S_weights = np.array([n], dtype=int)
 
@@ -152,18 +151,11 @@ def build_triangulation_coreset_practical(
 # -------------------------------------------------------
 
 def make_coreset_data(data_full: Data, S_idx):
-    """
-    data_full과 같은 pts / geometry 정보를 공유하지만,
-    triangulations 리스트만 코어셋으로 교체한 Data 객체를 만든다.
-    (weights는 일단 find_center에서는 쓰지 않고, 평가할 때만 사용)
-    """
     coreset_data = copy.copy(data_full)  # 얕은 복사: pts, etc. 공유
 
-    # 코어셋 triangulation만 복사해서 넣기
     new_tris = [copy.deepcopy(data_full.triangulations[i]) for i in S_idx]
     coreset_data.triangulations = new_tris
 
-    # center / flip / dist 초기화
     coreset_data.center = coreset_data.triangulations[0]
     coreset_data.flip = [[] for _ in coreset_data.triangulations]
     coreset_data.dist = float("inf")
@@ -171,50 +163,83 @@ def make_coreset_data(data_full: Data, S_idx):
     return coreset_data
 
 # -------------------------------------------------------
-# 3) full vs coreset에서 find_center 결과 비교
+# 3) 모든 인스턴스에 대해 코어셋 생성 후 저장 (per-instance 시간 출력)
 # -------------------------------------------------------
 
-def compare_center_with_coreset(
-    instance_path: str = "random_instance_440_160_20.json",
+def build_and_save_coresets_for_all_instances(
+    input_dir: str = "./data/benchmark_instances",
+    output_dir: str = "./data/coreset_instance",
     eps: float = 0.4,
     alpha: float = 8.0,
     alpha_min: float = 16.0,
     sample_size: int = 128,
+    center_seed: int = 0,
 ):
-    # (A) 원본 인스턴스 로딩
-    data_full = Data(instance_path)
+    input_path = Path(input_dir)
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
 
-    # (C) 1-median coreset 생성 (compute_pfd 기반, 샘플링 버전)
-    print("\n[2] 1-median coreset 생성 중...")
-    S_idx, S_weights = build_triangulation_coreset_practical(
-        data_full,
-        eps=eps,
-        alpha=alpha,
-        alpha_min=alpha_min,
-        use_random_center=True,
-        center_seed=0,
-        sample_size=sample_size,
-    )
-    print(f" coreset reps: {len(S_idx)} / approx weights 합: {S_weights.sum()}")
+    json_paths = sorted(input_path.glob("*.json"))
+    print(f"Found {len(json_paths)} json files in {input_dir}")
 
-    # (D) 코어셋만 가지고 continuous center (find_center_np)
-    print("\n[3] coreset 데이터에서 center 찾는 중...")
-    data_core = make_coreset_data(data_full, S_idx)
-    center_core, dist_core_on_core = data_core.find_center_np()
-    print(f" center_dist (coreset 데이터 기준): {dist_core_on_core}")
+    for json_file in json_paths:
+        print(f"\n=== Processing {json_file.name} ===")
+        start_time = time.time()  # ★ 시작 시간
 
-    # (E) coreset center를 full 데이터에서 평가
-    print("\n[4] coreset center를 full 데이터에서 평가...")
-    dist_core_on_full, _ = data_full.compute_center_dist(center_core)
-    print(f"coreset center_dist (full 기준):   {dist_core_on_full}")
+        # (1) Data 로딩 + 코어셋 생성
+        data_full = Data(str(json_file))
+        S_idx, S_weights = build_triangulation_coreset_practical(
+            data_full,
+            eps=eps,
+            alpha=alpha,
+            alpha_min=alpha_min,
+            use_random_center=True,
+            center_seed=center_seed,
+            sample_size=sample_size,
+        )
+        print(f"  -> coreset reps: {len(S_idx)} / approx weights sum: {int(S_weights.sum())}")
+
+        # (2) 원본 인스턴스 json 읽기
+        with open(json_file, "r") as f:
+            inst = json.load(f)
+
+        points_x = inst["points_x"]
+        points_y = inst["points_y"]
+        tri_list = inst["triangulations"]
+
+        S_idx_list = np.asarray(S_idx, dtype=int).tolist()
+        coreset_tris = [tri_list[i] for i in S_idx_list]
+
+        base_uid = inst.get("instance_uid", json_file.stem)
+        coreset_uid = f"{base_uid}-coreset"
+
+        coreset_inst = {
+            "content_type": inst.get("content_type", "CGSHOP2026_Instance"),
+            "instance_uid": coreset_uid,
+            "points_x": points_x,
+            "points_y": points_y,
+            "triangulations": coreset_tris,
+            # "coreset_weights": np.asarray(S_weights, dtype=int).tolist(),
+        }
+
+        out_name = json_file.stem + "_coreset.json"
+        out_file = output_path / out_name
+
+        with open(out_file, "w") as f:
+            json.dump(coreset_inst, f, indent=2)
+
+        elapsed = time.time() - start_time  # ★ 경과 시간
+        print(f"  -> saved to: {out_file}")
+        print(f"  -> time taken: {elapsed:.3f} seconds")  # ★ 시간 출력
 
 
 if __name__ == "__main__":
-    # 인스턴스 경로 / sample_size는 상황에 맞게 조절
-    compare_center_with_coreset(
-        instance_path="./data/benchmark_instances/rirs-500-75-9322678f.json",
-        eps=1.0,
+    build_and_save_coresets_for_all_instances(
+        input_dir="./data/benchmark_instances",
+        output_dir="./data/coreset_instance",
+        eps=0.4,
         alpha=8.0,
         alpha_min=16.0,
-        sample_size=32,   # 더 빠르게 하고 싶으면 64, 32 이런 식으로 줄여도 됨
+        sample_size=64,   # 더 빠르게: 64, 32 등으로 조절
+        center_seed=0,
     )
