@@ -15,6 +15,65 @@ import pdb
 import random
 import time
 
+def compute_center_dist(self, T1: Triangulation, max_total=None, diff_mode="grid_score", multi = False):
+        """
+        Returns (total_length, flips) same as original, but much faster.
+        - fast_copy
+        - edge_set equality
+        - bbox-grid find_difference (exact)
+        - early abort if exceeds max_total
+        """
+        if not T1:
+            return float("INF"), None
+
+        target_set = T1.edge_set
+        total_length = 0
+        flip = []
+
+        for i,_T in enumerate(self.triangulations):
+            if max_total is not None and total_length > max_total:
+                return max_total + 1, None
+
+            T = _T.fast_copy()
+            step = 0
+            res_e_list = []
+            flip_list = []
+
+            guard = 0
+            while True:
+                guard += 1
+                if guard > 200000:
+                    return max_total + 1 if max_total is not None else float("INF"), None
+
+                if T.edge_set == target_set:
+                    break
+
+                E1, _ = T.find_difference(T1, mode=diff_mode, compute_l2_scores=False)
+                if not E1:
+                    break
+
+                step += 1
+                if max_total is not None and (total_length + step) > max_total:
+                    return max_total + 1, None
+
+                e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
+                if not e_list:
+                    break
+
+                res_e_list = []
+                f_iter = []
+                for e in e_list:
+                    f_iter.append([e[0], e[1]])
+                    res_e_list.append(T.flip(e[0], e[1]))
+                flip_list.append(f_iter)
+
+            total_length += step
+            flip.append(flip_list)
+            print(f"Triangulation {i} to center: {step}")
+
+        return total_length, flip
+
+
 # ============================================================
 # NOTE: Speed-first version
 # - Triangulation edges store: dict[(u,v)] -> [nei0, nei1]  (no Diag objects in hot path)
@@ -555,7 +614,63 @@ class Data:
 
         EPS = 1e-9
         return (o1 * o2 < -EPS) and (o3 * o4 < -EPS)
+    def compute_center_dist(self, T1: Triangulation, max_total=None, diff_mode="grid_score", multi = False):
+        """
+        Returns (total_length, flips) same as original, but much faster.
+        - fast_copy
+        - edge_set equality
+        - bbox-grid find_difference (exact)
+        - early abort if exceeds max_total
+        """
+        if not T1:
+            return float("INF"), None
 
+        target_set = T1.edge_set
+        total_length = 0
+        flip = []
+
+        for i,_T in enumerate(self.triangulations):
+            if max_total is not None and total_length > max_total:
+                return max_total + 1, None
+
+            T = _T.fast_copy()
+            step = 0
+            res_e_list = []
+            flip_list = []
+
+            guard = 0
+            while True:
+                guard += 1
+                if guard > 200000:
+                    return max_total + 1 if max_total is not None else float("INF"), None
+
+                if T.edge_set == target_set:
+                    break
+
+                E1, _ = T.find_difference(T1, mode=diff_mode, compute_l2_scores=False)
+                if not E1:
+                    break
+
+                step += 1
+                if max_total is not None and (total_length + step) > max_total:
+                    return max_total + 1, None
+
+                e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
+                if not e_list:
+                    break
+
+                res_e_list = []
+                f_iter = []
+                for e in e_list:
+                    f_iter.append([e[0], e[1]])
+                    res_e_list.append(T.flip(e[0], e[1]))
+                flip_list.append(f_iter)
+
+            total_length += step
+            flip.append(flip_list)
+            print(f"Triangulation {i} to center: {step}")
+
+        return total_length, flip
     # ========================================================
     # Next-stage compute_center_len / compute_center_dist
     # ========================================================
@@ -611,7 +726,7 @@ class Data:
 
         return total
 
-    def compute_center_dist(self, T1: Triangulation, max_total=None, diff_mode="grid_score"):
+    def compute_center_dist(self, T1: Triangulation, max_total=None, diff_mode="grid_score", multi = False):
         """
         Returns (total_length, flips) same as original, but much faster.
         - fast_copy
@@ -626,7 +741,7 @@ class Data:
         total_length = 0
         flip = []
 
-        for _T in self.triangulations:
+        for i,_T in enumerate(self.triangulations):
             if max_total is not None and total_length > max_total:
                 return max_total + 1, None
 
@@ -665,8 +780,11 @@ class Data:
 
             total_length += step
             flip.append(flip_list)
+            print(f"Triangulation {i} to center: {step}")
 
         return total_length, flip
+    
+    
 
     # ========================================================
     # Speed-first find_center_np (global edge usage/inter graph incremental)
