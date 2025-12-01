@@ -150,15 +150,15 @@ def compare_center_with_coreset(
     alpha_min: float = 16.0,
     center_candidates: int = 5,
 ):
-    # # (A) 원본 인스턴스 로딩
+    # (A) 원본 인스턴스 로딩
     data_full = Data(instance_path)
     # n_full = len(data_full.triangulations)
     # print(f"# full triangulations: {n_full}")
 
-    # # (B) full 데이터에서 continuous center (find_center)
+    # (B) full 데이터에서 continuous center (find_center)
     # print("\n[1] full 데이터에서 center 찾는 중...")
-    # center_full, dist_full_on_full = data_full.find_center()
-    # # 안전하게 한 번 더 평가
+    # center_full, dist_full_on_full = data_full.find_center_np()
+    # 안전하게 한 번 더 평가
     # dist_full_on_full_check, _ = data_full.compute_center_dist(center_full)
     # print(f" full center_dist (full 데이터 기준): {dist_full_on_full_check}")
 
@@ -176,7 +176,7 @@ def compare_center_with_coreset(
     # (D) 코어셋만 가지고 continuous center (find_center)
     print("\n[3] coreset 데이터에서 center 찾는 중...")
     data_core = make_coreset_data(data_full, S_idx)
-    center_core, dist_core_on_core = data_core.find_center()
+    center_core, dist_core_on_core = data_core.find_center_np()
     print(f" center_dist (coreset 데이터 기준): {dist_core_on_core}")
 
     # (E) coreset center를 full 데이터에서 평가
@@ -184,8 +184,8 @@ def compare_center_with_coreset(
     dist_core_on_full, _ = data_full.compute_center_dist(center_core)
 
     # 결과 요약
-    print("\n===== 결과 요약 =====")
-    # rint(f"full center_dist (full 기준):      {dist_full_on_full_check}")
+    # print("\n===== 결과 요약 =====")
+    # print(f"full center_dist (full 기준):      {dist_full_on_full_check}")
     print(f"coreset center_dist (full 기준):   {dist_core_on_full}")
     # abs_diff = dist_core_on_full - dist_full_on_full_check
     # ratio = dist_core_on_full / dist_full_on_full_check if dist_full_on_full_check > 0 else float("nan")
@@ -196,7 +196,7 @@ def compare_center_with_coreset(
 if __name__ == "__main__":
     # 인스턴스 경로는 실제 위치에 맞게 수정해줘
     compare_center_with_coreset(
-        instance_path="./data/benchmark_instances/rirs-5000-75-9bd3bd51.json",
+        instance_path="./data/benchmark_instances/rirs-1500-75-10c039f8.json",
         eps=0.4,
         alpha=8.0,
         alpha_min=16.0,
