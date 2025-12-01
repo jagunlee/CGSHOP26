@@ -1,13 +1,19 @@
 import sys
 import os
-from data import *
+from data2 import *
 import time
 from multiprocessing import Process, Pool
 
 def find_dt_center(inp):
     dt = Data(os.path.join(inp))
-    dt.find_center_np()
-    dt.WriteData()
+    sol_list = os.listdir("opt")
+    for sol in sol_list:
+        if dt.instance_uid in sol:
+            print(f"{dt.instance_uid} already done!")
+            return
+    res = dt.find_center_np()
+    if res[0]!=-1:
+        dt.WriteData()
 
 if __name__=="__main__":
     argument = sys.argv
@@ -19,7 +25,7 @@ if __name__=="__main__":
     if "json" in inp:
         start = time.time()
         dt = Data(inp)
-        dt.find_center()
+        dt.find_center_np()
         end = time.time()
         print(f"total time: {end-start}s")
         dt.WriteData()
@@ -28,9 +34,9 @@ if __name__=="__main__":
         json_list = os.listdir(inp)
         rirs_list = []
         for inp1 in json_list:
-            # if "json" not in inp1:
-            #     continue
-            if "rirs" in inp1:
+            if "json" not in inp1:
+                continue
+            if "rirs" not in inp1:
                 continue
             # if "-20-" in inp1:
             #     continue
@@ -39,5 +45,5 @@ if __name__=="__main__":
             # dt.find_center()
             # dt.WriteData()
         
-        pool = Pool(processes=10)
+        pool = Pool(processes=4)
         pool.map(find_dt_center, rirs_list)
