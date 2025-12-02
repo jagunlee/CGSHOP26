@@ -15,64 +15,82 @@ import pdb
 import random
 import time
 
-def compute_center_dist(self, T1: Triangulation, max_total=None, diff_mode="grid_score", multi = False):
-        """
-        Returns (total_length, flips) same as original, but much faster.
-        - fast_copy
-        - edge_set equality
-        - bbox-grid find_difference (exact)
-        - early abort if exceeds max_total
-        """
-        if not T1:
-            return float("INF"), None
 
-        target_set = T1.edge_set
-        total_length = 0
-        flip = []
+import multiprocessing as mp
 
-        for i,_T in enumerate(self.triangulations):
-            if max_total is not None and total_length > max_total:
-                return max_total + 1, None
+_G_PTS = None
+_G_PX = None
+_G_PY = None
+_G_TARGET_EDGE_SET = None
+_G_DIFF_MODE = None
+_G_MAX_STEP = None
 
-            T = _T.fast_copy()
-            step = 0
-            res_e_list = []
-            flip_list = []
+def _init_center_worker(pts, px, py, target_edge_set, diff_mode, max_step):
+    global _G_PTS, _G_PX, _G_PY, _G_TARGET_EDGE_SET, _G_DIFF_MODE, _G_MAX_STEP
+    _G_PTS = pts
+    _G_PX = px
+    _G_PY = py
+    _G_TARGET_EDGE_SET = target_edge_set
+    _G_DIFF_MODE = diff_mode
+    _G_MAX_STEP = max_step
 
-            guard = 0
-            while True:
-                guard += 1
-                if guard > 200000:
-                    return max_total + 1 if max_total is not None else float("INF"), None
+def _rebuild_triangulation_from_payload(edges_dict, edge_set):
+    # Triangulation을 __init__ 없이 빠르게 재구성
+    t = object.__new__(Triangulation)
+    t.pts = _G_PTS
+    t.px = _G_PX
+    t.py = _G_PY
+    t.times = {}
+    # edges_dict: {(u,v): [nei0, nei1], ...}
+    t.edges = {e: [nei[0], nei[1]] for e, nei in edges_dict.items()}
+    t.edge_set = set(edge_set)
+    return t
 
-                if T.edge_set == target_set:
-                    break
+class _TargetStub:
+    __slots__ = ("edge_set",)
+    def __init__(self, edge_set):
+        self.edge_set = edge_set
 
-                E1, _ = T.find_difference(T1, mode=diff_mode, compute_l2_scores=False)
-                if not E1:
-                    break
+def _center_dist_one(payload):
+    """
+    payload = (i, edges_dict, edge_set)
+    returns (i, step, flip_list)
+    """
+    i, edges_dict, edge_set = payload
 
-                step += 1
-                if max_total is not None and (total_length + step) > max_total:
-                    return max_total + 1, None
+    T = _rebuild_triangulation_from_payload(edges_dict, edge_set)
+    target_set = _G_TARGET_EDGE_SET
+    T1_stub = _TargetStub(target_set)  # find_difference는 T1.edge_set만 필요
 
-                e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
-                if not e_list:
-                    break
+    step = 0
+    res_e_list = []
+    flip_list = []
 
-                res_e_list = []
-                f_iter = []
-                for e in e_list:
-                    f_iter.append([e[0], e[1]])
-                    res_e_list.append(T.flip(e[0], e[1]))
-                flip_list.append(f_iter)
+    while True:
+        if T.edge_set == target_set:
+            break
 
-            total_length += step
-            flip.append(flip_list)
-            print(f"Triangulation {i} to center: {step}")
+        if step >= _G_MAX_STEP:
+            raise RuntimeError(f"[compute_center_dist] step exceeded {_G_MAX_STEP} for triangulation {i}")
 
-        return total_length, flip
+        E1, _ = T.find_difference(T1_stub, mode=_G_DIFF_MODE, compute_l2_scores=False)
+        if not E1:
+            break
 
+        e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
+        if not e_list:
+            break
+
+        res_e_list = []
+        f_iter = []
+        for e in e_list:
+            f_iter.append([e[0], e[1]])
+            res_e_list.append(T.flip(e[0], e[1]))
+        flip_list.append(f_iter)
+
+        step += 1
+
+    return (i, step, flip_list)
 
 # ============================================================
 # NOTE: Speed-first version
@@ -299,6 +317,8 @@ class Triangulation:
     def maximal_disjoint_convex_quad(self, E, prev_use=None):
         if not E:
             return []
+        if len(E)==1:
+            return E
 
         edges = self.edges
         prev = set(prev_use) if prev_use else set()
@@ -614,63 +634,7 @@ class Data:
 
         EPS = 1e-9
         return (o1 * o2 < -EPS) and (o3 * o4 < -EPS)
-    def compute_center_dist(self, T1: Triangulation, max_total=None, diff_mode="grid_score", multi = False):
-        """
-        Returns (total_length, flips) same as original, but much faster.
-        - fast_copy
-        - edge_set equality
-        - bbox-grid find_difference (exact)
-        - early abort if exceeds max_total
-        """
-        if not T1:
-            return float("INF"), None
 
-        target_set = T1.edge_set
-        total_length = 0
-        flip = []
-
-        for i,_T in enumerate(self.triangulations):
-            if max_total is not None and total_length > max_total:
-                return max_total + 1, None
-
-            T = _T.fast_copy()
-            step = 0
-            res_e_list = []
-            flip_list = []
-
-            guard = 0
-            while True:
-                guard += 1
-                if guard > 200000:
-                    return max_total + 1 if max_total is not None else float("INF"), None
-
-                if T.edge_set == target_set:
-                    break
-
-                E1, _ = T.find_difference(T1, mode=diff_mode, compute_l2_scores=False)
-                if not E1:
-                    break
-
-                step += 1
-                if max_total is not None and (total_length + step) > max_total:
-                    return max_total + 1, None
-
-                e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
-                if not e_list:
-                    break
-
-                res_e_list = []
-                f_iter = []
-                for e in e_list:
-                    f_iter.append([e[0], e[1]])
-                    res_e_list.append(T.flip(e[0], e[1]))
-                flip_list.append(f_iter)
-
-            total_length += step
-            flip.append(flip_list)
-            print(f"Triangulation {i} to center: {step}")
-
-        return total_length, flip
     # ========================================================
     # Next-stage compute_center_len / compute_center_dist
     # ========================================================
@@ -726,65 +690,173 @@ class Data:
 
         return total
 
-    def compute_center_dist(self, T1: Triangulation, max_total=None, diff_mode="grid_score", multi = False):
+    def _tri_from_edges(self, edges_dict, edge_set):
         """
-        Returns (total_length, flips) same as original, but much faster.
-        - fast_copy
-        - edge_set equality
-        - bbox-grid find_difference (exact)
-        - early abort if exceeds max_total
+        multiprocessing에서 받은 edges/edge_set으로 Triangulation 객체를 빠르게 재구성.
         """
+        t = object.__new__(Triangulation)
+        t.pts = self.pts
+        t.px = self.px
+        t.py = self.py
+        t.times = {}
+
+        # edges_dict: { (u,v): [nei0, nei1], ... }
+        # deepcopy는 비싸니 list만 새로 복사
+        t.edges = {e: [nei[0], nei[1]] for e, nei in edges_dict.items()}
+        t.edge_set = set(edge_set)
+        return t
+
+    def compute_center_dist(self, T1: Triangulation, max_total=None, diff_mode="grid_score", multi=True):
         if not T1:
             return float("INF"), None
 
+        MAX_STEP = 2000
         target_set = T1.edge_set
-        total_length = 0
-        flip = []
 
-        for i,_T in enumerate(self.triangulations):
-            if max_total is not None and total_length > max_total:
-                return max_total + 1, None
+        # =========================
+        # sequential
+        # =========================
+        if not multi:
+            total_length = 0
+            flip = []
 
-            T = _T.fast_copy()
-            step = 0
-            res_e_list = []
-            flip_list = []
-
-            guard = 0
-            while True:
-                guard += 1
-                if guard > 200000:
-                    return max_total + 1 if max_total is not None else float("INF"), None
-
-                if T.edge_set == target_set:
-                    break
-
-                E1, _ = T.find_difference(T1, mode=diff_mode, compute_l2_scores=False)
-                if not E1:
-                    break
-
-                step += 1
-                if max_total is not None and (total_length + step) > max_total:
+            for i, _T in enumerate(self.triangulations):
+                if max_total is not None and total_length > max_total:
                     return max_total + 1, None
 
-                e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
-                if not e_list:
-                    break
-
+                T = _T.fast_copy()
+                step = 0
                 res_e_list = []
-                f_iter = []
-                for e in e_list:
-                    f_iter.append([e[0], e[1]])
-                    res_e_list.append(T.flip(e[0], e[1]))
-                flip_list.append(f_iter)
+                flip_list = []
 
-            total_length += step
-            flip.append(flip_list)
-            print(f"Triangulation {i} to center: {step}")
+                while True:
+                    if T.edge_set == target_set:
+                        break
+                    if step >= MAX_STEP:
+                        raise RuntimeError(f"[compute_center_dist] step exceeded {MAX_STEP} for triangulation {i}")
 
+                    # T.find_difference는 T1.edge_set만 쓰므로, 그대로 T1 전달 OK
+                    E1, _ = T.find_difference(T1, mode=diff_mode, compute_l2_scores=False)
+                    if not E1:
+                        break
+
+                    e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
+                    if not e_list:
+                        break
+
+                    res_e_list = []
+                    f_iter = []
+                    for e in e_list:
+                        f_iter.append([e[0], e[1]])
+                        res_e_list.append(T.flip(e[0], e[1]))
+                    flip_list.append(f_iter)
+
+                    step += 1
+
+                total_length += step
+                flip.append(flip_list)
+                print(f"Triangulation {i} to center: {step}")
+
+            if max_total is not None and total_length > max_total:
+                return max_total + 1, None
+            return total_length, flip
+
+        # =========================
+        # multiprocessing
+        # =========================
+        # payload를 가능한 가볍게: (i, edges_dict, edge_set)
+        jobs = []
+        for i, _T in enumerate(self.triangulations):
+            T = _T.fast_copy()
+            jobs.append((i, T.edges, T.edge_set))
+
+        # Windows spawn 안정성: context 명시
+        ctx = mp.get_context("spawn")
+
+        # initializer에는 pickle-safe한 것만 전달
+        with ctx.Pool(
+            processes=ctx.cpu_count(),
+            initializer=_init_center_worker,
+            initargs=(self.pts, self.px, self.py, target_set, diff_mode, MAX_STEP),
+        ) as pool:
+            results = []
+            try:
+                for r in pool.imap_unordered(_center_dist_one, jobs, chunksize=1):
+                    results.append(r)
+            except Exception as e:
+                raise RuntimeError(f"[compute_center_dist multi] failed: {e}")
+
+        results.sort(key=lambda x: x[0])
+        flip = [r[2] for r in results]
+        steps = [r[1] for r in results]
+
+        for i, st in enumerate(steps):
+            print(f"Triangulation {i} to center: {st}")
+
+        total_length = int(sum(steps))
+        if max_total is not None and total_length > max_total:
+            return max_total + 1, None
         return total_length, flip
-    
-    
+        
+    # def compute_center_dist(self, T1: Triangulation, max_total=None, diff_mode="grid_score", multi = False):
+    #     """
+    #     Returns (total_length, flips) same as original, but much faster.
+    #     - fast_copy
+    #     - edge_set equality
+    #     - bbox-grid find_difference (exact)
+    #     - early abort if exceeds max_total
+    #     """
+    #     if not T1:
+    #         return float("INF"), None
+
+    #     target_set = T1.edge_set
+    #     total_length = 0
+    #     flip = []
+
+    #     for i,_T in enumerate(self.triangulations):
+    #         if max_total is not None and total_length > max_total:
+    #             return max_total + 1, None
+
+    #         T = _T.fast_copy()
+    #         step = 0
+    #         res_e_list = []
+    #         flip_list = []
+
+    #         guard = 0
+    #         while True:
+    #             guard += 1
+    #             if guard > 200000:
+    #                 return max_total + 1 if max_total is not None else float("INF"), None
+
+    #             if T.edge_set == target_set:
+    #                 break
+
+    #             E1, _ = T.find_difference(T1, mode=diff_mode, compute_l2_scores=False)
+    #             if not E1:
+    #                 break
+
+    #             step += 1
+    #             if max_total is not None and (total_length + step) > max_total:
+    #                 return max_total + 1, None
+
+    #             e_list = T.maximal_disjoint_convex_quad(E1, res_e_list)
+    #             if not e_list:
+    #                 break
+
+    #             res_e_list = []
+    #             f_iter = []
+    #             for e in e_list:
+    #                 f_iter.append([e[0], e[1]])
+    #                 res_e_list.append(T.flip(e[0], e[1]))
+    #             flip_list.append(f_iter)
+
+    #         total_length += step
+    #         flip.append(flip_list)
+    #         print(f"Triangulation {i} to center: {step}")
+
+    #     return total_length, flip
+        
+        
 
     # ========================================================
     # Speed-first find_center_np (global edge usage/inter graph incremental)
@@ -993,6 +1065,7 @@ class Data:
             order = np.argsort(-T_val)
             update_t_ind = None
             flip_list = None
+            # print(T_val, order)
 
             for ti in order:
                 s = tri_sets[ti]
@@ -1000,7 +1073,7 @@ class Data:
                     continue
                 arr = np.fromiter(s, dtype=np.int32)
                 w = weight[arr]
-                pos_mask = (w > 0)
+                pos_mask = (w >= 0)
                 if not np.any(pos_mask):
                     continue
 
@@ -1014,12 +1087,14 @@ class Data:
                 pos_edges = pos_edges[np.argsort(-weight[pos_edges])]
                 update_e = [idx_to_edge[int(eidx)] for eidx in pos_edges]
                 fl = T[ti].maximal_disjoint_convex_quad(update_e, res_e_lists[ti])
+                # print(ti, update_e, res_e_lists[ti], fl)
                 if fl:
                     update_t_ind = ti
                     flip_list = [_canon_edge(e[0], e[1]) for e in fl]
                     break
 
             if update_t_ind is None:
+                print("no triangulation to update")
                 return (-1, -1)
 
             t = T[update_t_ind]

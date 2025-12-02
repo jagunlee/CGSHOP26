@@ -43,6 +43,7 @@ if __name__=="__main__":
             #     continue
             # rirs_list.append(os.path.join(inp,inp1))
             done = False
+            dt = Data(os.path.join(inp,inp1))
             for sol in sol_list:
                 if dt.instance_uid in sol:
                     print(f"{dt.instance_uid} already done!")
@@ -50,7 +51,7 @@ if __name__=="__main__":
                     break
             if done: continue
             start = time.time()
-            dt = Data(os.path.join(inp,inp1))
+            
             dt.find_center_np()
             dt.WriteData()
             end = time.time()
