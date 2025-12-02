@@ -17,15 +17,6 @@ def build_triangulation_coreset_practical(
     sample_size: int = 128,
 ):
     """
-    data.triangulations 위에서 compute_pfd를 거리로 사용하는
-    1-median coreset 생성기 (속도 극단적으로 줄인 버전).
-
-    아이디어:
-      - triangulation 전체 n개 중에서 sample_size개만 랜덤 샘플링해서
-        그 샘플들에 대해서만 거리 기반 코어셋을 만든다.
-      - center도 이 샘플들 중 하나로 선택한다.
-      - compute_pfd 호출 횟수 ~ O(sample_size) 로 제한.
-
     반환:
       S_idx      : 대표 triangulation 인덱스들 (np.ndarray[int], 원본 인덱스)
       S_weights  : 각 대표가 대표하는 "대략적인" 개수 (np.ndarray[int])
@@ -151,11 +142,11 @@ def build_triangulation_coreset_practical(
 # 2) 코어셋 triangulation 들만 가지고 find_center 실행
 # -------------------------------------------------------
 
-def make_coreset_data(data_full: Data, S_idx):
+def make_coreset_data(data_full: Data, S_idx, S_weights):
     """
     data_full과 같은 pts / geometry 정보를 공유하지만,
     triangulations 리스트만 코어셋으로 교체한 Data 객체를 만든다.
-    (weights는 일단 find_center에서는 쓰지 않고, 평가할 때만 사용)
+    tri_weights는 coreset weight(S_weights)로 설정.
     """
     coreset_data = copy.copy(data_full)  # 얕은 복사: pts, etc. 공유
 
@@ -166,9 +157,13 @@ def make_coreset_data(data_full: Data, S_idx):
     # center / flip / dist 초기화
     coreset_data.center = coreset_data.triangulations[0]
     coreset_data.flip = [[] for _ in coreset_data.triangulations]
-    coreset_data.dist = float("inf")
+    coreset_data.dist = float("INF")
+
+    # ★ coreset weight 설정 (Data.find_center_np에서 자동 사용)
+    coreset_data.tri_weights = np.asarray(S_weights, dtype=np.int64)
 
     return coreset_data
+
 
 # -------------------------------------------------------
 # 3) full vs coreset에서 find_center 결과 비교
@@ -185,7 +180,7 @@ def compare_center_with_coreset(
     data_full = Data(instance_path)
 
     # (C) 1-median coreset 생성 (compute_pfd 기반, 샘플링 버전)
-    print("\n[2] 1-median coreset 생성 중...")
+    print("\n[1] 1-median coreset 생성 중...")
     S_idx, S_weights = build_triangulation_coreset_practical(
         data_full,
         eps=eps,
@@ -198,14 +193,14 @@ def compare_center_with_coreset(
     print(f" coreset reps: {len(S_idx)} / approx weights 합: {S_weights.sum()}")
 
     # (D) 코어셋만 가지고 continuous center (find_center_np)
-    print("\n[3] coreset 데이터에서 center 찾는 중...")
-    data_core = make_coreset_data(data_full, S_idx)
+    print("\n[2] coreset 데이터에서 center 찾는 중...")
+    data_core = make_coreset_data(data_full, S_idx, S_weights)
     center_core, dist_core_on_core = data_core.find_center_np()
     print(f" center_dist (coreset 데이터 기준): {dist_core_on_core}")
 
     # data_core.WriteData()
     # (E) coreset center를 full 데이터에서 평가
-    print("\n[4] coreset center를 full 데이터에서 평가...")
+    print("\n[3] coreset center를 full 데이터에서 평가...")
     dist_core_on_full, _a = data_full.compute_center_dist(center_core)
     data_full.center = center_core
     data_full.dist = dist_core_on_full

@@ -560,11 +560,8 @@ class Data:
             self.center = self.triangulations[0]
             self.dist = float("INF")
             self.flip = [[] for _ in range(len(self.triangulations))]
-
-            # (optional) initial brute center search disabled by default
-            # self.center = self.triangulations[np.argmin(initial_sol)]
-            # _, self.flip = self.compute_center_dist(self.center)
-            # self.WriteData()
+            # ★ 기본 weight: 모두 1
+            self.tri_weights = np.ones(len(self.triangulations), dtype=np.int64)
 
         else:
             with open(self.input, "r", encoding="utf-8") as f:
@@ -593,11 +590,15 @@ class Data:
                 print(f"num of pts: {len(self.pts)}")
                 print(f"num of triangulations: {len(self.triangulations)}")
 
+            # solution 기반 center 복원
             min_flip_ind = np.argmin([len(x) for x in self.flip])
             self.center = self.triangulations[min_flip_ind].fast_copy()
             for flip_seq in self.flip[min_flip_ind]:
                 for flp in flip_seq:
                     self.center.flip(flp[0], flp[1])
+
+            # ★ 여기서도 기본 weight: 모두 1
+            self.tri_weights = np.ones(len(self.triangulations), dtype=np.int64)
 
     # strict intersection same as Triangulation (kept for find_center_np global graph)
     def intersect(self, d11, d12, d21, d22):
@@ -789,16 +790,27 @@ class Data:
     # ========================================================
     # Speed-first find_center_np (global edge usage/inter graph incremental)
     # ========================================================
+        # ========================================================
+    # Speed-first find_center_np (weighted coreset 대응)
+    # ========================================================
     def find_center_np(self, debug=False, TOPK=3000, max_steps=300000):
         """
         NOTE:
-          - TOPK=3000 default: fast mode (uses top-K positive-weight edges per triangulation)
-          - set TOPK=None to mimic "use all positive-weight edges" (slower, closer to original selection)
+          - self.tri_weights 를 사용하여 각 triangulation에 weight를 부여할 수 있음
+            (예: tri_coreset에서 만든 weighted coreset).
+          - tri_weights 가 정의되지 않았거나 길이가 안 맞으면 모두 weight=1로 동작.
         """
         step = 0
         T = [t.fast_copy() for t in self.triangulations]
         nT = len(T)
         res_e_lists = [[] for _ in range(nT)]
+
+        # ★ triangulation weight (coreset에서 S_weights로 세팅)
+        tri_w = getattr(self, "tri_weights", None)
+        if tri_w is None or len(tri_w) != nT:
+            tri_w = np.ones(nT, dtype=np.int64)
+        else:
+            tri_w = np.asarray(tri_w, dtype=np.int64)
 
         px = self.px
         py = self.py
@@ -822,7 +834,7 @@ class Data:
         M = len(idx_to_edge)
         cap = max(M, 4096)
 
-        usage = np.zeros(cap, dtype=np.int32)
+        usage = np.zeros(cap, dtype=np.int64)   # ★ int64로 조금 여유 있게
         inter = np.zeros(cap, dtype=np.int64)
         weight = np.zeros(cap, dtype=np.float64)
 
@@ -831,9 +843,13 @@ class Data:
         maxx = np.empty(cap, dtype=np.float64)
         maxy = np.empty(cap, dtype=np.float64)
 
-        for s in tri_sets:
+        # ★ edge usage: "몇 개의 triangulation이 이 edge를 가지는가" → 가중치 합
+        for ti, s in enumerate(tri_sets):
+            w_t = tri_w[ti]
+            if w_t == 0:
+                continue
             for eidx in s:
-                usage[eidx] += 1
+                usage[eidx] += w_t
 
         # grid cell size heuristic
         spanx = float(px.max() - px.min())
@@ -901,7 +917,7 @@ class Data:
                 return
             newcap = max(newM, int(cap * 1.6) + 4096)
 
-            usage2 = np.zeros(newcap, dtype=np.int32); usage2[:cap] = usage
+            usage2 = np.zeros(newcap, dtype=np.int64); usage2[:cap] = usage
             inter2 = np.zeros(newcap, dtype=np.int64); inter2[:cap] = inter
             weight2 = np.zeros(newcap, dtype=np.float64); weight2[:cap] = weight
             minx2 = np.empty(newcap, dtype=np.float64); minx2[:cap] = minx
@@ -963,12 +979,18 @@ class Data:
             return idx
 
         active = usage[:M] > 0
-        weight[:M][active] = (inter[:M][active] - usage[:M][active]) / usage[:M][active]
+        mask = active
+        usage_active = usage[:M][mask]
+        inter_active = inter[:M][mask]
+        weight[:M][mask] = (inter_active - usage_active) / usage_active
 
+        # ★ T_val: triangulation weight * (edge weight 합)
         T_val = np.zeros(nT, dtype=np.float64)
         for ti, s in enumerate(tri_sets):
+            if not s:
+                continue
             arr = np.fromiter(s, dtype=np.int32)
-            T_val[ti] = weight[arr].sum()
+            T_val[ti] = tri_w[ti] * weight[arr].sum()
 
         t_upt_list = []
 
@@ -1010,7 +1032,6 @@ class Data:
                     sel = np.argpartition(-wpos, TOPK - 1)[:TOPK]
                     pos_edges = pos_edges[sel]
 
-                # exact sort for determinism
                 pos_edges = pos_edges[np.argsort(-weight[pos_edges])]
                 update_e = [idx_to_edge[int(eidx)] for eidx in pos_edges]
                 fl = T[ti].maximal_disjoint_convex_quad(update_e, res_e_lists[ti])
@@ -1024,7 +1045,6 @@ class Data:
 
             t = T[update_t_ind]
 
-            # execute flips
             local_res_list = []
             for e in flip_list:
                 newe = t.flip(e[0], e[1])
@@ -1048,7 +1068,6 @@ class Data:
 
             changed = set(removed_idx)
             changed.update(added_idx)
-
             affected = set(changed)
             for eidx in list(changed):
                 for nb in neighbors[eidx]:
@@ -1057,8 +1076,9 @@ class Data:
 
             old_w = weight[affected].copy()
 
-            # membership delta on this triangulation
-            T_val[update_t_ind] += weight[added_idx].sum() - weight[removed_idx].sum()
+            # ★ membership이 바뀐 triangulation의 weight 반영
+            w_t = tri_w[update_t_ind]
+            T_val[update_t_ind] += w_t * (weight[added_idx].sum() - weight[removed_idx].sum())
 
             # update tri_set / signature / memberships
             s = tri_sets[update_t_ind]
@@ -1079,7 +1099,7 @@ class Data:
             tri_hash[update_t_ind] = h
             tri_size[update_t_ind] = len(s)
 
-            # usage delta + update inter on neighbors
+            # ★ usage / inter 업데이트에도 weight 반영
             delta = defaultdict(int)
             for eidx in removed_idx:
                 delta[eidx] -= 1
@@ -1089,16 +1109,16 @@ class Data:
             for eidx, d in delta.items():
                 if d == 0:
                     continue
-                usage[eidx] += d
+                usage[eidx] += d * w_t
                 for nb in neighbors[eidx]:
-                    inter[nb] += d
+                    inter[nb] += d * w_t
 
             # recompute weights only on affected and adjust T_val for tris containing these edges
             ua = usage[affected]
             ia = inter[affected]
             new_w = np.zeros_like(old_w, dtype=np.float64)
-            mask = (ua > 0)
-            new_w[mask] = (ia[mask] - ua[mask]) / ua[mask]
+            mask2 = (ua > 0)
+            new_w[mask2] = (ia[mask2] - ua[mask2]) / ua[mask2]
             dw = new_w - old_w
             weight[affected] = new_w
 
@@ -1108,7 +1128,7 @@ class Data:
                     continue
                 eidx = int(affected[k])
                 for tj in edge_to_tris[eidx]:
-                    T_val[tj] += dwi
+                    T_val[tj] += dwi * tri_w[tj]
 
             print(f"[{self.instance_uid}, {step} step] Triangulation {update_t_ind} flipped, {len(local_res_list)} edges")
 
