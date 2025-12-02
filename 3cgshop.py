@@ -1,4 +1,5 @@
-from hy_data import *
+#from jg_data import *
+from th_data import *
 
 import numpy as np
 import argparse
@@ -72,12 +73,11 @@ def read_center(input_file):
     input_file = root["instance_uid"]+'.json'
     with open(Center_path + input_file, 'r') as f:
         C_edges = json.load(f)
-    center = Triangulation(pts, C_edges)
+    center = Triangulation(pts, C_edges) #####################
 
     # Read Triangulations Ts
     dt = Data(Tris_path + input_file)
-    dt.center = center
-    return dt
+    return center, dt
 
 def reward(db, obj):
     if obj in db.objects:
@@ -109,7 +109,10 @@ def my_print_db(db):
 
 
 
-def convert_to_string(center):
+def convert_to_string(flips):
+
+    print(flips)
+    exit(0)
     # center -> adjmat
     edges = list(center.edges.keys())
     N = len(center.pts)
@@ -126,25 +129,20 @@ def convert_to_string(center):
         entries.append(",")
     return "".join(entries)
 
-def local_search_on_object(db, dt, center, input_file):
+def local_search_on_object(db, dt, idx, pll_flips, centerT, flips):
     objects=[]
     rewards=[]
-    origin_center = center
-    # Perturbe C
-    center.random_flip(20)
 
-    # Compute pfd(T,C), save it as a rewards for sorting
-    dist, flip = dt.compute_center_dist(center)
-    #_, dist2, flip2 = dt.random_move() # too long time
-    #if dist2 < dist:
-    #    dist = dist2
-    #    center.flip = flip2
-    #else:
-    #    center = origin_center
-    #    center.flip = flip
-    # error test
+    # Various PFD by parallel_flip_path() from T_idx to centerT
+    new_flip = dt.generate_pfp(dt.triangulations[idx], centerT)
+    dist = len(new_flip)
+    print(new_flip)
+    flips[idx] = new_flip
+    print("---")
+    print(flips)
+
     Tris_path = './data/benchmark_instances/'
-    with open(Tris_path+input_file, "r") as f:
+    with open(Tris_path + dt.instance_uid + '.json', "r") as f:
         file = json.load(f)
         instance = CGSHOP2026Instance(
                 instance_uid = file["instance_uid"],
@@ -154,16 +152,15 @@ def local_search_on_object(db, dt, center, input_file):
                 )
         solution = CGSHOP2026Solution(
                 instance_uid = file["instance_uid"],
-                flips=flip
+                flips=flips
                 )
 
     errors = check_for_errors(instance, solution)
     assert not errors, f"Errors found in solution: {errors}"
 
-    #print("dist = ", dist)
-
     rew = dist
-    obj = convert_to_string(center)
+    obj = convert_to_string(pll_flips)
+
     new = reward(db, obj)
     if new:
        objects.append(obj)
@@ -195,9 +192,32 @@ def local_search_from_decoded(db, inst_file, path, input_file):
                     index+=1
                 adjmat[i,j] = int(obj[index])
                 adjmat[j,i] = adjmat[i,j]
-                index+=1
                 if adjmat[i,j] ==1:
                     C_edges.append([i,j])
+        print("hy:  center = ")
+        print(C_edges)
+
+        # Remove intersecting edges
+        # C_edges의 엣지를 하나하나 추가하면서 intersect 하는 부분 지우기
+        valid_edge=[]
+        random.shuffle(C_edges)
+        for e in C_edges:
+            if len(valid_edge)>0:
+                for le in valid_edge:
+                    if dt.intersect(e[0],e[1], le[0], le[1])==False:
+                        valid_edge.append(le)
+            else: valid_edge.append(e)
+        C_edges = valid_edge
+        print(list(C_edges))
+        exit(0)
+        # Complete Triangulation
+
+        # Insert Hull edges <- maybe? done by make_triangulation()
+
+        # convert_to_string(adjmat) <- This going to be written in search_output_{i+1}.txt for next tokenize
+
+
+
         center = Triangulation(dt.pts, C_edges)
         dt.center = center #???? it works? and.. it is needed?
 
@@ -215,19 +235,47 @@ def local_search_from_decoded(db, inst_file, path, input_file):
 
 
 
-def local_search(db, dt, path, input_file):
-    #if 'solution' not in input_file and 'decoded' not in input_file:
-    #    center, dt = read_center(input_file) # './centers/~'
-    #elif 'solution' in input_file:
-    #    with open('./solutions/'+ input_file, 'r') as f:
-    #        root = json.load(f)
-    #    dt = Data(root["meta"]["input"])
-    #    center = dt.center
+def local_search(db, path, input_file):
+    if 'solution' not in input_file and 'decoded' not in input_file:
+        center, dt = read_center(input_file) # './centers/~'
+    elif 'solution' in input_file:
+        with open('./solutions/'+ input_file, 'r') as f:
+            root = json.load(f)
+        dt = Data(root["meta"]["input"]) # Data class from th_data.py
+        flips = root["flips"]
+        flip_len=[len(f) for f in flips]
+
+        max_len_idx = flip_len.index(max(flip_len)) #idx of Triangulation with longest pfd
+        min_len_idx = flip_len.index(min(flip_len)) #idx of Triangulation with shortest pfd
+
+        max_pll_flip = flips[max_len_idx] #longest pfd
+        min_pll_flip = flips[min_len_idx] #shortest pfd
+
+        Tmin = dt.triangulations[min_len_idx]
+        tmpTmin = deepcopy(Tmin)
+
+        for pll_flip in min_pll_flip:
+            for flip in pll_flip:
+                dt.flipDiagonal(tmpTmin, [flip])
+        centerT = deepcopy(tmpTmin)
+        #print(min_len_idx)
+        #print("-----")
+        #print(sorted(Tmin.edges))
+        #print("-----")
+        #print(min_pll_flip)
+        #print("-----")
+        #print(sorted(centerT.edges))
+        #print("-----")
+        #print(sorted(Tmin.edges.difference(centerT.edges)))
+        #print(sorted(centerT.edges.difference(Tmin.edges)))
+        #exit(0)
+
+
 
     single_thread_obj=[]
     single_thread_rew =[]
     for i in range(20):
-        obj, rew = local_search_on_object(db, dt, center, input_file)
+        obj, rew = local_search_on_object(db, dt, max_len_idx, max_pll_flip, centerT, flips)
         single_thread_obj.append(obj)
         single_thread_rew.append(rew)
 
@@ -371,7 +419,7 @@ def decode():
             for line in decoded_text:
                 file.write(line + '\n')
 
-        logger.info(f"Decoding complete. Check the output in {output_file}")
+        logger.info(f"Decoding complet. Check the output in {output_file}")
     else:
         logger.info(f"Error: The file {input_file} does not exist.")
 
@@ -475,188 +523,180 @@ if __name__ == '__main__':
 
     num_pts = int(inst_file.split('_')[-1])
     db = Database({},{},num_pts)
+    i=1
     for i in range(1, args.max_epochs):
         if not os.path.isfile(f"{args.dump_path}/search_output_{i}-tokenized.txt"):
+            print("No tokenized file")
             break
-
     initial_gen = i-1
+    if initial_gen ==0:
+        #### Instead of search.jl ######
+        print("from pohang center file...")
+        local_search(db, args.dump_path, inst_file+'.solution.json')
+        #### -------------------- ######
 
-    with Pool() as pool:
-        input_file = inst_file + '.solution.json'
-        #input_file = inst_file + '.json'
-        if initial_gen ==0:
-            if 'solution' not in input_file and 'decoded' not in input_file:
-                print("from taehoon_hwi center file...")
-                dt = read_center(input_file) # './centers/~'
-            elif 'solution' in input_file:
-                print("from pohang center file...")
-                dt = Data(Tris_path + inst_file + '.json')
-                dt.restore_center_from_solution()
-
-            local_search(db, dt, args.dump_path, inst_file+'.json')
-
-            tokenize(f"{args.dump_path}/search_output_1.txt", args.n_tokens)
-            initial_gen = 1
+        tokenize(f"{args.dump_path}/search_output_1.txt", args.n_tokens)
+        initial_gen = 1
 
 
-        logger.info(f"initializing at generation: {initial_gen}")
-        input_file = args.dump_path + f"/search_output_{initial_gen}-tokenized.txt"
-        train_dataset, test_dataset = create_datasets(input_file)
-        #vocab_size = args.n_tokens + 1
-        vocab_size = train_dataset.get_vocab_size() #hy
-        block_size = args.max_output_length + 1
-        logger.info(f"dataset determined that: {vocab_size=}, {block_size=}")
+    logger.info(f"initializing at generation: {initial_gen}")
+    input_file = args.dump_path + f"/search_output_{initial_gen}-tokenized.txt"
+    train_dataset, test_dataset = create_datasets(input_file)
+    #vocab_size = args.n_tokens + 1
+    vocab_size = train_dataset.get_vocab_size() #hy
+    block_size = args.max_output_length + 1
+    logger.info(f"dataset determined that: {vocab_size=}, {block_size=}")
 
 
-        args.device = "cpu" if args.cpu else "cuda"
-        # init model
-        config = ModelConfig(vocab_size=vocab_size, block_size=block_size,
-                           n_layer=args.n_layer, n_head=args.n_head,
-                           n_embd=args.n_embd, n_embd2=args.n_embd2)
-        if args.type == 'transformer':
-            model = Transformer(config)
-        elif args.type == 'bigram':
-            model = Bigram(config)
-        elif args.type == 'mlp':
-            model = MLP(config)
-        elif args.type == 'rnn':
-            model = RNN(config, cell_type='rnn')
-        elif args.type == 'gru':
-            model = RNN(config, cell_type='gru')
-        elif args.type == 'bow':
-            model = BoW(config)
-        else:
-            logger.error(f'model type {args.type} is not recognized')
-        model.to(args.device)
-        logger.info(f"model #params: {sum(p.numel() for p in model.parameters())}")
-        model_path = os.path.join(args.dump_path, "model.pt")
+    args.device = "cpu" if args.cpu else "cuda"
+    # init model
+    config = ModelConfig(vocab_size=vocab_size, block_size=block_size,
+                       n_layer=args.n_layer, n_head=args.n_head,
+                       n_embd=args.n_embd, n_embd2=args.n_embd2)
+    if args.type == 'transformer':
+        model = Transformer(config)
+    elif args.type == 'bigram':
+        model = Bigram(config)
+    elif args.type == 'mlp':
+        model = MLP(config)
+    elif args.type == 'rnn':
+        model = RNN(config, cell_type='rnn')
+    elif args.type == 'gru':
+        model = RNN(config, cell_type='gru')
+    elif args.type == 'bow':
+        model = BoW(config)
+    else:
+        logger.error(f'model type {args.type} is not recognized')
+    model.to(args.device)
+    logger.info(f"model #params: {sum(p.numel() for p in model.parameters())}")
+    model_path = os.path.join(args.dump_path, "model.pt")
 
-        for generation in range(initial_gen,args.max_epochs + 1):
-            logger.info(f"============ Start of generation {generation} ============")
-            logger.info(f"cuda Memory allocated:  {torch.cuda.memory_allocated(0)/(1024*1024):.2f}MB, cuda reserved: {torch.cuda.memory_reserved(0)/(1024*1024):.2f}MB")
+    for generation in range(initial_gen,args.max_epochs + 1):
+        logger.info(f"============ Start of generation {generation} ============")
+        logger.info(f"cuda Memory allocated:  {torch.cuda.memory_allocated(0)/(1024*1024):.2f}MB, cuda reserved: {torch.cuda.memory_reserved(0)/(1024*1024):.2f}MB")
 
-            logger.info("training")
-            # python makemoretokens.py --i search_output_1-tokenized.txt --device cuda
-            #train_makemore()
-            # init optimizer
-            optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay, betas=(0.9, 0.99), eps=1e-8)
+        logger.info("training")
+        # python makemoretokens.py --i search_output_1-tokenized.txt --device cuda
+        #train_makemore()
+        # init optimizer
+        optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay, betas=(0.9, 0.99), eps=1e-8)
 
-            # init dataloader
-            #batch_loader = InfiniteDataLoader(train_dataset, batch_size=args.batch_size, pin_memory=True, num_workers=args.num_workers)#hy
-            batch_loader = InfiniteDataLoader(train_dataset, batch_size=args.batch_size, pin_memory=False, num_workers=0)
+        # init dataloader
+        #batch_loader = InfiniteDataLoader(train_dataset, batch_size=args.batch_size, pin_memory=True, num_workers=args.num_workers)#hy
+        batch_loader = InfiniteDataLoader(train_dataset, batch_size=args.batch_size, pin_memory=False, num_workers=0)
 
-            # training loop
-            best_loss = None
-            step = 0
-            while True:
+        # training loop
+        best_loss = None
+        step = 0
+        while True:
 
-                t0 = time.time()
+            t0 = time.time()
 
-                # get the next batch, ship to device, and unpack it to input and target
-                batch = batch_loader.next()
-                batch = [t.to(args.device) for t in batch]
-                X, Y = batch
+            # get the next batch, ship to device, and unpack it to input and target
+            batch = batch_loader.next()
+            batch = [t.to(args.device) for t in batch]
+            X, Y = batch
 
-                # feed into the model
-                try:
-                    logits, loss = model(X, Y)
-                    # calculate the gradient, update the weights
-                    model.zero_grad(set_to_none=True)
-                    loss.backward()
-                    optimizer.step()
+            # feed into the model
+            try:
+                logits, loss = model(X, Y)
+                # calculate the gradient, update the weights
+                model.zero_grad(set_to_none=True)
+                loss.backward()
+                optimizer.step()
 
-                except RuntimeError as e:
-                    logger.info("Caught RuntimeError during forward pass.")
-                    logger.info(f"Shape of x before error: {X.shape}")
-                    logger.info(f"Shape of y before error: {Y.shape}")
-                    logger.info(f"Shape of logits (if calculated): {logits.shape if 'logits' in locals() else 'Not calculated'}")
+            except RuntimeError as e:
+                logger.info("Caught RuntimeError during forward pass.")
+                logger.info(f"Shape of x before error: {X.shape}")
+                logger.info(f"Shape of y before error: {Y.shape}")
+                logger.info(f"Shape of logits (if calculated): {logits.shape if 'logits' in locals() else 'Not calculated'}")
 
-                    #raise e
+                #raise e
 
 
 
-                # wait for all CUDA work on the GPU to finish then calculate iteration time taken
-                if args.device =="cuda":
-                    torch.cuda.synchronize()
-                t1 = time.time()
+            # wait for all CUDA work on the GPU to finish then calculate iteration time taken
+            if args.device =="cuda":
+                torch.cuda.synchronize()
+            t1 = time.time()
 
-                # logging
-                if step % 100 == 0:
-                    logger.info(f"step {step}/{args.max_steps} | loss {loss.item():.4f} | step time {(t1-t0)*1000:.2f}ms")
+            # logging
+            if step % 100 == 0:
+                logger.info(f"step {step}/{args.max_steps} | loss {loss.item():.4f} | step time {(t1-t0)*1000:.2f}ms")
 
-                # evaluate the model
-                if step > 0 and step % 500 == 0:
-                    train_loss = evaluate(model, train_dataset, args.device, batch_size=100, max_batches=10)
-                    test_loss  = evaluate(model, test_dataset,  args.device, batch_size=100, max_batches=10)
-                    logger.info(f"step {step} train loss: {train_loss} test loss: {test_loss}")
-                    # save the model to disk if it has improved
-                    if best_loss is None or test_loss < best_loss:
-                        out_path = os.path.join(args.dump_path, "model.pt")
-                        logger.info(f"test loss {test_loss} is the best so far, saving model to {out_path}")
-                        torch.save(model.state_dict(), out_path)
-                        best_loss = test_loss
-        #            print_samples(num=10)
+            # evaluate the model
+            if step > 0 and step % 500 == 0:
+                train_loss = evaluate(model, train_dataset, args.device, batch_size=100, max_batches=10)
+                test_loss  = evaluate(model, test_dataset,  args.device, batch_size=100, max_batches=10)
+                logger.info(f"step {step} train loss: {train_loss} test loss: {test_loss}")
+                # save the model to disk if it has improved
+                if best_loss is None or test_loss < best_loss:
+                    out_path = os.path.join(args.dump_path, "model.pt")
+                    logger.info(f"test loss {test_loss} is the best so far, saving model to {out_path}")
+                    torch.save(model.state_dict(), out_path)
+                    best_loss = test_loss
+    #            print_samples(num=10)
 
-                step += 1
-                # termination conditions
-                if args.max_steps >= 0 and step >= args.max_steps:
-                    break
-            logger.info(f"Memory allocated:  {torch.cuda.memory_allocated(0)/(1024*1024):.2f}MB, reserved: {torch.cuda.memory_reserved(0)/(1024*1024):.2f}MB")
+            step += 1
+            # termination conditions
+            if args.max_steps >= 0 and step >= args.max_steps:
+                break
+        logger.info(f"Memory allocated:  {torch.cuda.memory_allocated(0)/(1024*1024):.2f}MB, reserved: {torch.cuda.memory_reserved(0)/(1024*1024):.2f}MB")
 
-            logger.info('generating')
-            sample_batch_size =args.gen_batch_size # reduce this if GPU crashes, increase it if sampling is slow
-            todo = args.sample_only
-            tot_n = 0
-            tot_sum = 0
-            tot_max = 0
-            out_file = args.dump_path + "/out.txt"
-            in_file = args.dump_path + f"/search_output_{generation}-tokenized.txt"
-            #infilz = f"{args.dump_path}/search_output_{generation}.txt"
-            with open(in_file, 'r') as f:
-                data = f.read()
-            words = data.splitlines()
-            with open(out_file, "w") as file:
-                for word in words:
-                    file.write(word)
-                    file.write("\n")
-            while sample_batch_size < todo:
-                if todo % 50000 ==0 :
-                    logger.info(f'{todo} samples remaining')
-                n, sm, mx = write_samples(num=sample_batch_size)
-                tot_n+=n
-                tot_sum+=sm
-                tot_max = max(tot_max,mx)
-                todo = todo - sample_batch_size
-            n, sm, mx = write_samples(num=todo)
+        logger.info('generating')
+        sample_batch_size =args.gen_batch_size # reduce this if GPU crashes, increase it if sampling is slow
+        todo = args.sample_only
+        tot_n = 0
+        tot_sum = 0
+        tot_max = 0
+        out_file = args.dump_path + "/out.txt"
+        in_file = args.dump_path + f"/search_output_{generation}-tokenized.txt"
+        #infilz = f"{args.dump_path}/search_output_{generation}.txt"
+        with open(in_file, 'r') as f:
+            data = f.read()
+        words = data.splitlines()
+        with open(out_file, "w") as file:
+            for word in words:
+                file.write(word)
+                file.write("\n")
+        while sample_batch_size < todo:
+            if todo % 50000 ==0 :
+                logger.info(f'{todo} samples remaining')
+            n, sm, mx = write_samples(num=sample_batch_size)
             tot_n+=n
             tot_sum+=sm
             tot_max = max(tot_max,mx)
-            logger.info(f"distribution of sample lengths: average: {tot_sum/tot_n if tot_n != 0 else 0} max: {tot_max}")
-            logger.info('decoding')
-            decode()
-            logger.info(f"Memory allocated:  {torch.cuda.memory_allocated(0)/(1024*1024):.2f}MB, reserved: {torch.cuda.memory_reserved(0)/(1024*1024):.2f}MB")
-            logger.info(f"============ End of generation {generation} ============")
-            #logger.info(f"launching search.jl")
-            #os.environ["JULIA_NUM_THREADS"] = str(args.nb_threads)  # Set the environment variable
-            #logger.info(f"JULIA_NUM_THREADS is set to {os.environ['JULIA_NUM_THREADS']}")
+            todo = todo - sample_batch_size
+        n, sm, mx = write_samples(num=todo)
+        tot_n+=n
+        tot_sum+=sm
+        tot_max = max(tot_max,mx)
+        logger.info(f"distribution of sample lengths: average: {tot_sum/tot_n if tot_n != 0 else 0} max: {tot_max}")
+        logger.info('decoding')
+        decode()
+        logger.info(f"Memory allocated:  {torch.cuda.memory_allocated(0)/(1024*1024):.2f}MB, reserved: {torch.cuda.memory_reserved(0)/(1024*1024):.2f}MB")
+        logger.info(f"============ End of generation {generation} ============")
+        #logger.info(f"launching search.jl")
+        #os.environ["JULIA_NUM_THREADS"] = str(args.nb_threads)  # Set the environment variable
+        #logger.info(f"JULIA_NUM_THREADS is set to {os.environ['JULIA_NUM_THREADS']}")
 
-            #subprocess.run(["julia", "search_pfd.jl", args.dump_path, str(args.nb_local_searches), str(args.num_initial_empty_objects), str(args.final_database_size), str(args.target_db_size), '-i', args.dump_path + '/transformer-output-decoded.txt'])
+        #subprocess.run(["julia", "search_pfd.jl", args.dump_path, str(args.nb_local_searches), str(args.num_initial_empty_objects), str(args.final_database_size), str(args.target_db_size), '-i', args.dump_path + '/transformer-output-decoded.txt'])
 
-            #### Instead of search.jl ######
-            local_search_from_decoded(db, inst_file, args.dump_path,'/transformer-output-decoded.txt', pool)
-            #### -------------------- ######
-
-
-
-            if os.path.exists(args.dump_path+"/distribution.txt"):
-                with open(args.dump_path+"/distribution.txt", 'r') as file:
-                    d_lines = file.readlines()
-            logger.info("distribution of scores")
-            for l in d_lines:
-                logger.info(l[:-1])
+        #### Instead of search.jl ######
+        local_search_from_decoded(db, inst_file, args.dump_path,'/transformer-output-decoded.txt')
+        #### -------------------- ######
 
 
-            logger.info("tokenizing")
-            tokenize(f"{args.dump_path}/search_output_{generation+1}.txt", args.n_tokens)
-            input_file = args.dump_path + f"/search_output_{generation+1}-tokenized.txt"
-            train_dataset, test_dataset = create_datasets(input_file)
+
+        if os.path.exists(args.dump_path+"/distribution.txt"):
+            with open(args.dump_path+"/distribution.txt", 'r') as file:
+                d_lines = file.readlines()
+        logger.info("distribution of scores")
+        for l in d_lines:
+            logger.info(l[:-1])
+
+
+        logger.info("tokenizing")
+        tokenize(f"{args.dump_path}/search_output_{generation+1}.txt", args.n_tokens)
+        input_file = args.dump_path + f"/search_output_{generation+1}-tokenized.txt"
+        train_dataset, test_dataset = create_datasets(input_file)

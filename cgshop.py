@@ -1,5 +1,4 @@
-
-from hy_data import *
+from jg_data import *
 
 import numpy as np
 import argparse

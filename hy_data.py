@@ -49,16 +49,15 @@ class Triangulation:
             print(i)
 
     def make_triangulation(self, T):
+        edges = dict()
+        for e in T:
+            edges[(min(e[0],e[1]),max(e[0],e[1]))] = Diag(min(e[0],e[1]),max(e[0],e[1]))
         nei_dict = dict()
         for i in range(len(self.pts)):
             nei_dict[i] = []
         for e in T:
             nei_dict[e[0]].append(e[1])
             nei_dict[e[1]].append(e[0])
-
-        edges = dict()
-        for e in T:
-            edges[(min(e[0],e[1]),max(e[0],e[1]))] = Diag(min(e[0],e[1]),max(e[0],e[1]))
         for i in range(len(self.pts)):
             nei_dict[i], _, found = self.sort_cw_with_half_circle(nei_dict[i], i)
             for j in range(len(nei_dict[i])-1):
@@ -72,19 +71,16 @@ class Triangulation:
                 else:
                     edges[(nei_dict[i][len(nei_dict[i])-1],i)].nei_pts[0] = nei_dict[i][0]
         self.edges = edges
-        #print("make_triangulation: edges")
-        #print(list(edges))
-        #exit(0)
 
     def sort_cw_with_half_circle(self, pts, center):
         cx, cy = self.pts[center].x, self.pts[center].y
         with_angles = [(pt, math.atan2(self.pts[pt].y - cy, self.pts[pt].x - cx)) for pt in pts]
         with_angles.sort(key=lambda pa: -pa[1])
+        n = len(with_angles)
         angles = [a for _, a in with_angles]
         best_start = 0
         found = False
         doubled = angles + [a - 2*math.pi for a in angles]  # wrap-around
-        n = len(with_angles)
         for i in range(n):
             j = i + n - 1
             if doubled[i] - doubled[j] <= math.pi + 1e-12:
@@ -324,9 +320,12 @@ class Data:
         self.application_path = str(base.parents[0])
         self.input = input
         self.df = None
-        # self.compute_intersect()
+
         self.ReadData()
 
+        self.center = None
+        self.dist = float("inf")
+        self.flip = [[] for _ in range(len(self.triangulations))]
 
     def ReadData(self):
         #print("--------------------ReadData--------------------")
@@ -336,79 +335,58 @@ class Data:
                 self.instance_uid = root["instance_uid"]
                 pts_x = root["points_x"]
                 pts_y = root["points_y"]
-                self.pts = []
-                for i in range(len(pts_y)):
-                    self.pts.append(Point(pts_x[i], pts_y[i]))
+                self.pts = [Point(x,y) for x,y in zip(pts_x, pts_y)]
+
                 self.triangulations = []
-                Ts = root["triangulations"]
-                for T in Ts:
+                for T in root["triangulations"]:
                     self.triangulations.append(Triangulation(self.pts, T))
-                #print(f"num of pts: {len(self.pts)}")
-                #print(f"num of triangulations: {len(self.triangulations)}")
-            # for i in range(len(self.triangulations)):
-            #     self.DrawTriangulation(self.triangulations[i], name = f"{i}")
-            max_pfd = 0
-            inp = []
-            for i in range((len(self.triangulations))-1):
-                for j in range(i+1, len(self.triangulations)):
-                    inp.append((i,j))
-            # print(inp)
-            _multi = True
-            _ini_sol = True
-            initial_sol = [0]*len(self.triangulations)
-            self.center = self.triangulations[0]
-            self.dist = float("INF")
-            self.flip = [[] for _ in range(len(self.triangulations))]
-            if _ini_sol:
-                if _multi:
-                    with Pool() as pool:
-                        res = pool.starmap(self.compute_pfd, inp)
-                    for res1 in res:
-                        initial_sol[res1[2]]+=res1[0]
-                        initial_sol[res1[3]]+=res1[0]
-                    max_pfd = max(res, key=lambda x:x[0])
-                    #print(f"Maximum Parallel flip distance: {max_pfd[0]}")
-                else:
-                    for i in range((len(self.triangulations))-1):
-                        for j in range(i+1, len(self.triangulations)):
-                            pfd, *_ = self.compute_pfd(i,j)
-                            max_pfd = max(max_pfd, pfd)
-                            initial_sol[i]+=pfd
-                            initial_sol[j]+=pfd
-                    #print(f"Maximum Parallel flip distance: {max_pfd}")
-                #print(f"Initial Center: {np.argmax(initial_sol)} (total dist: {max(initial_sol)})")
-                self.center = self.triangulations[np.argmax(initial_sol)]
-                _, self.flip = self.compute_center_dist(self.center)
+
+    def compute_pfd_pair(self, args):
+        i, j = args
+        return self.compute_pfd(i,j)
+
+    def compute_pfd_parallel(self, pool=None):
+        inp = [(i,j) for i in range(len(self.triangulations)-1)
+                        for j in range(i+1, len(self.triangulations))]
+        if pool is not None:
+            res = pool.map(self.compute_pfd_pair, inp)
         else:
-            with open(self.input, "r", encoding="utf-8") as f:
-                root = json.load(f)
-                self.instance_uid = root["instance_uid"]
-                self.flip = root["flips"]
-                self.dist = sum([len(x) for x in self.flip])
-                org_input = root["meta"]["input"]
-            self.input = org_input
-            with open(self.input, "r", encoding="utf-8") as f:
-                root = json.load(f)
-                self.instance_uid = root["instance_uid"]
-                pts_x = root["points_x"]
-                pts_y = root["points_y"]
-                self.pts = []
-                for i in range(len(pts_y)):
-                    self.pts.append(Point(pts_x[i], pts_y[i]))
-                self.triangulations = []
-                Ts = root["triangulations"]
-                for T in Ts:
-                    self.triangulations.append(Triangulation(self.pts, T))
-                #print(f"num of pts: {len(self.pts)}")
-                #print(f"num of triangulations: {len(self.triangulations)}")
-            min_flip_ind = np.argmin([len(x) for x in self.flip])
-            self.center =  copy.deepcopy(self.triangulations[min_flip_ind])
-            for flip_seq in self.flip[min_flip_ind]:
-                for flp in flip_seq:
-                    self.center.flip(flp[0], flp[1])
+            res = [self.compute_pfd(i,j) for i, j in inp]
+        initial_sol = [0]*len(self.triangulations)
+        for r in res:
+            pfd_value, *_, idx_i, idx_j = r
+            initial_sol[idx_i] += pfd_value #hy: pfd_value = step = len(flip_list)
+            initial_sol[idx_j] += pfd_value
 
-        #print("--------------------ReadDataEND--------------------")
+        max_idx = np.argmax(initial_sol)
+        self.center = self.triangulations[max_idx]
+        self.dist = max(initial_sol)
 
+        _, self.flip = self.compute_center_dist(self.center)
+        return res
+
+    def restore_center_from_solution(self):
+        solution_file = './solutions/' + (self.input.split("/")[-1]).split(".")[0] + '.solution.json'
+        with open(solution_file, "r", encoding="utf-8") as f:
+            root = json.load(f)
+            self.instance_uid = root["instance_uid"]
+            self.flip = root["flips"]
+            self.dist = sum([len(x) for x in self.flip])
+
+        with open(root["meta"]["input"], "r", encoding="utf-8") as f:
+            root = json.load(f)
+            self.instance_uid = root["instance_uid"]
+            pts_x = root["points_x"]
+            pts_y = root["points_y"]
+            self.pts = [Point(x,y) for x,y in zip(pts_x, pts_y)]
+            self.triangulations = []
+            for T in root["triangulations"]:
+                self.triangulations.append(Triangulation(self.pts, T))
+        min_flip_ind = np.argmin([len(x) for x in self.flip])
+        self.center =  copy.deepcopy(self.triangulations[min_flip_ind])
+        for flip_seq in self.flip[min_flip_ind]:
+            for flp in flip_seq:
+                self.center.flip(flp[0], flp[1])
 
     def compute_intersect(self):
         self.inter_list = [[[[False]*len(self.pts) for _ in range(len(self.pts))]for __ in range(len(self.pts))]for ___ in range(len(self.pts))]
@@ -565,6 +543,7 @@ class Data:
 
 
 
+
     def intersect(self, d11, d12, d21, d22):
         def _orient(a, b, c) -> float:
             return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
@@ -581,7 +560,7 @@ class Data:
 
         # 일반적인 교차 (서로 다른 편에 위치)
         if (o1 * o2 < -EPS) and (o3 * o4 < -EPS):
-            return True #hy: True means "no intersect!"
+            return True
         return False
 
     def compute_pfd(self, i, j):

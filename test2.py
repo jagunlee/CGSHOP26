@@ -5,7 +5,7 @@ from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
 from cgshop2026_pyutils.verify import check_for_errors
 from cgshop2026_pyutils.visualize import create_instance_plot
 
-from hy_data import *
+from jg_data import *
 import numpy as np
 
 
@@ -120,10 +120,11 @@ if __name__ == '__main__':
         C_edges = valid_edge
         print("edges = ")
         print(C_edges)
+        is_triangulation(points, C_edges, verbose=True)
         if len(C_edges)!=E and is_triangulation(points, C_edges, verbose=False)==False:
             is_triangulation(points, C_edges, verbose=True)
             draw_edges(points, C_edges, show_indices=True)
-            plt.show()
+            #plt.show()
             break
 
         #draw_edges(points, C_edges, show_indices=True)

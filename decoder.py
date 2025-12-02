@@ -22,7 +22,7 @@ def decode_tokens(token_line):
     #print(token_line)
     token_ids = [int(token[1:]) for token in token_line.split(',')]
     # Decode the token ids to text
-    
+
     return tokenizer.decode(token_ids).replace(" ","")
 
 # Process the input file

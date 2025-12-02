@@ -28,8 +28,8 @@ with open(path1+input_file+'.json', "r") as f:
     edges = [[0, 1], [0, 5], [0, 8], [0, 9], [1, 3], [1, 4], [1, 5], [1, 6], [2, 8], [2, 9], [3, 6], [3, 9], [5, 7], [6, 9], [7, 8]]
     points = [Point(x,y) for x, y in zip(instance.points_x, instance.points_y)]
     print(points)
-    draw_edges(points, edges, show_indices=True)
-    plt.show()
+    #draw_edges(points, edges, show_indices=True)
+    #plt.show()
     is_triangulation(points, edges, verbose=True)
 
 
