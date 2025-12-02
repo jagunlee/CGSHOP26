@@ -197,7 +197,7 @@ def build_and_save_coresets_for_all_instances(
             center_seed=center_seed,
             sample_size=sample_size,
         )
-        print(f"  -> coreset reps: {len(S_idx)} / approx weights sum: {int(S_weights.sum())}")
+        print(f"-> coreset reps: {len(S_idx)} / approx weights sum: {int(S_weights.sum())}")
 
         # (2) 원본 인스턴스 json 읽기
         with open(json_file, "r") as f:
@@ -219,7 +219,7 @@ def build_and_save_coresets_for_all_instances(
             "points_x": points_x,
             "points_y": points_y,
             "triangulations": coreset_tris,
-            # "coreset_weights": np.asarray(S_weights, dtype=int).tolist(),
+            "coreset_weights": np.asarray(S_weights, dtype=int).tolist(),
         }
 
         out_name = json_file.stem + "_coreset.json"
@@ -229,8 +229,8 @@ def build_and_save_coresets_for_all_instances(
             json.dump(coreset_inst, f, indent=2)
 
         elapsed = time.time() - start_time  # ★ 경과 시간
-        print(f"  -> saved to: {out_file}")
-        print(f"  -> time taken: {elapsed:.3f} seconds")  # ★ 시간 출력
+        print(f"-> saved to: {out_file}")
+        print(f"-> time taken: {elapsed:.3f} seconds")  # ★ 시간 출력
 
 
 if __name__ == "__main__":

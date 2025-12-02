@@ -531,12 +531,19 @@ class Data:
         self.application_path = str(base.parents[0])
         self.input = input
         self.df = None
+
+        # ★ triangulation weight (coreset일 때 사용, 아니면 모두 1)
+        self.tri_weights = None
+
         self.ReadData()
 
     def ReadData(self):
         print("--------------------ReadData--------------------")
 
         if "solution" not in self.input:
+            # =========================
+            #  (a) 인스턴스 JSON 직접 읽는 경우
+            # =========================
             with open(self.input, "r", encoding="utf-8") as f:
                 root = json.load(f)
                 self.instance_uid = root["instance_uid"]
@@ -557,13 +564,31 @@ class Data:
                 print(f"num of pts: {len(self.pts)}")
                 print(f"num of triangulations: {len(self.triangulations)}")
 
+                # ★ NEW: coreset_weights 읽기 (없으면 모두 1)
+                w = root.get("coreset_weights", None)
+                if w is None:
+                    # 일반 인스턴스 or weight 정보 없음 → weight=1
+                    self.tri_weights = np.ones(len(self.triangulations), dtype=np.float64)
+                else:
+                    w_arr = np.asarray(w, dtype=np.float64)
+                    if w_arr.shape[0] != len(self.triangulations):
+                        print(
+                            f"[WARN] coreset_weights length mismatch "
+                            f"({w_arr.shape[0]} vs {len(self.triangulations)}); ignore weights."
+                        )
+                        self.tri_weights = np.ones(len(self.triangulations), dtype=np.float64)
+                    else:
+                        self.tri_weights = w_arr
+
             self.center = self.triangulations[0]
             self.dist = float("INF")
             self.flip = [[] for _ in range(len(self.triangulations))]
-            # ★ 기본 weight: 모두 1
-            self.tri_weights = np.ones(len(self.triangulations), dtype=np.int64)
 
         else:
+            # =========================
+            #  (b) solution.json을 읽는 경우
+            #      → 원본 인스턴스 JSON(root["meta"]["input"]) 다시 열기
+            # =========================
             with open(self.input, "r", encoding="utf-8") as f:
                 root = json.load(f)
                 self.instance_uid = root["instance_uid"]
@@ -590,15 +615,20 @@ class Data:
                 print(f"num of pts: {len(self.pts)}")
                 print(f"num of triangulations: {len(self.triangulations)}")
 
-            # solution 기반 center 복원
-            min_flip_ind = np.argmin([len(x) for x in self.flip])
-            self.center = self.triangulations[min_flip_ind].fast_copy()
-            for flip_seq in self.flip[min_flip_ind]:
-                for flp in flip_seq:
-                    self.center.flip(flp[0], flp[1])
-
-            # ★ 여기서도 기본 weight: 모두 1
-            self.tri_weights = np.ones(len(self.triangulations), dtype=np.int64)
+                # ★ 여기서도 동일하게 weight 처리
+                w = root.get("coreset_weights", None)
+                if w is None:
+                    self.tri_weights = np.ones(len(self.triangulations), dtype=np.float64)
+                else:
+                    w_arr = np.asarray(w, dtype=np.float64)
+                    if w_arr.shape[0] != len(self.triangulations):
+                        print(
+                            f"[WARN] coreset_weights length mismatch "
+                            f"({w_arr.shape[0]} vs {len(self.triangulations)}); ignore weights."
+                        )
+                        self.tri_weights = np.ones(len(self.triangulations), dtype=np.float64)
+                    else:
+                        self.tri_weights = w_arr
 
     # strict intersection same as Triangulation (kept for find_center_np global graph)
     def intersect(self, d11, d12, d21, d22):
@@ -1245,7 +1275,7 @@ class Data:
                 res_e_list.append(T.flip(e[0], e[1]))
             flip_list.append(flip_iter)
 
-        print(f"{i} -> {j} can be done in {step} step!")
+        # print(f"{i} -> {j} can be done in {step} step!")
         return step, flip_list, i, j
 
     # ========================================================
