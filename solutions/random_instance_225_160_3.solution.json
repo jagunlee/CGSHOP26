@@ -1771,7 +1771,7 @@
 	],
 	"meta": {
 		"dist": 12,
-		"input": ".\\data\\benchmark_instances\\random_instance_225_160_3.json",
+		"input": "data\\benchmark_instances\\random_instance_225_160_3.json",
 		"center": [
 			[
 				114,

@@ -235,11 +235,11 @@ def build_and_save_coresets_for_all_instances(
 
 if __name__ == "__main__":
     build_and_save_coresets_for_all_instances(
-        input_dir="./data/benchmark_instances",
+        input_dir="./data/large_instances",
         output_dir="./data/coreset_instance",
-        eps=0.5,
+        eps=0.5, 
         alpha=8.0,
         alpha_min=16.0,
-        sample_size=32,   # 더 빠르게: 64, 32 등으로 조절
+        sample_size=16,   # 더 빠르게: 64, 32 등으로 조절
         center_seed=0,
     )

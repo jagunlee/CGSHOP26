@@ -143,7 +143,7 @@
 	],
 	"meta": {
 		"dist": 8,
-		"input": ".\\data\\benchmark_instances\\random_instance_110_15_3.json",
+		"input": "data\\benchmark_instances\\random_instance_110_15_3.json",
 		"center": [
 			[
 				6,
