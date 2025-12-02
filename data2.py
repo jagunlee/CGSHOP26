@@ -15,7 +15,7 @@ import pdb
 import random
 import time
 
-def compute_center_dist(self, T1: Triangulation, max_total=None, diff_mode="grid_score", multi = False):
+def compute_center_dist(self, T1, max_total=None, diff_mode="grid_score", multi = False):
         """
         Returns (total_length, flips) same as original, but much faster.
         - fast_copy
@@ -1000,7 +1000,7 @@ class Data:
                     continue
                 arr = np.fromiter(s, dtype=np.int32)
                 w = weight[arr]
-                pos_mask = (w > 0)
+                pos_mask = (w >= 0)
                 if not np.any(pos_mask):
                     continue
 
