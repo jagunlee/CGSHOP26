@@ -72,5 +72,5 @@ if __name__ == "__main__":
     solve_from_coreset(
         benchmark_dir="./data/benchmark_instances",
         coreset_dir="./data/coreset_instance",
-        coreset_name="rirs-12500-100-0c057cab_coreset.json",
+        coreset_name="rirs-9000-20-41491eba_coreset.json",
     )
