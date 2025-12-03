@@ -1,1 +1,2 @@
 opt.zip filter=lfs diff=lfs merge=lfs -text
+data/coreset_instance/*.json filter=lfs diff=lfs merge=lfs -text
