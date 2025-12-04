@@ -41,7 +41,8 @@ class Data:
         self.pts_y = root["points_y"]
         self.pts = []
         for i in range(len(self.pts_y)):
-            self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
+            self.pts.append(Point(self.pts_x[i], self.pts_y[i])) #hy: !!! This is pts in Data!!!! not in Triangulation
+        print("---ReadData: Triangulations")
         for t in root["triangulations"]:
             self.triangulations.append(self.make_triangulation(t))
             print(len(self.triangulations),"/",len(root["triangulations"]))
@@ -104,10 +105,10 @@ class Data:
             q1 = con[0]
             q2 = con[1]
             for t in tri.triangles:
-                i = t.get_ind(q1)
-                if i != -1:
-                    r1 = self.pts[q1]
-                    r2 = self.pts[t.pt(i + 1)]
+                i = t.get_ind(q1) # hy: i = 0~2 in a triangle t
+                if i != -1: # hy: q1 in a triangle
+                    r1 = self.pts[q1] # hy: pts in Data!!! r1 is (x,y) coordinate of q1
+                    r2 = self.pts[t.pt(i + 1)] #hy: t.pt gives real node index
                     r3 = self.pts[t.pt(i + 2)]
                     r4 = self.pts[q2]
                     if (turn(r1, r2, r4) < 0 or turn(r1, r3, r4) > 0):
@@ -126,7 +127,7 @@ class Data:
             # self.print_triangle(t)
             # print("-----------------------------")
             i = t.get_ind(q1)
-            f = self.flip(tri, t, (i + 1) % 3)
+            f = self.flip(tri, t, (i + 1) % 3) #hy: f = [(flip edge), (diagonal edge)]
             r = t.pt(i + 2)
             if (r == q2):
                 return f
@@ -176,7 +177,8 @@ class Data:
         pi = t.pt(i + 2)
         pj = tt.pt(j + 2)
         q1, q2 = min(t.pts[i], tt.pts[j]), max(t.pts[i], tt.pts[j])
-        f = [((q1, q2), (min(pi, pj), max(pi, pj)))]
+        #f = [((q1, q2), (min(pi, pj), max(pi, pj)))]
+        Fe_De = [((q1, q2), (min(pi, pj), max(pi, pj)))] # hy: Flip edge and Diagonal edge
         # f = [(q1, q2)]
         del(tri.dict[(q1, q2)])
         del(tri.dict[(q2, q1)])
@@ -202,7 +204,8 @@ class Data:
         tt.neis[(j + 1) % 3] = t
         tri.dict[(tt.pt(j), tt.pt(j+1))] = tt
         tri.dict[(tt.pt(j+1), tt.pt(j+2))] = tt
-        return f
+        #return f
+        return Fe_De
         # L = [f[0], t_pts]
         # return L
 
@@ -242,7 +245,7 @@ class Data:
 
         for t in tri.triangles:
             if t_pts == sorted(t.pts):
-                
+
                 print('t_pts:', t_pts) 
                 print('t.pts:', t.pts, 'sorted(t.pts):', sorted(t.pts))
 
@@ -261,7 +264,7 @@ class Data:
                     self.flip(tri, t, 2)
                     change = True
                     break
-        
+
                 if not change:
                     a, b = F[1]
                     print('c:', a, 'd:', b)
@@ -290,7 +293,10 @@ class Data:
         random.shuffle(edges)
         cnt = 0
         for e in edges:
-            fs += self.resolve_cross(tri, e)
+            #print("flip_sequence: e = ", e)
+            fs += self.resolve_cross(tri, e) #hy: fs = [((need-to-flip edge in T1), (to-get "e" in T2)), ((), ()), ....]
+            #print("fs = ", fs)
+            #print("-----------------")
             cnt += 1
             if cnt % 100 == 0:
                 print(cnt, "/", len(edges), " in flip_sequence")
@@ -444,7 +450,7 @@ class Data:
                     usedtri.add(t2)
                     fps.append(fs[i])
                 donenum += len(fps)
-                print(donenum, "/", len(done))
+                print("*", donenum, "/", len(done))
                 for _, con in fps:
                     self.resolve_cross(tri, con)
                 pfp.append(fps)
@@ -484,10 +490,55 @@ class Data:
                 usedtri.add(t2)
                 fps.append(fs[i])
             donenum += len(fps)
-            print(donenum, "/", len(done))
-            for _, con in fps:
+            print("+", donenum, "/", len(done))
+            flippable_edge=[]
+            for f, con in fps:
                 self.resolve_cross(tri, con)
-            pfp.append(fps)
+                flippable_edge.append(f)
+            #pfp.append(fps)
+            #print("fps: ", fps)
+            #print("flippable_edge: ", flippable_edge)
+            pfp.append(flippable_edge)
+        return pfp
+
+    #hy: generate a new centerT
+    def generate_centerT(self, tri1: Triangulation, tri2: Triangulation):
+        # flip sequence 자체에서 들어감
+        fs = self.flip_sequence(tri1, tri2) # hy: Problem is, we need to set a new tri2 and then apply flip_sequence...
+        done = [False] * len(fs)
+        tri = deepcopy(tri1)
+        pfp = []
+        donenum = 0
+        while not all(done):
+            fps = []
+            usedtri = set()
+            for i in range(len(fs)):
+                if done[i]: continue
+                (p1, p2), (p3, p4) = fs[i]
+                t1 = tri.find_triangle(p1, p2)
+                if not t1 or t1 in usedtri:
+                    continue
+                t2 = tri.find_triangle(p2, p1)
+                assert (t2)
+                if t2 in usedtri:
+                    continue
+                p5, p6 = t1.pt(t1.get_ind(p2) + 1), t2.pt(t2.get_ind(p1) + 1)
+                if (min(p5, p6), max(p5, p6)) != (p3, p4):
+                    continue
+                done[i] = True
+                usedtri.add(t1)
+                usedtri.add(t2)
+                fps.append(fs[i])
+            donenum += len(fps)
+            print("+", donenum, "/", len(done))
+            flippable_edge=[]
+            for f, con in fps:
+                self.resolve_cross(tri, con)
+                flippable_edge.append(f)
+            #pfp.append(fps)
+            #print("fps: ", fps)
+            #print("flippable_edge: ", flippable_edge)
+            pfp.append(flippable_edge)
         return pfp
 
     def print_triangle(self, t: Triangle):
@@ -535,10 +586,10 @@ class Data:
 
         return T1copy
         '''
-        
+
     # reconstruction이 필요
     # 우선, 한 번의 diagonal flip이 이루어진 triangulation 계산?
-    
+
     def findCenter(self):
 
         start = time.time()
@@ -546,12 +597,12 @@ class Data:
         # random.shuffle(self.triangulations)
         centerT = self.triangulations[0]
         weight = 1
-        
+
         for i in range(1, len(self.triangulations)):
             print(i,"th triangle")
             nextT = self.triangulations[i]
             # 내분을 통해 새로운 central triangulation 계산
-            centerT = self.internal_division(centerT, weight, nextT, 1) 
+            centerT = self.internal_division(centerT, weight, nextT, 1)
             weight += 1
 
             end = time.time()
@@ -574,7 +625,7 @@ class Data:
 
         inst["flips"] = self.pFlips
         inst["meta"] = {"dist": sum([len(pFlip) for pFlip in self.pFlips])} # , "input": self.input}
-        
+
         folder = "solutions"
         with open(folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
             json.dump(inst, f, indent='\t')

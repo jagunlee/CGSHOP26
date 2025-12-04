@@ -111,21 +111,16 @@ def my_print_db(db):
 
 def convert_to_string(flips):
 
-    print(flips)
-    exit(0)
-    # center -> adjmat
-    edges = list(center.edges.keys())
-    N = len(center.pts)
-    adjmat = np.zeros((N,N))
-    for i,j in edges:
-        adjmat[i,j]=int(1)
-        adjmat[j,i]=int(1)
+    print("--- conver_to_string: ", flips)
 
-    # adjmat -> string
+    # flips -> string
     entries = []
-    for i in range(N-1):
-        for j in range(i+1, N):
-            entries.append(str(int(adjmat[i,j])))
+    for flip in flips:
+        for e in flip:
+            entries.append(str(e[0]))
+            entries.append('.')
+            entries.append(str(e[1]))
+            entries.append('.')
         entries.append(",")
     return "".join(entries)
 
@@ -134,12 +129,21 @@ def local_search_on_object(db, dt, idx, pll_flips, centerT, flips):
     rewards=[]
 
     # Various PFD by parallel_flip_path() from T_idx to centerT
+    print("T_", idx)
     new_flip = dt.generate_pfp(dt.triangulations[idx], centerT)
+    exit(0)
     dist = len(new_flip)
-    print(new_flip)
-    flips[idx] = new_flip
-    print("---")
-    print(flips)
+    list_flip = []
+    # tuple type -> list type
+    for i in range(dist):
+        outside = new_flip[i]
+        list_outside = [list(outside[j]) for j in range(len(outside))]
+        list_flip.append(list_outside)
+    flips[idx] = list_flip
+
+    # Try A: generate new centerT
+    # So, need to compute flips again from each T to a new centerT
+
 
     Tris_path = './data/benchmark_instances/'
     with open(Tris_path + dt.instance_uid + '.json', "r") as f:
@@ -227,8 +231,10 @@ def local_search_from_decoded(db, inst_file, path, input_file):
             obj, rew = local_search_on_object(db, dt, center, input_file)
             single_thread_obj.append(obj)
             single_thread_rew.append(rew)
+
         # add_db! part
         add_db(db, single_thread_obj, single_thread_rew)
+
         # Write search_output.txt file
         write_output_to_file(db, path)
 
@@ -236,6 +242,7 @@ def local_search_from_decoded(db, inst_file, path, input_file):
 
 
 def local_search(db, path, input_file):
+    print("in local_search()")
     if 'solution' not in input_file and 'decoded' not in input_file:
         center, dt = read_center(input_file) # './centers/~'
     elif 'solution' in input_file:
@@ -244,7 +251,6 @@ def local_search(db, path, input_file):
         dt = Data(root["meta"]["input"]) # Data class from th_data.py
         flips = root["flips"]
         flip_len=[len(f) for f in flips]
-
         max_len_idx = flip_len.index(max(flip_len)) #idx of Triangulation with longest pfd
         min_len_idx = flip_len.index(min(flip_len)) #idx of Triangulation with shortest pfd
 
@@ -258,24 +264,13 @@ def local_search(db, path, input_file):
             for flip in pll_flip:
                 dt.flipDiagonal(tmpTmin, [flip])
         centerT = deepcopy(tmpTmin)
-        #print(min_len_idx)
-        #print("-----")
-        #print(sorted(Tmin.edges))
-        #print("-----")
-        #print(min_pll_flip)
-        #print("-----")
-        #print(sorted(centerT.edges))
-        #print("-----")
-        #print(sorted(Tmin.edges.difference(centerT.edges)))
-        #print(sorted(centerT.edges.difference(Tmin.edges)))
-        #exit(0)
-
-
 
     single_thread_obj=[]
     single_thread_rew =[]
-    for i in range(20):
+    for i in range(1):
         obj, rew = local_search_on_object(db, dt, max_len_idx, max_pll_flip, centerT, flips)
+        # obj = pfp from Tmin to center_j
+        # rew = sum(pfp(T_i, center_j))
         single_thread_obj.append(obj)
         single_thread_rew.append(rew)
 
