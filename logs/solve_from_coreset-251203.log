@@ -1,0 +1,2504 @@
+========== solve_from_coreset run ==========
+Time: 2025-12-03 15:56:39
+Loaded 250 instance best costs from ./result.csv
+
+[random_instance_110_15_3_coreset.json]
+instance_uid            = random_instance_110_15_3
+coreset_dist_on_full    = 10.000000
+find_center_time        = 0.601s
+evaluate_time           = 0.629s
+best_cost(result.csv)   = 7.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.428571
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_111_15_2_coreset.json]
+instance_uid            = random_instance_111_15_2
+coreset_dist_on_full    = 5.000000
+find_center_time        = 0.640s
+evaluate_time           = 0.618s
+best_cost(result.csv)   = 5.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_130_15_5_coreset.json]
+instance_uid            = random_instance_130_15_5
+coreset_dist_on_full    = 10.000000
+find_center_time        = 0.649s
+evaluate_time           = 0.668s
+best_cost(result.csv)   = 9.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.111111
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_132_80_20_coreset.json]
+instance_uid            = random_instance_132_80_20
+coreset_dist_on_full    = 99.000000
+find_center_time        = 1.180s
+evaluate_time           = 1.097s
+best_cost(result.csv)   = 81.000000
+diff(coreset - best)    = 18.000000
+ratio(coreset / best)   = 1.222222
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_136_320_2_coreset.json]
+instance_uid            = random_instance_136_320_2
+coreset_dist_on_full    = 8.000000
+find_center_time        = 7.396s
+evaluate_time           = 7.046s
+best_cost(result.csv)   = 7.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.142857
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_137_40_10_coreset.json]
+instance_uid            = random_instance_137_40_10
+coreset_dist_on_full    = 41.000000
+find_center_time        = 0.654s
+evaluate_time           = 0.639s
+best_cost(result.csv)   = 31.000000
+diff(coreset - best)    = 10.000000
+ratio(coreset / best)   = 1.322581
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_160_320_20_coreset.json]
+instance_uid            = random_instance_160_320_20
+coreset_dist_on_full    = 90.000000
+find_center_time        = 6.962s
+evaluate_time           = 6.818s
+best_cost(result.csv)   = 79.000000
+diff(coreset - best)    = 11.000000
+ratio(coreset / best)   = 1.139241
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_168_15_2_coreset.json]
+instance_uid            = random_instance_168_15_2
+coreset_dist_on_full    = 1.000000
+find_center_time        = 0.600s
+evaluate_time           = 0.584s
+best_cost(result.csv)   = 1.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_168_80_5_coreset.json]
+instance_uid            = random_instance_168_80_5
+coreset_dist_on_full    = 22.000000
+find_center_time        = 1.099s
+evaluate_time           = 1.067s
+best_cost(result.csv)   = 18.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.222222
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_16_15_2_coreset.json]
+instance_uid            = random_instance_16_15_2
+coreset_dist_on_full    = 3.000000
+find_center_time        = 0.609s
+evaluate_time           = 0.605s
+best_cost(result.csv)   = 3.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_188_40_10_coreset.json]
+instance_uid            = random_instance_188_40_10
+coreset_dist_on_full    = 48.000000
+find_center_time        = 0.647s
+evaluate_time           = 0.647s
+best_cost(result.csv)   = 41.000000
+diff(coreset - best)    = 7.000000
+ratio(coreset / best)   = 1.170732
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_192_15_2_coreset.json]
+instance_uid            = random_instance_192_15_2
+coreset_dist_on_full    = 3.000000
+find_center_time        = 0.622s
+evaluate_time           = 0.602s
+best_cost(result.csv)   = 3.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_197_320_10_coreset.json]
+instance_uid            = random_instance_197_320_10
+coreset_dist_on_full    = 75.000000
+find_center_time        = 7.314s
+evaluate_time           = 6.790s
+best_cost(result.csv)   = 69.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.086957
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_204_80_20_coreset.json]
+instance_uid            = random_instance_204_80_20
+coreset_dist_on_full    = 93.000000
+find_center_time        = 1.082s
+evaluate_time           = 1.048s
+best_cost(result.csv)   = 67.000000
+diff(coreset - best)    = 26.000000
+ratio(coreset / best)   = 1.388060
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_213_80_20_coreset.json]
+instance_uid            = random_instance_213_80_20
+coreset_dist_on_full    = 122.000000
+find_center_time        = 1.138s
+evaluate_time           = 1.063s
+best_cost(result.csv)   = 94.000000
+diff(coreset - best)    = 28.000000
+ratio(coreset / best)   = 1.297872
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_224_15_20_coreset.json]
+instance_uid            = random_instance_224_15_20
+coreset_dist_on_full    = 54.000000
+find_center_time        = 0.606s
+evaluate_time           = 0.609s
+best_cost(result.csv)   = 48.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.125000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_225_160_3_coreset.json]
+instance_uid            = random_instance_225_160_3
+coreset_dist_on_full    = 13.000000
+find_center_time        = 1.131s
+evaluate_time           = 1.058s
+best_cost(result.csv)   = 12.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.083333
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_271_15_20_coreset.json]
+instance_uid            = random_instance_271_15_20
+coreset_dist_on_full    = 59.000000
+find_center_time        = 0.616s
+evaluate_time           = 0.613s
+best_cost(result.csv)   = 50.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.180000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_286_15_5_coreset.json]
+instance_uid            = random_instance_286_15_5
+coreset_dist_on_full    = 15.000000
+find_center_time        = 0.622s
+evaluate_time           = 0.608s
+best_cost(result.csv)   = 14.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.071429
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_292_15_20_coreset.json]
+instance_uid            = random_instance_292_15_20
+coreset_dist_on_full    = 54.000000
+find_center_time        = 0.626s
+evaluate_time           = 0.616s
+best_cost(result.csv)   = 49.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.102041
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_299_40_10_coreset.json]
+instance_uid            = random_instance_299_40_10
+coreset_dist_on_full    = 39.000000
+find_center_time        = 0.636s
+evaluate_time           = 0.602s
+best_cost(result.csv)   = 30.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.300000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_307_15_20_coreset.json]
+instance_uid            = random_instance_307_15_20
+coreset_dist_on_full    = 69.000000
+find_center_time        = 0.605s
+evaluate_time           = 0.597s
+best_cost(result.csv)   = 57.000000
+diff(coreset - best)    = 12.000000
+ratio(coreset / best)   = 1.210526
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_312_80_2_coreset.json]
+instance_uid            = random_instance_312_80_2
+coreset_dist_on_full    = 6.000000
+find_center_time        = 1.081s
+evaluate_time           = 1.046s
+best_cost(result.csv)   = 6.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_337_40_2_coreset.json]
+instance_uid            = random_instance_337_40_2
+coreset_dist_on_full    = 4.000000
+find_center_time        = 0.639s
+evaluate_time           = 0.604s
+best_cost(result.csv)   = 4.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_34_320_2_coreset.json]
+instance_uid            = random_instance_34_320_2
+coreset_dist_on_full    = 11.000000
+find_center_time        = 7.103s
+evaluate_time           = 6.861s
+best_cost(result.csv)   = 8.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.375000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_351_320_5_coreset.json]
+instance_uid            = random_instance_351_320_5
+coreset_dist_on_full    = 37.000000
+find_center_time        = 7.061s
+evaluate_time           = 6.841s
+best_cost(result.csv)   = 30.000000
+diff(coreset - best)    = 7.000000
+ratio(coreset / best)   = 1.233333
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_353_80_10_coreset.json]
+instance_uid            = random_instance_353_80_10
+coreset_dist_on_full    = 54.000000
+find_center_time        = 1.081s
+evaluate_time           = 1.046s
+best_cost(result.csv)   = 40.000000
+diff(coreset - best)    = 14.000000
+ratio(coreset / best)   = 1.350000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_359_320_2_coreset.json]
+instance_uid            = random_instance_359_320_2
+coreset_dist_on_full    = 15.000000
+find_center_time        = 7.242s
+evaluate_time           = 6.917s
+best_cost(result.csv)   = 12.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.250000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_36_80_3_coreset.json]
+instance_uid            = random_instance_36_80_3
+coreset_dist_on_full    = 15.000000
+find_center_time        = 1.126s
+evaluate_time           = 1.033s
+best_cost(result.csv)   = 14.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.071429
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_397_40_3_coreset.json]
+instance_uid            = random_instance_397_40_3
+coreset_dist_on_full    = 10.000000
+find_center_time        = 0.620s
+evaluate_time           = 0.605s
+best_cost(result.csv)   = 9.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.111111
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_402_40_20_coreset.json]
+instance_uid            = random_instance_402_40_20
+coreset_dist_on_full    = 96.000000
+find_center_time        = 0.644s
+evaluate_time           = 0.613s
+best_cost(result.csv)   = 81.000000
+diff(coreset - best)    = 15.000000
+ratio(coreset / best)   = 1.185185
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_402_80_20_coreset.json]
+instance_uid            = random_instance_402_80_20
+coreset_dist_on_full    = 116.000000
+find_center_time        = 1.159s
+evaluate_time           = 1.078s
+best_cost(result.csv)   = 97.000000
+diff(coreset - best)    = 19.000000
+ratio(coreset / best)   = 1.195876
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_410_160_5_coreset.json]
+instance_uid            = random_instance_410_160_5
+coreset_dist_on_full    = 26.000000
+find_center_time        = 1.238s
+evaluate_time           = 1.058s
+best_cost(result.csv)   = 23.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.130435
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_420_40_2_coreset.json]
+instance_uid            = random_instance_420_40_2
+coreset_dist_on_full    = 8.000000
+find_center_time        = 0.648s
+evaluate_time           = 0.604s
+best_cost(result.csv)   = 8.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_422_320_10_coreset.json]
+instance_uid            = random_instance_422_320_10
+coreset_dist_on_full    = 60.000000
+find_center_time        = 7.147s
+evaluate_time           = 6.726s
+best_cost(result.csv)   = 54.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.111111
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_42_15_2_coreset.json]
+instance_uid            = random_instance_42_15_2
+coreset_dist_on_full    = 3.000000
+find_center_time        = 0.599s
+evaluate_time           = 0.615s
+best_cost(result.csv)   = 3.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_440_160_20_coreset.json]
+instance_uid            = random_instance_440_160_20
+coreset_dist_on_full    = 140.000000
+find_center_time        = 1.280s
+evaluate_time           = 1.121s
+best_cost(result.csv)   = 110.000000
+diff(coreset - best)    = 30.000000
+ratio(coreset / best)   = 1.272727
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_444_15_10_coreset.json]
+instance_uid            = random_instance_444_15_10
+coreset_dist_on_full    = 25.000000
+find_center_time        = 0.609s
+evaluate_time           = 0.594s
+best_cost(result.csv)   = 23.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.086957
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_453_320_5_coreset.json]
+instance_uid            = random_instance_453_320_5
+coreset_dist_on_full    = 32.000000
+find_center_time        = 7.201s
+evaluate_time           = 6.844s
+best_cost(result.csv)   = 31.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.032258
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_459_320_3_coreset.json]
+instance_uid            = random_instance_459_320_3
+coreset_dist_on_full    = 16.000000
+find_center_time        = 7.331s
+evaluate_time           = 6.762s
+best_cost(result.csv)   = 16.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_476_80_3_coreset.json]
+instance_uid            = random_instance_476_80_3
+coreset_dist_on_full    = 14.000000
+find_center_time        = 1.117s
+evaluate_time           = 1.056s
+best_cost(result.csv)   = 13.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.076923
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_479_320_20_coreset.json]
+instance_uid            = random_instance_479_320_20
+coreset_dist_on_full    = 191.000000
+find_center_time        = 8.014s
+evaluate_time           = 6.912s
+best_cost(result.csv)   = 165.000000
+diff(coreset - best)    = 26.000000
+ratio(coreset / best)   = 1.157576
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_482_80_2_coreset.json]
+instance_uid            = random_instance_482_80_2
+coreset_dist_on_full    = 10.000000
+find_center_time        = 1.075s
+evaluate_time           = 1.060s
+best_cost(result.csv)   = 9.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.111111
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_487_320_3_coreset.json]
+instance_uid            = random_instance_487_320_3
+coreset_dist_on_full    = 20.000000
+find_center_time        = 7.061s
+evaluate_time           = 6.871s
+best_cost(result.csv)   = 16.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.250000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_493_160_5_coreset.json]
+instance_uid            = random_instance_493_160_5
+coreset_dist_on_full    = 30.000000
+find_center_time        = 1.145s
+evaluate_time           = 1.045s
+best_cost(result.csv)   = 24.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.250000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_49_15_2_coreset.json]
+instance_uid            = random_instance_49_15_2
+coreset_dist_on_full    = 4.000000
+find_center_time        = 0.633s
+evaluate_time           = 0.603s
+best_cost(result.csv)   = 4.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_4_40_2_coreset.json]
+instance_uid            = random_instance_4_40_2
+coreset_dist_on_full    = 6.000000
+find_center_time        = 0.623s
+evaluate_time           = 0.613s
+best_cost(result.csv)   = 6.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_51_80_3_coreset.json]
+instance_uid            = random_instance_51_80_3
+coreset_dist_on_full    = 18.000000
+find_center_time        = 1.086s
+evaluate_time           = 1.049s
+best_cost(result.csv)   = 16.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.125000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_543_40_5_coreset.json]
+instance_uid            = random_instance_543_40_5
+coreset_dist_on_full    = 18.000000
+find_center_time        = 0.624s
+evaluate_time           = 0.598s
+best_cost(result.csv)   = 16.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.125000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_547_40_2_coreset.json]
+instance_uid            = random_instance_547_40_2
+coreset_dist_on_full    = 5.000000
+find_center_time        = 0.631s
+evaluate_time           = 0.598s
+best_cost(result.csv)   = 5.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_552_320_20_coreset.json]
+instance_uid            = random_instance_552_320_20
+coreset_dist_on_full    = 165.000000
+find_center_time        = 7.933s
+evaluate_time           = 6.881s
+best_cost(result.csv)   = 149.000000
+diff(coreset - best)    = 16.000000
+ratio(coreset / best)   = 1.107383
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_579_80_3_coreset.json]
+instance_uid            = random_instance_579_80_3
+coreset_dist_on_full    = 8.000000
+find_center_time        = 1.037s
+evaluate_time           = 1.030s
+best_cost(result.csv)   = 7.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.142857
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_600_320_3_coreset.json]
+instance_uid            = random_instance_600_320_3
+coreset_dist_on_full    = 9.000000
+find_center_time        = 6.932s
+evaluate_time           = 6.763s
+best_cost(result.csv)   = 9.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_603_320_2_coreset.json]
+instance_uid            = random_instance_603_320_2
+coreset_dist_on_full    = 8.000000
+find_center_time        = 6.990s
+evaluate_time           = 6.814s
+best_cost(result.csv)   = 8.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_603_40_20_coreset.json]
+instance_uid            = random_instance_603_40_20
+coreset_dist_on_full    = 90.000000
+find_center_time        = 0.667s
+evaluate_time           = 0.642s
+best_cost(result.csv)   = 81.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.111111
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_605_80_20_coreset.json]
+instance_uid            = random_instance_605_80_20
+coreset_dist_on_full    = 123.000000
+find_center_time        = 1.105s
+evaluate_time           = 1.032s
+best_cost(result.csv)   = 97.000000
+diff(coreset - best)    = 26.000000
+ratio(coreset / best)   = 1.268041
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_650_80_10_coreset.json]
+instance_uid            = random_instance_650_80_10
+coreset_dist_on_full    = 62.000000
+find_center_time        = 1.107s
+evaluate_time           = 1.060s
+best_cost(result.csv)   = 47.000000
+diff(coreset - best)    = 15.000000
+ratio(coreset / best)   = 1.319149
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_666_15_10_coreset.json]
+instance_uid            = random_instance_666_15_10
+coreset_dist_on_full    = 32.000000
+find_center_time        = 0.633s
+evaluate_time           = 0.593s
+best_cost(result.csv)   = 26.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.230769
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_668_160_5_coreset.json]
+instance_uid            = random_instance_668_160_5
+coreset_dist_on_full    = 37.000000
+find_center_time        = 1.200s
+evaluate_time           = 1.068s
+best_cost(result.csv)   = 30.000000
+diff(coreset - best)    = 7.000000
+ratio(coreset / best)   = 1.233333
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_677_40_2_coreset.json]
+instance_uid            = random_instance_677_40_2
+coreset_dist_on_full    = 7.000000
+find_center_time        = 0.637s
+evaluate_time           = 0.611s
+best_cost(result.csv)   = 6.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.166667
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_683_40_10_coreset.json]
+instance_uid            = random_instance_683_40_10
+coreset_dist_on_full    = 39.000000
+find_center_time        = 0.615s
+evaluate_time           = 0.625s
+best_cost(result.csv)   = 30.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.300000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_689_160_2_coreset.json]
+instance_uid            = random_instance_689_160_2
+coreset_dist_on_full    = 11.000000
+find_center_time        = 1.141s
+evaluate_time           = 1.071s
+best_cost(result.csv)   = 10.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.100000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_694_15_3_coreset.json]
+instance_uid            = random_instance_694_15_3
+coreset_dist_on_full    = 7.000000
+find_center_time        = 0.620s
+evaluate_time           = 0.608s
+best_cost(result.csv)   = 5.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.400000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_699_320_20_coreset.json]
+instance_uid            = random_instance_699_320_20
+coreset_dist_on_full    = 67.000000
+find_center_time        = 6.910s
+evaluate_time           = 6.734s
+best_cost(result.csv)   = 59.000000
+diff(coreset - best)    = 8.000000
+ratio(coreset / best)   = 1.135593
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_73_160_10_coreset.json]
+instance_uid            = random_instance_73_160_10
+coreset_dist_on_full    = 58.000000
+find_center_time        = 1.274s
+evaluate_time           = 1.090s
+best_cost(result.csv)   = 50.000000
+diff(coreset - best)    = 8.000000
+ratio(coreset / best)   = 1.160000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_757_15_5_coreset.json]
+instance_uid            = random_instance_757_15_5
+coreset_dist_on_full    = 18.000000
+find_center_time        = 0.630s
+evaluate_time           = 0.589s
+best_cost(result.csv)   = 16.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.125000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_771_15_20_coreset.json]
+instance_uid            = random_instance_771_15_20
+coreset_dist_on_full    = 52.000000
+find_center_time        = 0.633s
+evaluate_time           = 0.601s
+best_cost(result.csv)   = 52.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_783_80_2_coreset.json]
+instance_uid            = random_instance_783_80_2
+coreset_dist_on_full    = 6.000000
+find_center_time        = 1.068s
+evaluate_time           = 1.057s
+best_cost(result.csv)   = 5.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.200000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_784_15_2_coreset.json]
+instance_uid            = random_instance_784_15_2
+coreset_dist_on_full    = 3.000000
+find_center_time        = 0.614s
+evaluate_time           = 0.549s
+best_cost(result.csv)   = 3.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_786_320_5_coreset.json]
+instance_uid            = random_instance_786_320_5
+coreset_dist_on_full    = 32.000000
+find_center_time        = 7.330s
+evaluate_time           = 6.816s
+best_cost(result.csv)   = 33.000000
+diff(coreset - best)    = -1.000000
+ratio(coreset / best)   = 0.969697
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[random_instance_78_40_10_coreset.json]
+instance_uid            = random_instance_78_40_10
+coreset_dist_on_full    = 32.000000
+find_center_time        = 0.634s
+evaluate_time           = 0.615s
+best_cost(result.csv)   = 26.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.230769
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_792_80_5_coreset.json]
+instance_uid            = random_instance_792_80_5
+coreset_dist_on_full    = 27.000000
+find_center_time        = 1.078s
+evaluate_time           = 1.030s
+best_cost(result.csv)   = 22.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.227273
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_798_80_3_coreset.json]
+instance_uid            = random_instance_798_80_3
+coreset_dist_on_full    = 11.000000
+find_center_time        = 1.071s
+evaluate_time           = 1.027s
+best_cost(result.csv)   = 10.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.100000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_823_320_3_coreset.json]
+instance_uid            = random_instance_823_320_3
+coreset_dist_on_full    = 19.000000
+find_center_time        = 7.176s
+evaluate_time           = 6.767s
+best_cost(result.csv)   = 16.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.187500
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_826_320_20_coreset.json]
+instance_uid            = random_instance_826_320_20
+coreset_dist_on_full    = 197.000000
+find_center_time        = 7.759s
+evaluate_time           = 6.880s
+best_cost(result.csv)   = 168.000000
+diff(coreset - best)    = 29.000000
+ratio(coreset / best)   = 1.172619
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_835_160_3_coreset.json]
+instance_uid            = random_instance_835_160_3
+coreset_dist_on_full    = 19.000000
+find_center_time        = 1.238s
+evaluate_time           = 1.081s
+best_cost(result.csv)   = 18.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.055556
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_837_40_10_coreset.json]
+instance_uid            = random_instance_837_40_10
+coreset_dist_on_full    = 44.000000
+find_center_time        = 0.660s
+evaluate_time           = 0.611s
+best_cost(result.csv)   = 35.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.257143
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_838_80_10_coreset.json]
+instance_uid            = random_instance_838_80_10
+coreset_dist_on_full    = 36.000000
+find_center_time        = 1.080s
+evaluate_time           = 1.032s
+best_cost(result.csv)   = 31.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.161290
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_83_160_10_coreset.json]
+instance_uid            = random_instance_83_160_10
+coreset_dist_on_full    = 66.000000
+find_center_time        = 1.258s
+evaluate_time           = 1.085s
+best_cost(result.csv)   = 57.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.157895
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_840_15_3_coreset.json]
+instance_uid            = random_instance_840_15_3
+coreset_dist_on_full    = 10.000000
+find_center_time        = 0.628s
+evaluate_time           = 0.611s
+best_cost(result.csv)   = 8.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.250000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_840_160_20_coreset.json]
+instance_uid            = random_instance_840_160_20
+coreset_dist_on_full    = 134.000000
+find_center_time        = 1.248s
+evaluate_time           = 1.112s
+best_cost(result.csv)   = 112.000000
+diff(coreset - best)    = 22.000000
+ratio(coreset / best)   = 1.196429
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_862_160_2_coreset.json]
+instance_uid            = random_instance_862_160_2
+coreset_dist_on_full    = 8.000000
+find_center_time        = 1.109s
+evaluate_time           = 1.057s
+best_cost(result.csv)   = 7.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.142857
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_881_320_10_coreset.json]
+instance_uid            = random_instance_881_320_10
+coreset_dist_on_full    = 78.000000
+find_center_time        = 7.434s
+evaluate_time           = 6.829s
+best_cost(result.csv)   = 70.000000
+diff(coreset - best)    = 8.000000
+ratio(coreset / best)   = 1.114286
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_887_80_2_coreset.json]
+instance_uid            = random_instance_887_80_2
+coreset_dist_on_full    = 5.000000
+find_center_time        = 1.058s
+evaluate_time           = 1.040s
+best_cost(result.csv)   = 5.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_891_15_20_coreset.json]
+instance_uid            = random_instance_891_15_20
+coreset_dist_on_full    = 63.000000
+find_center_time        = 0.630s
+evaluate_time           = 0.617s
+best_cost(result.csv)   = 56.000000
+diff(coreset - best)    = 7.000000
+ratio(coreset / best)   = 1.125000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_900_40_20_coreset.json]
+instance_uid            = random_instance_900_40_20
+coreset_dist_on_full    = 91.000000
+find_center_time        = 0.641s
+evaluate_time           = 0.628s
+best_cost(result.csv)   = 67.000000
+diff(coreset - best)    = 24.000000
+ratio(coreset / best)   = 1.358209
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_905_15_2_coreset.json]
+instance_uid            = random_instance_905_15_2
+coreset_dist_on_full    = 5.000000
+find_center_time        = 0.626s
+evaluate_time           = 0.600s
+best_cost(result.csv)   = 4.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.250000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_90_320_5_coreset.json]
+instance_uid            = random_instance_90_320_5
+coreset_dist_on_full    = 23.000000
+find_center_time        = 7.033s
+evaluate_time           = 6.781s
+best_cost(result.csv)   = 20.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.150000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_915_320_20_coreset.json]
+instance_uid            = random_instance_915_320_20
+coreset_dist_on_full    = 183.000000
+find_center_time        = 8.128s
+evaluate_time           = 7.459s
+best_cost(result.csv)   = 162.000000
+diff(coreset - best)    = 21.000000
+ratio(coreset / best)   = 1.129630
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_925_80_2_coreset.json]
+instance_uid            = random_instance_925_80_2
+coreset_dist_on_full    = 9.000000
+find_center_time        = 1.243s
+evaluate_time           = 1.181s
+best_cost(result.csv)   = 7.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.285714
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_93_40_10_coreset.json]
+instance_uid            = random_instance_93_40_10
+coreset_dist_on_full    = 51.000000
+find_center_time        = 0.684s
+evaluate_time           = 0.645s
+best_cost(result.csv)   = 40.000000
+diff(coreset - best)    = 11.000000
+ratio(coreset / best)   = 1.275000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_946_40_20_coreset.json]
+instance_uid            = random_instance_946_40_20
+coreset_dist_on_full    = 77.000000
+find_center_time        = 0.678s
+evaluate_time           = 0.654s
+best_cost(result.csv)   = 61.000000
+diff(coreset - best)    = 16.000000
+ratio(coreset / best)   = 1.262295
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_960_160_2_coreset.json]
+instance_uid            = random_instance_960_160_2
+coreset_dist_on_full    = 9.000000
+find_center_time        = 1.298s
+evaluate_time           = 1.245s
+best_cost(result.csv)   = 9.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_966_40_2_coreset.json]
+instance_uid            = random_instance_966_40_2
+coreset_dist_on_full    = 6.000000
+find_center_time        = 0.648s
+evaluate_time           = 0.633s
+best_cost(result.csv)   = 5.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.200000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_973_80_3_coreset.json]
+instance_uid            = random_instance_973_80_3
+coreset_dist_on_full    = 11.000000
+find_center_time        = 1.215s
+evaluate_time           = 1.206s
+best_cost(result.csv)   = 11.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[random_instance_976_15_20_coreset.json]
+instance_uid            = random_instance_976_15_20
+coreset_dist_on_full    = 52.000000
+find_center_time        = 0.634s
+evaluate_time           = 0.601s
+best_cost(result.csv)   = 51.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.019608
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_982_320_10_coreset.json]
+instance_uid            = random_instance_982_320_10
+coreset_dist_on_full    = 90.000000
+find_center_time        = 10.434s
+evaluate_time           = 8.364s
+best_cost(result.csv)   = 78.000000
+diff(coreset - best)    = 12.000000
+ratio(coreset / best)   = 1.153846
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_995_160_5_coreset.json]
+instance_uid            = random_instance_995_160_5
+coreset_dist_on_full    = 27.000000
+find_center_time        = 1.449s
+evaluate_time           = 1.319s
+best_cost(result.csv)   = 29.000000
+diff(coreset - best)    = -2.000000
+ratio(coreset / best)   = 0.931034
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[random_instance_995_320_10_coreset.json]
+instance_uid            = random_instance_995_320_10
+coreset_dist_on_full    = 71.000000
+find_center_time        = 9.578s
+evaluate_time           = 7.907s
+best_cost(result.csv)   = 65.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.092308
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[random_instance_996_40_20_coreset.json]
+instance_uid            = random_instance_996_40_20
+coreset_dist_on_full    = 85.000000
+find_center_time        = 0.666s
+evaluate_time           = 0.638s
+best_cost(result.csv)   = 76.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.118421
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-1000-20-ee506ff1_coreset.json]
+instance_uid            = rirs-1000-20-ee506ff1
+coreset_dist_on_full    = 310.000000
+find_center_time        = 35.018s
+evaluate_time           = 9.474s
+best_cost(result.csv)   = 298.000000
+diff(coreset - best)    = 12.000000
+ratio(coreset / best)   = 1.040268
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-1000-50-efb3c1bd_coreset.json]
+instance_uid            = rirs-1000-50-efb3c1bd
+coreset_dist_on_full    = 784.000000
+find_center_time        = 35.978s
+evaluate_time           = 12.170s
+best_cost(result.csv)   = 779.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.006418
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-1000-75-50e9d715_coreset.json]
+instance_uid            = rirs-1000-75-50e9d715
+coreset_dist_on_full    = 1188.000000
+find_center_time        = 37.807s
+evaluate_time           = 13.469s
+best_cost(result.csv)   = 1185.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.002532
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-10000-20-85b95253_coreset.json]
+instance_uid            = rirs-10000-20-85b95253
+coreset_dist_on_full    = 439.000000
+find_center_time        = 180.983s
+evaluate_time           = 41.754s
+best_cost(result.csv)   = 426.000000
+diff(coreset - best)    = 13.000000
+ratio(coreset / best)   = 1.030516
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-10000-50-918ee15c_coreset.json]
+instance_uid            = rirs-10000-50-918ee15c
+coreset_dist_on_full    = 1115.000000
+find_center_time        = 377.426s
+evaluate_time           = 74.807s
+best_cost(result.csv)   = 1118.000000
+diff(coreset - best)    = -3.000000
+ratio(coreset / best)   = 0.997317
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-10000-75-08dd7dc1_coreset.json]
+instance_uid            = rirs-10000-75-08dd7dc1
+coreset_dist_on_full    = 1721.000000
+find_center_time        = 451.869s
+evaluate_time           = 103.192s
+best_cost(result.csv)   = 1678.000000
+diff(coreset - best)    = 43.000000
+ratio(coreset / best)   = 1.025626
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-12500-100-0c057cab_coreset.json]
+instance_uid            = rirs-12500-100-0c057cab
+coreset_dist_on_full    = 2387.000000
+find_center_time        = 456.593s
+evaluate_time           = 162.456s
+best_cost(result.csv)   = 2378.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.003785
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-12500-20-dd322248_coreset.json]
+instance_uid            = rirs-12500-20-dd322248
+coreset_dist_on_full    = 476.000000
+find_center_time        = 316.183s
+evaluate_time           = 46.830s
+best_cost(result.csv)   = 457.000000
+diff(coreset - best)    = 19.000000
+ratio(coreset / best)   = 1.041575
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-12500-200-e8ac0d06_coreset.json]
+instance_uid            = rirs-12500-200-e8ac0d06
+coreset_dist_on_full    = 4696.000000
+find_center_time        = 534.675s
+evaluate_time           = 306.968s
+best_cost(result.csv)   = 4709.000000
+diff(coreset - best)    = -13.000000
+ratio(coreset / best)   = 0.997239
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-12500-50-7f3b2926_coreset.json]
+instance_uid            = rirs-12500-50-7f3b2926
+coreset_dist_on_full    = 1168.000000
+find_center_time        = 429.651s
+evaluate_time           = 87.606s
+best_cost(result.csv)   = 1164.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.003436
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-12500-75-2ef068ba_coreset.json]
+instance_uid            = rirs-12500-75-2ef068ba
+coreset_dist_on_full    = 1753.000000
+find_center_time        = 785.502s
+evaluate_time           = 129.434s
+best_cost(result.csv)   = 1747.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.003434
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-1500-20-abcb179b_coreset.json]
+instance_uid            = rirs-1500-20-abcb179b
+coreset_dist_on_full    = 325.000000
+find_center_time        = 47.897s
+evaluate_time           = 11.681s
+best_cost(result.csv)   = 331.000000
+diff(coreset - best)    = -6.000000
+ratio(coreset / best)   = 0.981873
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-1500-50-49040875_coreset.json]
+instance_uid            = rirs-1500-50-49040875
+coreset_dist_on_full    = 848.000000
+find_center_time        = 55.276s
+evaluate_time           = 15.415s
+best_cost(result.csv)   = 839.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.010727
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-1500-75-10c039f8_coreset.json]
+instance_uid            = rirs-1500-75-10c039f8
+coreset_dist_on_full    = 1279.000000
+find_center_time        = 60.859s
+evaluate_time           = 18.604s
+best_cost(result.csv)   = 1280.000000
+diff(coreset - best)    = -1.000000
+ratio(coreset / best)   = 0.999219
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-2000-20-fc840c19_coreset.json]
+instance_uid            = rirs-2000-20-fc840c19
+coreset_dist_on_full    = 353.000000
+find_center_time        = 64.735s
+evaluate_time           = 12.697s
+best_cost(result.csv)   = 352.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.002841
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-2000-50-5fa13e78_coreset.json]
+instance_uid            = rirs-2000-50-5fa13e78
+coreset_dist_on_full    = 907.000000
+find_center_time        = 111.505s
+evaluate_time           = 19.504s
+best_cost(result.csv)   = 898.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.010022
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-2000-75-42f0456a_coreset.json]
+instance_uid            = rirs-2000-75-42f0456a
+coreset_dist_on_full    = 1350.000000
+find_center_time        = 79.165s
+evaluate_time           = 22.002s
+best_cost(result.csv)   = 1342.000000
+diff(coreset - best)    = 8.000000
+ratio(coreset / best)   = 1.005961
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-2500-20-70c6d643_coreset.json]
+instance_uid            = rirs-2500-20-70c6d643
+coreset_dist_on_full    = 380.000000
+find_center_time        = 57.704s
+evaluate_time           = 15.390s
+best_cost(result.csv)   = 371.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.024259
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-2500-50-16465e74_coreset.json]
+instance_uid            = rirs-2500-50-16465e74
+coreset_dist_on_full    = 939.000000
+find_center_time        = 86.566s
+evaluate_time           = 19.182s
+best_cost(result.csv)   = 947.000000
+diff(coreset - best)    = -8.000000
+ratio(coreset / best)   = 0.991552
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-2500-75-fe6940e6_coreset.json]
+instance_uid            = rirs-2500-75-fe6940e6
+coreset_dist_on_full    = 1413.000000
+find_center_time        = 100.661s
+evaluate_time           = 24.547s
+best_cost(result.csv)   = 1390.000000
+diff(coreset - best)    = 23.000000
+ratio(coreset / best)   = 1.016547
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-3000-20-ca4a729f_coreset.json]
+instance_uid            = rirs-3000-20-ca4a729f
+coreset_dist_on_full    = 376.000000
+find_center_time        = 156.356s
+evaluate_time           = 15.668s
+best_cost(result.csv)   = 371.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.013477
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-3000-50-69fe82ea_coreset.json]
+instance_uid            = rirs-3000-50-69fe82ea
+coreset_dist_on_full    = 957.000000
+find_center_time        = 111.309s
+evaluate_time           = 26.293s
+best_cost(result.csv)   = 948.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.009494
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-3000-75-d0dd4d29_coreset.json]
+instance_uid            = rirs-3000-75-d0dd4d29
+coreset_dist_on_full    = 1425.000000
+find_center_time        = 131.704s
+evaluate_time           = 31.815s
+best_cost(result.csv)   = 1409.000000
+diff(coreset - best)    = 16.000000
+ratio(coreset / best)   = 1.011356
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-3500-20-36165067_coreset.json]
+instance_uid            = rirs-3500-20-36165067
+coreset_dist_on_full    = 396.000000
+find_center_time        = 103.457s
+evaluate_time           = 17.095s
+best_cost(result.csv)   = 392.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.010204
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-3500-50-cd1647e4_coreset.json]
+instance_uid            = rirs-3500-50-cd1647e4
+coreset_dist_on_full    = 966.000000
+find_center_time        = 177.157s
+evaluate_time           = 29.444s
+best_cost(result.csv)   = 960.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.006250
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-3500-75-0ba3f101_coreset.json]
+instance_uid            = rirs-3500-75-0ba3f101
+coreset_dist_on_full    = 1492.000000
+find_center_time        = 150.501s
+evaluate_time           = 35.568s
+best_cost(result.csv)   = 1457.000000
+diff(coreset - best)    = 35.000000
+ratio(coreset / best)   = 1.024022
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-4000-20-65a95787_coreset.json]
+instance_uid            = rirs-4000-20-65a95787
+coreset_dist_on_full    = 401.000000
+find_center_time        = 84.979s
+evaluate_time           = 16.418s
+best_cost(result.csv)   = 399.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.005013
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-4000-50-b142e8e4_coreset.json]
+instance_uid            = rirs-4000-50-b142e8e4
+coreset_dist_on_full    = 1009.000000
+find_center_time        = 122.446s
+evaluate_time           = 28.227s
+best_cost(result.csv)   = 1001.000000
+diff(coreset - best)    = 8.000000
+ratio(coreset / best)   = 1.007992
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-4000-75-1629c45a_coreset.json]
+instance_uid            = rirs-4000-75-1629c45a
+coreset_dist_on_full    = 1502.000000
+find_center_time        = 148.871s
+evaluate_time           = 42.802s
+best_cost(result.csv)   = 1499.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.002001
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-4500-20-fe859874_coreset.json]
+instance_uid            = rirs-4500-20-fe859874
+coreset_dist_on_full    = 401.000000
+find_center_time        = 182.104s
+evaluate_time           = 17.052s
+best_cost(result.csv)   = 403.000000
+diff(coreset - best)    = -2.000000
+ratio(coreset / best)   = 0.995037
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-4500-50-745c57a2_coreset.json]
+instance_uid            = rirs-4500-50-745c57a2
+coreset_dist_on_full    = 1028.000000
+find_center_time        = 100.872s
+evaluate_time           = 34.593s
+best_cost(result.csv)   = 1019.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.008832
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-4500-75-ea9f0323_coreset.json]
+instance_uid            = rirs-4500-75-ea9f0323
+coreset_dist_on_full    = 1519.000000
+find_center_time        = 249.414s
+evaluate_time           = 42.542s
+best_cost(result.csv)   = 1495.000000
+diff(coreset - best)    = 24.000000
+ratio(coreset / best)   = 1.016054
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-500-20-5e21448d_coreset.json]
+instance_uid            = rirs-500-20-5e21448d
+coreset_dist_on_full    = 271.000000
+find_center_time        = 15.890s
+evaluate_time           = 7.303s
+best_cost(result.csv)   = 259.000000
+diff(coreset - best)    = 12.000000
+ratio(coreset / best)   = 1.046332
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-500-50-23d00ec5_coreset.json]
+instance_uid            = rirs-500-50-23d00ec5
+coreset_dist_on_full    = 697.000000
+find_center_time        = 14.729s
+evaluate_time           = 8.112s
+best_cost(result.csv)   = 695.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.002878
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-500-75-9322678f_coreset.json]
+instance_uid            = rirs-500-75-9322678f
+coreset_dist_on_full    = 1034.000000
+find_center_time        = 17.353s
+evaluate_time           = 8.678s
+best_cost(result.csv)   = 1023.000000
+diff(coreset - best)    = 11.000000
+ratio(coreset / best)   = 1.010753
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-5000-20-2caf288b_coreset.json]
+instance_uid            = rirs-5000-20-2caf288b
+coreset_dist_on_full    = 421.000000
+find_center_time        = 78.816s
+evaluate_time           = 19.860s
+best_cost(result.csv)   = 392.000000
+diff(coreset - best)    = 29.000000
+ratio(coreset / best)   = 1.073980
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-5000-50-2ec37111_coreset.json]
+instance_uid            = rirs-5000-50-2ec37111
+coreset_dist_on_full    = 1038.000000
+find_center_time        = 166.516s
+evaluate_time           = 36.261s
+best_cost(result.csv)   = 1040.000000
+diff(coreset - best)    = -2.000000
+ratio(coreset / best)   = 0.998077
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-5000-75-9bd3bd51_coreset.json]
+instance_uid            = rirs-5000-75-9bd3bd51
+coreset_dist_on_full    = 1569.000000
+find_center_time        = 164.216s
+evaluate_time           = 46.723s
+best_cost(result.csv)   = 1581.000000
+diff(coreset - best)    = -12.000000
+ratio(coreset / best)   = 0.992410
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-6000-20-cc3d0e5d_coreset.json]
+instance_uid            = rirs-6000-20-cc3d0e5d
+coreset_dist_on_full    = 420.000000
+find_center_time        = 242.045s
+evaluate_time           = 26.911s
+best_cost(result.csv)   = 429.000000
+diff(coreset - best)    = -9.000000
+ratio(coreset / best)   = 0.979021
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-6000-50-3c632805_coreset.json]
+instance_uid            = rirs-6000-50-3c632805
+coreset_dist_on_full    = 1069.000000
+find_center_time        = 188.552s
+evaluate_time           = 45.586s
+best_cost(result.csv)   = 1079.000000
+diff(coreset - best)    = -10.000000
+ratio(coreset / best)   = 0.990732
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-6000-75-3640423c_coreset.json]
+instance_uid            = rirs-6000-75-3640423c
+coreset_dist_on_full    = 1568.000000
+find_center_time        = 368.044s
+evaluate_time           = 54.863s
+best_cost(result.csv)   = 1525.000000
+diff(coreset - best)    = 43.000000
+ratio(coreset / best)   = 1.028197
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-7000-20-37c47d14_coreset.json]
+instance_uid            = rirs-7000-20-37c47d14
+coreset_dist_on_full    = 433.000000
+find_center_time        = 225.106s
+evaluate_time           = 31.939s
+best_cost(result.csv)   = 428.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.011682
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-7000-75-98ec3d45_coreset.json]
+instance_uid            = rirs-7000-75-98ec3d45
+coreset_dist_on_full    = 1645.000000
+find_center_time        = 331.793s
+evaluate_time           = 70.141s
+best_cost(result.csv)   = 1597.000000
+diff(coreset - best)    = 48.000000
+ratio(coreset / best)   = 1.030056
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-8000-20-8357ef0f_coreset.json]
+instance_uid            = rirs-8000-20-8357ef0f
+coreset_dist_on_full    = 430.000000
+find_center_time        = 203.548s
+evaluate_time           = 27.466s
+best_cost(result.csv)   = 445.000000
+diff(coreset - best)    = -15.000000
+ratio(coreset / best)   = 0.966292
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-8000-50-b9e2ae77_coreset.json]
+instance_uid            = rirs-8000-50-b9e2ae77
+coreset_dist_on_full    = 1081.000000
+find_center_time        = 448.671s
+evaluate_time           = 59.350s
+best_cost(result.csv)   = 1102.000000
+diff(coreset - best)    = -21.000000
+ratio(coreset / best)   = 0.980944
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-8000-75-b95969e5_coreset.json]
+instance_uid            = rirs-8000-75-b95969e5
+coreset_dist_on_full    = 1646.000000
+find_center_time        = 310.659s
+evaluate_time           = 84.491s
+best_cost(result.csv)   = 1600.000000
+diff(coreset - best)    = 46.000000
+ratio(coreset / best)   = 1.028750
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[rirs-9000-20-41491eba_coreset.json]
+instance_uid            = rirs-9000-20-41491eba
+coreset_dist_on_full    = 448.000000
+find_center_time        = 277.848s
+evaluate_time           = 34.330s
+best_cost(result.csv)   = 468.000000
+diff(coreset - best)    = -20.000000
+ratio(coreset / best)   = 0.957265
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-9000-50-0a55dbb8_coreset.json]
+instance_uid            = rirs-9000-50-0a55dbb8
+coreset_dist_on_full    = 1145.000000
+find_center_time        = 598.518s
+evaluate_time           = 62.468s
+best_cost(result.csv)   = 1222.000000
+diff(coreset - best)    = -77.000000
+ratio(coreset / best)   = 0.936989
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[rirs-9000-75-940659a6_coreset.json]
+instance_uid            = rirs-9000-75-940659a6
+coreset_dist_on_full    = 1682.000000
+find_center_time        = 228.413s
+evaluate_time           = 81.154s
+best_cost(result.csv)   = 1627.000000
+diff(coreset - best)    = 55.000000
+ratio(coreset / best)   = 1.033805
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-100-random-2388911d_coreset.json]
+instance_uid            = woc-100-random-2388911d
+coreset_dist_on_full    = 41.000000
+find_center_time        = 1.478s
+evaluate_time           = 1.289s
+best_cost(result.csv)   = 35.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.171429
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-100-tsplib-19003732_coreset.json]
+instance_uid            = woc-100-tsplib-19003732
+coreset_dist_on_full    = 45.000000
+find_center_time        = 1.298s
+evaluate_time           = 1.070s
+best_cost(result.csv)   = 34.000000
+diff(coreset - best)    = 11.000000
+ratio(coreset / best)   = 1.323529
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-100-tsplib-ee8c7335_coreset.json]
+instance_uid            = woc-100-tsplib-ee8c7335
+coreset_dist_on_full    = 39.000000
+find_center_time        = 1.368s
+evaluate_time           = 1.098s
+best_cost(result.csv)   = 35.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.114286
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-110-random-e61dabe8_coreset.json]
+instance_uid            = woc-110-random-e61dabe8
+coreset_dist_on_full    = 23.000000
+find_center_time        = 1.293s
+evaluate_time           = 1.099s
+best_cost(result.csv)   = 22.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.045455
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-110-tsplib-39ba065c_coreset.json]
+instance_uid            = woc-110-tsplib-39ba065c
+coreset_dist_on_full    = 40.000000
+find_center_time        = 1.581s
+evaluate_time           = 1.198s
+best_cost(result.csv)   = 35.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.142857
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-110-tsplib-cf61d346_coreset.json]
+instance_uid            = woc-110-tsplib-cf61d346
+coreset_dist_on_full    = 54.000000
+find_center_time        = 1.435s
+evaluate_time           = 1.121s
+best_cost(result.csv)   = 45.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.200000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-120-random-62f49613_coreset.json]
+instance_uid            = woc-120-random-62f49613
+coreset_dist_on_full    = 33.000000
+find_center_time        = 1.421s
+evaluate_time           = 1.208s
+best_cost(result.csv)   = 31.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.064516
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-120-tsplib-1ac0c01d_coreset.json]
+instance_uid            = woc-120-tsplib-1ac0c01d
+coreset_dist_on_full    = 82.000000
+find_center_time        = 1.503s
+evaluate_time           = 1.177s
+best_cost(result.csv)   = 66.000000
+diff(coreset - best)    = 16.000000
+ratio(coreset / best)   = 1.242424
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-120-tsplib-f36876ed_coreset.json]
+instance_uid            = woc-120-tsplib-f36876ed
+coreset_dist_on_full    = 50.000000
+find_center_time        = 1.650s
+evaluate_time           = 1.185s
+best_cost(result.csv)   = 45.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.111111
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-130-random-7a59d7ba_coreset.json]
+instance_uid            = woc-130-random-7a59d7ba
+coreset_dist_on_full    = 44.000000
+find_center_time        = 1.381s
+evaluate_time           = 1.165s
+best_cost(result.csv)   = 39.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.128205
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-130-tsplib-1db5c60e_coreset.json]
+instance_uid            = woc-130-tsplib-1db5c60e
+coreset_dist_on_full    = 46.000000
+find_center_time        = 1.650s
+evaluate_time           = 1.203s
+best_cost(result.csv)   = 41.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.121951
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-130-tsplib-f38721ef_coreset.json]
+instance_uid            = woc-130-tsplib-f38721ef
+coreset_dist_on_full    = 44.000000
+find_center_time        = 1.818s
+evaluate_time           = 1.242s
+best_cost(result.csv)   = 37.000000
+diff(coreset - best)    = 7.000000
+ratio(coreset / best)   = 1.189189
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-140-random-61cc975f_coreset.json]
+instance_uid            = woc-140-random-61cc975f
+coreset_dist_on_full    = 27.000000
+find_center_time        = 1.439s
+evaluate_time           = 1.188s
+best_cost(result.csv)   = 26.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.038462
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-140-tsplib-07d5a295_coreset.json]
+instance_uid            = woc-140-tsplib-07d5a295
+coreset_dist_on_full    = 30.000000
+find_center_time        = 1.462s
+evaluate_time           = 1.148s
+best_cost(result.csv)   = 28.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.071429
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-140-tsplib-44cfce74_coreset.json]
+instance_uid            = woc-140-tsplib-44cfce74
+coreset_dist_on_full    = 44.000000
+find_center_time        = 1.793s
+evaluate_time           = 1.210s
+best_cost(result.csv)   = 44.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[woc-150-random-d16123e7_coreset.json]
+instance_uid            = woc-150-random-d16123e7
+coreset_dist_on_full    = 46.000000
+find_center_time        = 1.539s
+evaluate_time           = 1.192s
+best_cost(result.csv)   = 45.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.022222
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-150-tsplib-7de836c1_coreset.json]
+instance_uid            = woc-150-tsplib-7de836c1
+coreset_dist_on_full    = 50.000000
+find_center_time        = 1.782s
+evaluate_time           = 1.208s
+best_cost(result.csv)   = 46.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.086957
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-150-tsplib-d8064434_coreset.json]
+instance_uid            = woc-150-tsplib-d8064434
+coreset_dist_on_full    = 45.000000
+find_center_time        = 1.602s
+evaluate_time           = 1.247s
+best_cost(result.csv)   = 42.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.071429
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-155-random-bcc5dff8_coreset.json]
+instance_uid            = woc-155-random-bcc5dff8
+coreset_dist_on_full    = 25.000000
+find_center_time        = 1.543s
+evaluate_time           = 1.275s
+best_cost(result.csv)   = 24.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.041667
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-155-tsplib-16bd1a72_coreset.json]
+instance_uid            = woc-155-tsplib-16bd1a72
+coreset_dist_on_full    = 48.000000
+find_center_time        = 1.800s
+evaluate_time           = 1.341s
+best_cost(result.csv)   = 42.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.142857
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-155-tsplib-aac644b7_coreset.json]
+instance_uid            = woc-155-tsplib-aac644b7
+coreset_dist_on_full    = 61.000000
+find_center_time        = 1.909s
+evaluate_time           = 1.320s
+best_cost(result.csv)   = 51.000000
+diff(coreset - best)    = 10.000000
+ratio(coreset / best)   = 1.196078
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-160-random-80862a66_coreset.json]
+instance_uid            = woc-160-random-80862a66
+coreset_dist_on_full    = 48.000000
+find_center_time        = 1.838s
+evaluate_time           = 1.246s
+best_cost(result.csv)   = 42.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.142857
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-160-tsplib-52412885_coreset.json]
+instance_uid            = woc-160-tsplib-52412885
+coreset_dist_on_full    = 33.000000
+find_center_time        = 1.610s
+evaluate_time           = 1.370s
+best_cost(result.csv)   = 33.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[woc-160-tsplib-b2dc6d6b_coreset.json]
+instance_uid            = woc-160-tsplib-b2dc6d6b
+coreset_dist_on_full    = 60.000000
+find_center_time        = 2.332s
+evaluate_time           = 1.356s
+best_cost(result.csv)   = 46.000000
+diff(coreset - best)    = 14.000000
+ratio(coreset / best)   = 1.304348
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-165-random-34b2e4be_coreset.json]
+instance_uid            = woc-165-random-34b2e4be
+coreset_dist_on_full    = 29.000000
+find_center_time        = 1.479s
+evaluate_time           = 1.218s
+best_cost(result.csv)   = 30.000000
+diff(coreset - best)    = -1.000000
+ratio(coreset / best)   = 0.966667
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[woc-165-tsplib-29bc5916_coreset.json]
+instance_uid            = woc-165-tsplib-29bc5916
+coreset_dist_on_full    = 61.000000
+find_center_time        = 1.852s
+evaluate_time           = 1.321s
+best_cost(result.csv)   = 50.000000
+diff(coreset - best)    = 11.000000
+ratio(coreset / best)   = 1.220000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-165-tsplib-ddfc0df0_coreset.json]
+instance_uid            = woc-165-tsplib-ddfc0df0
+coreset_dist_on_full    = 94.000000
+find_center_time        = 2.173s
+evaluate_time           = 1.284s
+best_cost(result.csv)   = 75.000000
+diff(coreset - best)    = 19.000000
+ratio(coreset / best)   = 1.253333
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-170-random-261629f3_coreset.json]
+instance_uid            = woc-170-random-261629f3
+coreset_dist_on_full    = 50.000000
+find_center_time        = 2.219s
+evaluate_time           = 1.239s
+best_cost(result.csv)   = 46.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.086957
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-170-tsplib-2959d81d_coreset.json]
+instance_uid            = woc-170-tsplib-2959d81d
+coreset_dist_on_full    = 52.000000
+find_center_time        = 1.885s
+evaluate_time           = 1.410s
+best_cost(result.csv)   = 44.000000
+diff(coreset - best)    = 8.000000
+ratio(coreset / best)   = 1.181818
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-170-tsplib-357a3de6_coreset.json]
+instance_uid            = woc-170-tsplib-357a3de6
+coreset_dist_on_full    = 27.000000
+find_center_time        = 1.606s
+evaluate_time           = 1.248s
+best_cost(result.csv)   = 23.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.173913
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-175-random-1f37ea2a_coreset.json]
+instance_uid            = woc-175-random-1f37ea2a
+coreset_dist_on_full    = 45.000000
+find_center_time        = 1.912s
+evaluate_time           = 1.271s
+best_cost(result.csv)   = 43.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.046512
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-175-tsplib-c6fb5178_coreset.json]
+instance_uid            = woc-175-tsplib-c6fb5178
+coreset_dist_on_full    = 72.000000
+find_center_time        = 2.409s
+evaluate_time           = 1.323s
+best_cost(result.csv)   = 60.000000
+diff(coreset - best)    = 12.000000
+ratio(coreset / best)   = 1.200000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-175-tsplib-fec4c7fe_coreset.json]
+instance_uid            = woc-175-tsplib-fec4c7fe
+coreset_dist_on_full    = 36.000000
+find_center_time        = 1.702s
+evaluate_time           = 1.286s
+best_cost(result.csv)   = 32.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.125000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-180-random-1c3d45cd_coreset.json]
+instance_uid            = woc-180-random-1c3d45cd
+coreset_dist_on_full    = 42.000000
+find_center_time        = 2.400s
+evaluate_time           = 1.291s
+best_cost(result.csv)   = 43.000000
+diff(coreset - best)    = -1.000000
+ratio(coreset / best)   = 0.976744
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[woc-180-tsplib-26e893d1_coreset.json]
+instance_uid            = woc-180-tsplib-26e893d1
+coreset_dist_on_full    = 35.000000
+find_center_time        = 1.731s
+evaluate_time           = 1.256s
+best_cost(result.csv)   = 33.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.060606
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-180-tsplib-e56aa880_coreset.json]
+instance_uid            = woc-180-tsplib-e56aa880
+coreset_dist_on_full    = 48.000000
+find_center_time        = 2.686s
+evaluate_time           = 1.415s
+best_cost(result.csv)   = 42.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.142857
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-185-random-a0e60a07_coreset.json]
+instance_uid            = woc-185-random-a0e60a07
+coreset_dist_on_full    = 39.000000
+find_center_time        = 1.863s
+evaluate_time           = 1.339s
+best_cost(result.csv)   = 32.000000
+diff(coreset - best)    = 7.000000
+ratio(coreset / best)   = 1.218750
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-185-tsplib-b8dd6b77_coreset.json]
+instance_uid            = woc-185-tsplib-b8dd6b77
+coreset_dist_on_full    = 120.000000
+find_center_time        = 2.256s
+evaluate_time           = 1.457s
+best_cost(result.csv)   = 109.000000
+diff(coreset - best)    = 11.000000
+ratio(coreset / best)   = 1.100917
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-185-tsplib-fb277a6a_coreset.json]
+instance_uid            = woc-185-tsplib-fb277a6a
+coreset_dist_on_full    = 35.000000
+find_center_time        = 1.882s
+evaluate_time           = 1.363s
+best_cost(result.csv)   = 35.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[woc-190-random-f504e4b7_coreset.json]
+instance_uid            = woc-190-random-f504e4b7
+coreset_dist_on_full    = 54.000000
+find_center_time        = 2.450s
+evaluate_time           = 1.326s
+best_cost(result.csv)   = 53.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.018868
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-190-tsplib-5a761621_coreset.json]
+instance_uid            = woc-190-tsplib-5a761621
+coreset_dist_on_full    = 115.000000
+find_center_time        = 2.252s
+evaluate_time           = 1.592s
+best_cost(result.csv)   = 63.000000
+diff(coreset - best)    = 52.000000
+ratio(coreset / best)   = 1.825397
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-190-tsplib-c6022ffe_coreset.json]
+instance_uid            = woc-190-tsplib-c6022ffe
+coreset_dist_on_full    = 40.000000
+find_center_time        = 2.050s
+evaluate_time           = 1.416s
+best_cost(result.csv)   = 38.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.052632
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-195-random-a5467698_coreset.json]
+instance_uid            = woc-195-random-a5467698
+coreset_dist_on_full    = 43.000000
+find_center_time        = 1.834s
+evaluate_time           = 1.324s
+best_cost(result.csv)   = 46.000000
+diff(coreset - best)    = -3.000000
+ratio(coreset / best)   = 0.934783
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[woc-195-tsplib-4c2fd194_coreset.json]
+instance_uid            = woc-195-tsplib-4c2fd194
+coreset_dist_on_full    = 70.000000
+find_center_time        = 2.366s
+evaluate_time           = 1.381s
+best_cost(result.csv)   = 58.000000
+diff(coreset - best)    = 12.000000
+ratio(coreset / best)   = 1.206897
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-195-tsplib-8aa5fdc6_coreset.json]
+instance_uid            = woc-195-tsplib-8aa5fdc6
+coreset_dist_on_full    = 58.000000
+find_center_time        = 3.132s
+evaluate_time           = 1.515s
+best_cost(result.csv)   = 52.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.115385
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-200-random-47e4a4fb_coreset.json]
+instance_uid            = woc-200-random-47e4a4fb
+coreset_dist_on_full    = 53.000000
+find_center_time        = 7.796s
+evaluate_time           = 6.999s
+best_cost(result.csv)   = 47.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.127660
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-200-tsplib-6d0c0d51_coreset.json]
+instance_uid            = woc-200-tsplib-6d0c0d51
+coreset_dist_on_full    = 67.000000
+find_center_time        = 8.015s
+evaluate_time           = 6.960s
+best_cost(result.csv)   = 57.000000
+diff(coreset - best)    = 10.000000
+ratio(coreset / best)   = 1.175439
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-200-tsplib-734409f1_coreset.json]
+instance_uid            = woc-200-tsplib-734409f1
+coreset_dist_on_full    = 68.000000
+find_center_time        = 8.473s
+evaluate_time           = 6.916s
+best_cost(result.csv)   = 65.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.046154
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-205-random-769696fb_coreset.json]
+instance_uid            = woc-205-random-769696fb
+coreset_dist_on_full    = 27.000000
+find_center_time        = 6.981s
+evaluate_time           = 6.697s
+best_cost(result.csv)   = 26.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.038462
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-205-tsplib-8058c7cb_coreset.json]
+instance_uid            = woc-205-tsplib-8058c7cb
+coreset_dist_on_full    = 52.000000
+find_center_time        = 8.234s
+evaluate_time           = 6.988s
+best_cost(result.csv)   = 51.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.019608
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-205-tsplib-8670753b_coreset.json]
+instance_uid            = woc-205-tsplib-8670753b
+coreset_dist_on_full    = 38.000000
+find_center_time        = 7.125s
+evaluate_time           = 6.816s
+best_cost(result.csv)   = 35.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.085714
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-210-random-921f33b6_coreset.json]
+instance_uid            = woc-210-random-921f33b6
+coreset_dist_on_full    = 29.000000
+find_center_time        = 7.046s
+evaluate_time           = 6.751s
+best_cost(result.csv)   = 29.000000
+diff(coreset - best)    = 0.000000
+ratio(coreset / best)   = 1.000000
+comparison              = equal_to_result_csv
+-------------------------------------------------------
+[woc-210-tsplib-70f2a9bf_coreset.json]
+instance_uid            = woc-210-tsplib-70f2a9bf
+coreset_dist_on_full    = 33.000000
+find_center_time        = 7.358s
+evaluate_time           = 8.153s
+best_cost(result.csv)   = 31.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.064516
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-210-tsplib-98198d20_coreset.json]
+instance_uid            = woc-210-tsplib-98198d20
+coreset_dist_on_full    = 34.000000
+find_center_time        = 9.235s
+evaluate_time           = 8.075s
+best_cost(result.csv)   = 30.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.133333
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-215-random-057a9f3f_coreset.json]
+instance_uid            = woc-215-random-057a9f3f
+coreset_dist_on_full    = 40.000000
+find_center_time        = 8.541s
+evaluate_time           = 8.151s
+best_cost(result.csv)   = 41.000000
+diff(coreset - best)    = -1.000000
+ratio(coreset / best)   = 0.975610
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[woc-215-tsplib-3826ebd3_coreset.json]
+instance_uid            = woc-215-tsplib-3826ebd3
+coreset_dist_on_full    = 45.000000
+find_center_time        = 10.156s
+evaluate_time           = 8.098s
+best_cost(result.csv)   = 43.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.046512
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-215-tsplib-e353fb9d_coreset.json]
+instance_uid            = woc-215-tsplib-e353fb9d
+coreset_dist_on_full    = 77.000000
+find_center_time        = 10.882s
+evaluate_time           = 8.297s
+best_cost(result.csv)   = 67.000000
+diff(coreset - best)    = 10.000000
+ratio(coreset / best)   = 1.149254
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-220-random-95a3b25a_coreset.json]
+instance_uid            = woc-220-random-95a3b25a
+coreset_dist_on_full    = 44.000000
+find_center_time        = 9.606s
+evaluate_time           = 8.152s
+best_cost(result.csv)   = 41.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.073171
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-220-tsplib-29e6860e_coreset.json]
+instance_uid            = woc-220-tsplib-29e6860e
+coreset_dist_on_full    = 83.000000
+find_center_time        = 11.189s
+evaluate_time           = 8.244s
+best_cost(result.csv)   = 77.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.077922
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-220-tsplib-864789d7_coreset.json]
+instance_uid            = woc-220-tsplib-864789d7
+coreset_dist_on_full    = 56.000000
+find_center_time        = 9.542s
+evaluate_time           = 8.145s
+best_cost(result.csv)   = 50.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.120000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-225-random-ac59d396_coreset.json]
+instance_uid            = woc-225-random-ac59d396
+coreset_dist_on_full    = 38.000000
+find_center_time        = 9.265s
+evaluate_time           = 8.054s
+best_cost(result.csv)   = 37.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.027027
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-225-tsplib-67fd0075_coreset.json]
+instance_uid            = woc-225-tsplib-67fd0075
+coreset_dist_on_full    = 78.000000
+find_center_time        = 10.777s
+evaluate_time           = 8.284s
+best_cost(result.csv)   = 61.000000
+diff(coreset - best)    = 17.000000
+ratio(coreset / best)   = 1.278689
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-225-tsplib-71b5a5ca_coreset.json]
+instance_uid            = woc-225-tsplib-71b5a5ca
+coreset_dist_on_full    = 71.000000
+find_center_time        = 10.595s
+evaluate_time           = 8.287s
+best_cost(result.csv)   = 67.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.059701
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-230-tsplib-32634ca5_coreset.json]
+instance_uid            = woc-230-tsplib-32634ca5
+coreset_dist_on_full    = 68.000000
+find_center_time        = 9.599s
+evaluate_time           = 7.953s
+best_cost(result.csv)   = 63.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.079365
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-230-tsplib-5d6e5c1d_coreset.json]
+instance_uid            = woc-230-tsplib-5d6e5c1d
+coreset_dist_on_full    = 75.000000
+find_center_time        = 8.827s
+evaluate_time           = 7.192s
+best_cost(result.csv)   = 69.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.086957
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-230-tsplib-e1ba1619_coreset.json]
+instance_uid            = woc-230-tsplib-e1ba1619
+coreset_dist_on_full    = 60.000000
+find_center_time        = 9.309s
+evaluate_time           = 7.183s
+best_cost(result.csv)   = 52.000000
+diff(coreset - best)    = 8.000000
+ratio(coreset / best)   = 1.153846
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-230-tsplib-e7303a41_coreset.json]
+instance_uid            = woc-230-tsplib-e7303a41
+coreset_dist_on_full    = 30.000000
+find_center_time        = 7.551s
+evaluate_time           = 6.929s
+best_cost(result.csv)   = 25.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.200000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-230-tsplib-eb3e6717_coreset.json]
+instance_uid            = woc-230-tsplib-eb3e6717
+coreset_dist_on_full    = 62.000000
+find_center_time        = 8.979s
+evaluate_time           = 7.081s
+best_cost(result.csv)   = 52.000000
+diff(coreset - best)    = 10.000000
+ratio(coreset / best)   = 1.192308
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-235-tsplib-2d7d476c_coreset.json]
+instance_uid            = woc-235-tsplib-2d7d476c
+coreset_dist_on_full    = 36.000000
+find_center_time        = 8.087s
+evaluate_time           = 7.116s
+best_cost(result.csv)   = 31.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.161290
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-235-tsplib-681bdc27_coreset.json]
+instance_uid            = woc-235-tsplib-681bdc27
+coreset_dist_on_full    = 39.000000
+find_center_time        = 8.435s
+evaluate_time           = 7.219s
+best_cost(result.csv)   = 38.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.026316
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-235-tsplib-8c89c7cb_coreset.json]
+instance_uid            = woc-235-tsplib-8c89c7cb
+coreset_dist_on_full    = 48.000000
+find_center_time        = 8.135s
+evaluate_time           = 7.056s
+best_cost(result.csv)   = 44.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.090909
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-240-tsplib-9d3c5249_coreset.json]
+instance_uid            = woc-240-tsplib-9d3c5249
+coreset_dist_on_full    = 36.000000
+find_center_time        = 8.449s
+evaluate_time           = 7.247s
+best_cost(result.csv)   = 35.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.028571
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-240-tsplib-cb5aff34_coreset.json]
+instance_uid            = woc-240-tsplib-cb5aff34
+coreset_dist_on_full    = 37.000000
+find_center_time        = 8.174s
+evaluate_time           = 7.295s
+best_cost(result.csv)   = 36.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.027778
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-240-tsplib-d96d289b_coreset.json]
+instance_uid            = woc-240-tsplib-d96d289b
+coreset_dist_on_full    = 33.000000
+find_center_time        = 7.836s
+evaluate_time           = 6.997s
+best_cost(result.csv)   = 32.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.031250
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-245-tsplib-1170b41d_coreset.json]
+instance_uid            = woc-245-tsplib-1170b41d
+coreset_dist_on_full    = 41.000000
+find_center_time        = 7.936s
+evaluate_time           = 7.026s
+best_cost(result.csv)   = 34.000000
+diff(coreset - best)    = 7.000000
+ratio(coreset / best)   = 1.205882
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-245-tsplib-34ed11a6_coreset.json]
+instance_uid            = woc-245-tsplib-34ed11a6
+coreset_dist_on_full    = 33.000000
+find_center_time        = 7.666s
+evaluate_time           = 7.107s
+best_cost(result.csv)   = 31.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.064516
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-245-tsplib-98234be6_coreset.json]
+instance_uid            = woc-245-tsplib-98234be6
+coreset_dist_on_full    = 56.000000
+find_center_time        = 8.028s
+evaluate_time           = 7.128s
+best_cost(result.csv)   = 49.000000
+diff(coreset - best)    = 7.000000
+ratio(coreset / best)   = 1.142857
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-250-tsplib-aa939734_coreset.json]
+instance_uid            = woc-250-tsplib-aa939734
+coreset_dist_on_full    = 43.000000
+find_center_time        = 8.502s
+evaluate_time           = 7.197s
+best_cost(result.csv)   = 37.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.162162
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-250-tsplib-d0200f03_coreset.json]
+instance_uid            = woc-250-tsplib-d0200f03
+coreset_dist_on_full    = 42.000000
+find_center_time        = 8.290s
+evaluate_time           = 7.172s
+best_cost(result.csv)   = 38.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.105263
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-250-tsplib-ef67652d_coreset.json]
+instance_uid            = woc-250-tsplib-ef67652d
+coreset_dist_on_full    = 43.000000
+find_center_time        = 7.893s
+evaluate_time           = 8.213s
+best_cost(result.csv)   = 40.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.075000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-45-random-8d641b9c_coreset.json]
+instance_uid            = woc-45-random-8d641b9c
+coreset_dist_on_full    = 31.000000
+find_center_time        = 0.679s
+evaluate_time           = 0.664s
+best_cost(result.csv)   = 29.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.068966
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-45-tsplib-2ed43f71_coreset.json]
+instance_uid            = woc-45-tsplib-2ed43f71
+coreset_dist_on_full    = 27.000000
+find_center_time        = 0.718s
+evaluate_time           = 0.657s
+best_cost(result.csv)   = 24.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.125000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-45-tsplib-51f1d852_coreset.json]
+instance_uid            = woc-45-tsplib-51f1d852
+coreset_dist_on_full    = 24.000000
+find_center_time        = 0.686s
+evaluate_time           = 0.661s
+best_cost(result.csv)   = 22.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.090909
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-50-random-e56ec684_coreset.json]
+instance_uid            = woc-50-random-e56ec684
+coreset_dist_on_full    = 14.000000
+find_center_time        = 1.232s
+evaluate_time           = 1.173s
+best_cost(result.csv)   = 15.000000
+diff(coreset - best)    = -1.000000
+ratio(coreset / best)   = 0.933333
+comparison              = better_than_result_csv
+-------------------------------------------------------
+[woc-50-tsplib-037ddc15_coreset.json]
+instance_uid            = woc-50-tsplib-037ddc15
+coreset_dist_on_full    = 32.000000
+find_center_time        = 1.235s
+evaluate_time           = 1.181s
+best_cost(result.csv)   = 25.000000
+diff(coreset - best)    = 7.000000
+ratio(coreset / best)   = 1.280000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-50-tsplib-887df108_coreset.json]
+instance_uid            = woc-50-tsplib-887df108
+coreset_dist_on_full    = 45.000000
+find_center_time        = 1.254s
+evaluate_time           = 1.182s
+best_cost(result.csv)   = 36.000000
+diff(coreset - best)    = 9.000000
+ratio(coreset / best)   = 1.250000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-60-random-36d4dade_coreset.json]
+instance_uid            = woc-60-random-36d4dade
+coreset_dist_on_full    = 37.000000
+find_center_time        = 1.338s
+evaluate_time           = 1.162s
+best_cost(result.csv)   = 30.000000
+diff(coreset - best)    = 7.000000
+ratio(coreset / best)   = 1.233333
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-60-tsplib-63f3f788_coreset.json]
+instance_uid            = woc-60-tsplib-63f3f788
+coreset_dist_on_full    = 36.000000
+find_center_time        = 1.383s
+evaluate_time           = 1.216s
+best_cost(result.csv)   = 31.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.161290
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-60-tsplib-be375294_coreset.json]
+instance_uid            = woc-60-tsplib-be375294
+coreset_dist_on_full    = 42.000000
+find_center_time        = 1.330s
+evaluate_time           = 1.198s
+best_cost(result.csv)   = 40.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.050000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-70-random-9a7d18d3_coreset.json]
+instance_uid            = woc-70-random-9a7d18d3
+coreset_dist_on_full    = 23.000000
+find_center_time        = 1.293s
+evaluate_time           = 1.196s
+best_cost(result.csv)   = 20.000000
+diff(coreset - best)    = 3.000000
+ratio(coreset / best)   = 1.150000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-70-tsplib-662c5dfb_coreset.json]
+instance_uid            = woc-70-tsplib-662c5dfb
+coreset_dist_on_full    = 41.000000
+find_center_time        = 1.414s
+evaluate_time           = 1.211s
+best_cost(result.csv)   = 35.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.171429
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-70-tsplib-8ae47929_coreset.json]
+instance_uid            = woc-70-tsplib-8ae47929
+coreset_dist_on_full    = 37.000000
+find_center_time        = 1.415s
+evaluate_time           = 1.237s
+best_cost(result.csv)   = 31.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.193548
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-75-random-6e4b56b1_coreset.json]
+instance_uid            = woc-75-random-6e4b56b1
+coreset_dist_on_full    = 31.000000
+find_center_time        = 1.365s
+evaluate_time           = 1.223s
+best_cost(result.csv)   = 30.000000
+diff(coreset - best)    = 1.000000
+ratio(coreset / best)   = 1.033333
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-75-tsplib-1da38e08_coreset.json]
+instance_uid            = woc-75-tsplib-1da38e08
+coreset_dist_on_full    = 39.000000
+find_center_time        = 1.327s
+evaluate_time           = 1.225s
+best_cost(result.csv)   = 28.000000
+diff(coreset - best)    = 11.000000
+ratio(coreset / best)   = 1.392857
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-75-tsplib-43f8ca86_coreset.json]
+instance_uid            = woc-75-tsplib-43f8ca86
+coreset_dist_on_full    = 39.000000
+find_center_time        = 1.426s
+evaluate_time           = 1.219s
+best_cost(result.csv)   = 34.000000
+diff(coreset - best)    = 5.000000
+ratio(coreset / best)   = 1.147059
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-80-random-669f73a7_coreset.json]
+instance_uid            = woc-80-random-669f73a7
+coreset_dist_on_full    = 40.000000
+find_center_time        = 1.370s
+evaluate_time           = 1.188s
+best_cost(result.csv)   = 30.000000
+diff(coreset - best)    = 10.000000
+ratio(coreset / best)   = 1.333333
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-80-tsplib-3ee3a8a5_coreset.json]
+instance_uid            = woc-80-tsplib-3ee3a8a5
+coreset_dist_on_full    = 31.000000
+find_center_time        = 1.411s
+evaluate_time           = 1.210s
+best_cost(result.csv)   = 27.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.148148
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-80-tsplib-a0813030_coreset.json]
+instance_uid            = woc-80-tsplib-a0813030
+coreset_dist_on_full    = 46.000000
+find_center_time        = 1.547s
+evaluate_time           = 1.268s
+best_cost(result.csv)   = 40.000000
+diff(coreset - best)    = 6.000000
+ratio(coreset / best)   = 1.150000
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-90-random-5ab97996_coreset.json]
+instance_uid            = woc-90-random-5ab97996
+coreset_dist_on_full    = 34.000000
+find_center_time        = 1.426s
+evaluate_time           = 1.231s
+best_cost(result.csv)   = 30.000000
+diff(coreset - best)    = 4.000000
+ratio(coreset / best)   = 1.133333
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-90-tsplib-8e18a238_coreset.json]
+instance_uid            = woc-90-tsplib-8e18a238
+coreset_dist_on_full    = 25.000000
+find_center_time        = 1.368s
+evaluate_time           = 1.191s
+best_cost(result.csv)   = 23.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.086957
+comparison              = worse_than_result_csv
+-------------------------------------------------------
+[woc-90-tsplib-96a321d8_coreset.json]
+instance_uid            = woc-90-tsplib-96a321d8
+coreset_dist_on_full    = 25.000000
+find_center_time        = 1.412s
+evaluate_time           = 1.210s
+best_cost(result.csv)   = 23.000000
+diff(coreset - best)    = 2.000000
+ratio(coreset / best)   = 1.086957
+comparison              = worse_than_result_csv
+-------------------------------------------------------

@@ -186,5 +186,5 @@ if __name__ == "__main__":
         benchmark_dir="./data/benchmark_instances",
         coreset_dir="./data/coreset_instance",
         result_csv="./result.csv",
-        log_path="./solve_from_coreset.log",
+        log_path="./logs/solve_from_coreset-251203.log",
     )
