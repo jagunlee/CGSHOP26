@@ -1,5 +1,3 @@
-{
-    "python.analysis.extraPaths": [
-        "./pyutils26/src"
-    ]
-}
+version https://git-lfs.github.com/spec/v1
+oid sha256:6d45d67642aa6ce455161569bc3e0ec0da89a17797f24099ec9b74edbb1fa872
+size 71

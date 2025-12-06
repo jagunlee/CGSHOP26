@@ -32,6 +32,7 @@ if __name__=="__main__":
         # dt.random_move()
     else:
         json_list = os.listdir(inp)
+        json_list.reverse()
         sol_list = os.listdir("opt")
         rirs_list = []
         for inp1 in json_list:
