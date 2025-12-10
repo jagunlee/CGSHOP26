@@ -99,6 +99,7 @@ class Data:
     def resolve_cross_random(self):
         pass
 
+
     # con: edge in T2 that may be not in T1
     def resolve_cross(self, tri: Triangulation, con: tuple, t=None):
         if not t:
@@ -106,8 +107,8 @@ class Data:
             q2 = con[1]
             for t in tri.triangles:
                 i = t.get_ind(q1) # hy: i = 0~2 in a triangle t
-                if i != -1: # hy: q1 in a triangle
-                    r1 = self.pts[q1] # hy: pts in Data!!! r1 is (x,y) coordinate of q1
+                if i != -1: # hy: q1 node in a triangle
+                    r1 = self.pts[q1] # hy: pts from Data not from Triangulation!!! r1 is (x,y) coordinate of q1
                     r2 = self.pts[t.pt(i + 1)] #hy: t.pt gives real node index
                     r3 = self.pts[t.pt(i + 2)]
                     r4 = self.pts[q2]
@@ -212,14 +213,14 @@ class Data:
     # flip F: ((a, b), (c, d)) 꼴
     # point-in-polygon 여러 번. point-in-polygon은 halfplane으로.
     # 삼각형 정렬.
-    def isFlippable(self, F):
-        pass
+    #def isFlippable(self, F):
+    #    pass
 
     def flipDiagonal(self, tri: Triangulation, F):
         change = False
 
         for t in tri.triangles:
-            a, b = F[0]
+            a, b = F[0] #hy: F[0] is edge in tri. After flip F[0], then F[1] will appear.
 
             if sorted([t.pts[0], t.pts[1]]) == sorted([a, b]):
                 self.flip(tri, t, 0)
@@ -235,6 +236,25 @@ class Data:
                 break
 
         assert(change)
+
+    # Is e=[con1,con2] edge in tri be flippable?
+    def isFlippable(self, tri:Triangulation, e):
+        for t in tri.triangles:
+            a, b = e
+            E = sorted([a,b])
+            if None in t.neis:
+                print(t.neis)
+                exit(0)
+            if sorted([t.pts[0], t.pts[1]]) == E:
+                self.flip(tri, t, 0)
+                return True
+            elif sorted([t.pts[1], t.pts[2]]) == E:
+                self.flip(tri, t, 1)
+                return True
+            elif sorted([t.pts[2], t.pts[0]]) == E:
+                self.flip(tri, t, 2)
+                return True
+        return False
 
     '''
     # def flip(self, tri: Triangulation, t: Triangle, i: int)
@@ -330,7 +350,7 @@ class Data:
             # print("----- Starting triangle -----")
             # self.print_triangle(t)
             # print("-----------------------------")
-            
+
             i = t.get_ind(q1)
             ts = [(t, (i + 1) % 3)]
             while True:
@@ -378,9 +398,9 @@ class Data:
         # numTrials = 10
         bestDist = 10000
         bestSeq = None
-        
+
         for i in range(numTrials):
-        
+
             fs = []
             tri = tri1.copy()
             edges = list(tri2.edges)
@@ -388,11 +408,11 @@ class Data:
 
             # list of (triangulation, len(fs) so far)
             L = []
-            
+
             for e in edges:
 
                 before = len(fs)
-                
+
                 ADDED = self.resolve_cross(tri, e)
                 # print('added length:', len(ADDED))
                 fs += ADDED
@@ -450,7 +470,7 @@ class Data:
                     usedtri.add(t2)
                     fps.append(fs[i])
                 donenum += len(fps)
-                print("*", donenum, "/", len(done))
+                #print("*", donenum, "/", len(done))
                 for _, con in fps:
                     self.resolve_cross(tri, con)
                 pfp.append(fps)
@@ -458,7 +478,7 @@ class Data:
                 best = pfp
                 bestscore = len(pfp)
                 trial = 0
-        print(len(best))
+        #print("len(best) = ", len(best))
         return best
 
     #hy: just generate pfp, no need to best
@@ -490,7 +510,7 @@ class Data:
                 usedtri.add(t2)
                 fps.append(fs[i])
             donenum += len(fps)
-            print("+", donenum, "/", len(done))
+            #print("+", donenum, "/", len(done))
             flippable_edge=[]
             for f, con in fps:
                 self.resolve_cross(tri, con)
@@ -501,45 +521,6 @@ class Data:
             pfp.append(flippable_edge)
         return pfp
 
-    #hy: generate a new centerT
-    def generate_centerT(self, tri1: Triangulation, tri2: Triangulation):
-        # flip sequence 자체에서 들어감
-        fs = self.flip_sequence(tri1, tri2) # hy: Problem is, we need to set a new tri2 and then apply flip_sequence...
-        done = [False] * len(fs)
-        tri = deepcopy(tri1)
-        pfp = []
-        donenum = 0
-        while not all(done):
-            fps = []
-            usedtri = set()
-            for i in range(len(fs)):
-                if done[i]: continue
-                (p1, p2), (p3, p4) = fs[i]
-                t1 = tri.find_triangle(p1, p2)
-                if not t1 or t1 in usedtri:
-                    continue
-                t2 = tri.find_triangle(p2, p1)
-                assert (t2)
-                if t2 in usedtri:
-                    continue
-                p5, p6 = t1.pt(t1.get_ind(p2) + 1), t2.pt(t2.get_ind(p1) + 1)
-                if (min(p5, p6), max(p5, p6)) != (p3, p4):
-                    continue
-                done[i] = True
-                usedtri.add(t1)
-                usedtri.add(t2)
-                fps.append(fs[i])
-            donenum += len(fps)
-            print("+", donenum, "/", len(done))
-            flippable_edge=[]
-            for f, con in fps:
-                self.resolve_cross(tri, con)
-                flippable_edge.append(f)
-            #pfp.append(fps)
-            #print("fps: ", fps)
-            #print("flippable_edge: ", flippable_edge)
-            pfp.append(flippable_edge)
-        return pfp
 
     def print_triangle(self, t: Triangle):
         print("Triangle :", end="")
@@ -559,7 +540,7 @@ class Data:
         # parallel version
         pfp = self.parallel_flip_path(T1, T2)
         midVal = int(len(pfp) * (w2 / (w1 + w2)))
-        print('len(pfp):', len(pfp), 'w1:', w1, 'w2:', w2, 'midVal:', midVal)
+        #print('len(pfp):', len(pfp), 'w1:', w1, 'w2:', w2, 'midVal:', midVal)
 
         # use_pfp: 사용되는 parallel flip들 모음
         use_pfp = pfp[:midVal]
@@ -599,17 +580,17 @@ class Data:
         weight = 1
 
         for i in range(1, len(self.triangulations)):
-            print(i,"th triangle")
+            #print(i,"th triangle")
             nextT = self.triangulations[i]
             # 내분을 통해 새로운 central triangulation 계산
             centerT = self.internal_division(centerT, weight, nextT, 1)
             weight += 1
 
             end = time.time()
-            print('time:', f"{end - start:.5f} sec")
+            #print('time:', f"{end - start:.5f} sec")
 
-        with open("centers/" + self.instance_uid + ".json", "w", encoding="utf-8") as f:
-            json.dump(list(centerT.edges), f, indent='\t')
+        #with open("centers/" + self.instance_uid + ".json", "w", encoding="utf-8") as f:
+        #    json.dump(list(centerT.edges), f, indent='\t')
 
         return centerT
         # local search to move to a certain direction
@@ -682,10 +663,10 @@ class Data:
 
         start = time.time()
 
-        print(self.pFlips)
-        print(len(self.pFlips))
-        print(len(self.triangulations))
-        
+        #print("self.pFlips = ", self.pFlips)
+        #print("len() = ", len(self.pFlips))
+        #print("len(self.triangulations) = ",len(self.triangulations))
+
         Dsum=0
         for i in range(len(self.triangulations)):
 
@@ -724,10 +705,11 @@ class Data:
             self.pFlips[i].reverse()
             '''
             Dsum += len(self.pFlips[i])
-            print('parallel flip distance from the center to T', i, ':', len(self.pFlips[i]))
+            #print('parallel flip distance from the center to T', i, ':', len(self.pFlips[i]))
+            #print('pfd from the center to T_', i, ':', len(self.pFlips[i]))
 
             end = time.time()
-            print('time:', f"{end - start:.5f} sec")
+            #print('time:', f"{end - start:.5f} sec")
         return Dsum #hy
 
     def verify(self):

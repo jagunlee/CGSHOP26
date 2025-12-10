@@ -1,5 +1,5 @@
 class Triangle:
-    # p, q, r: point index
+    # p, q, r: point(hy: node) index
     def __init__(self, p: int, q: int, r: int):
         self.pts = [p, q, r]
         self.neis = [None, None, None]
@@ -20,7 +20,7 @@ class Triangulation:
     def __init__(self):
         self.triangles = set()
         self.edges = set()
-        self.dict = dict()
+        self.dict = dict() #hy: key=edge, value=face(triangle)
 
     # need to fix, due to time issue
     def getEdges(self):

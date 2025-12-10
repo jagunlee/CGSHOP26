@@ -1,7 +1,6 @@
-#######
-# 3cgshop.py is for generating shorter pfd from T_(longest F) to C.
-# So, we can shorten the sum of pfds by shortening the longest one without changing C.
-######
+#####
+# 4cgshop.py is generating better C.
+####
 
 #from jg_data import *
 from th_data import *
@@ -46,7 +45,6 @@ def write_output_to_file(db, write_path):
     curr_rew_index = 0
     lines_written = 0
     with open(filename, "w") as file:
-        print(filename)
         while lines_written < final_database_size and curr_rew_index < len(sorted_score):
             curr_rew = sorted_score[curr_rew_index]
             for obj in db.rewards[curr_rew][0:min(final_database_size - lines_written, len(db.rewards[curr_rew]))]:
@@ -54,9 +52,10 @@ def write_output_to_file(db, write_path):
             lines_written += len(db.rewards[curr_rew])
             curr_rew_index +=1
     file.close()
+    print("---------------- write_output_to_file()")
     print(f"Data written to {filename}")
-    print(f"An example of an object with maximum reward ({str(sorted_score[0])}):")
-    print(db.rewards[sorted_score[0]][0])
+    print(f"An example of an object with minimum reward ({str(sorted_score[-1])}): {db.rewards[sorted_score[-1]][0]}")
+    print("---------------------------------------")
 
     #print("Read file..")
     #with open(filename, "r") as file:
@@ -79,6 +78,8 @@ def read_center(input_file):
     with open(Center_path + input_file, 'r') as f:
         C_edges = json.load(f)
     center = Triangulation(pts, C_edges) #####################
+    print("read_center = ", center.dict())
+    exit(0)
 
     # Read Triangulations Ts
     dt = Data(Tris_path + input_file)
@@ -116,7 +117,7 @@ def my_print_db(db):
 
 def convert_to_string(flips):
 
-    print("--- conver_to_string: ", flips)
+    #print("--- conver_to_string: ", flips)
 
     # flips -> string
     entries = []
@@ -129,26 +130,39 @@ def convert_to_string(flips):
         entries.append(",")
     return "".join(entries)
 
-def local_search_on_object(db, dt, idx, pll_flips, centerT, flips):
+def local_search_on_object(db, dt, idx, centerT, flips, first):
     objects=[]
     rewards=[]
 
-    # Various PFD by parallel_flip_path() from T_idx to centerT
-    print("T_", idx)
-    new_flip = dt.generate_pfp(dt.triangulations[idx], centerT)
-    exit(0)
-    dist = len(new_flip)
-    list_flip = []
-    # tuple type -> list type
-    for i in range(dist):
-        outside = new_flip[i]
-        list_outside = [list(outside[j]) for j in range(len(outside))]
-        list_flip.append(list_outside)
-    flips[idx] = list_flip
+    if first>0:
+        # replace T with shortest pfd to current centerT
+        tmp = deepcopy(dt.triangulations[idx])
+        dt.triangulations[idx] = centerT
 
-    # Try A: generate new centerT
-    # So, need to compute flips again from each T to a new centerT
+        # find a new center
+        newCT = dt.findCenter()
 
+        # restore
+        dt.triangulations[idx] = deepcopy(tmp)
+
+        new_flip=[]
+        #print("len flips = ", len(flips))
+        for i in range(len(flips)):
+            new_pfp = dt.generate_pfp(dt.triangulations[i], newCT)
+            list_flip = []
+            for j in range(len(new_pfp)):
+                outside = new_pfp[j]
+                list_outside = [list(outside[k]) for k in range(len(outside))]
+                list_flip.append(list_outside)
+            new_flip.append(list_flip)
+
+        # update flips
+        flips = new_flip
+
+        flip_len=[len(f) for f in flips]
+        min_len_idx = flip_len.index(min(flip_len)) #idx of Triangulation with shortest pfd
+        idx = min_len_idx
+        centerT = newCT
 
     Tris_path = './data/benchmark_instances/'
     with open(Tris_path + dt.instance_uid + '.json', "r") as f:
@@ -167,8 +181,8 @@ def local_search_on_object(db, dt, idx, pll_flips, centerT, flips):
     errors = check_for_errors(instance, solution)
     assert not errors, f"Errors found in solution: {errors}"
 
-    rew = dist
-    obj = convert_to_string(pll_flips)
+    rew = dt.computeDistanceSum(centerT)
+    obj = convert_to_string(flips[0])
 
     new = reward(db, obj)
     if new:
@@ -176,8 +190,6 @@ def local_search_on_object(db, dt, idx, pll_flips, centerT, flips):
        rewards.append(rew)
     return objects, rewards
 
-    #center = origin_center #hy: maybe not helpful?
-    # Save perturbed Cs in 'search_output_{i}.txt'
 
 
 def local_search_from_decoded(db, inst_file, path, input_file):
@@ -191,57 +203,81 @@ def local_search_from_decoded(db, inst_file, path, input_file):
     # Read Triangulations Ts
     dt = Data(Tris_path + inst_file + '.json')
     N = db.num_pts
+    print("hy: from_decoded:")
+    single_thread_obj=[]
+    single_thread_rew =[]
+    # Ah... no need to make it parallel... sequential is enough!!!!
+    # Later, change it for the speed-up.
     for obj in lines:
-        adjmat = np.zeros((N,N))
-        index=0
-        C_edges=[]
-        for i in range(N-1):
-            for j in range(i+1,N):
-                while obj[index] ==',':
-                    index+=1
-                adjmat[i,j] = int(obj[index])
-                adjmat[j,i] = adjmat[i,j]
-                if adjmat[i,j] ==1:
-                    C_edges.append([i,j])
-        print("hy:  center = ")
-        print(C_edges)
+        # string flip -> int list flip
+        #print("obj = ", obj)
+        flips=[]
+        for pll in obj.split(','):
+            if pll =='': continue
+            int_nodes=[]
+            str_nodes = pll.split('.')
+            del str_nodes[-1]
+            edge=[]
+            if '' in str_nodes or str_nodes==[] or len(str_nodes)%2==1: continue
+            for n in str_nodes:
+                if len(edge)<2:
+                    edge.append(int(n))
+                else:
+                    int_nodes.append(edge)
+                    edge=[]
+                    edge.append(int(n))
+            int_nodes.append(edge)
+            flips.append(int_nodes)
 
-        # Remove intersecting edges
-        # C_edges의 엣지를 하나하나 추가하면서 intersect 하는 부분 지우기
-        valid_edge=[]
-        random.shuffle(C_edges)
-        for e in C_edges:
-            if len(valid_edge)>0:
-                for le in valid_edge:
-                    if dt.intersect(e[0],e[1], le[0], le[1])==False:
-                        valid_edge.append(le)
-            else: valid_edge.append(e)
-        C_edges = valid_edge
-        print(list(C_edges))
-        exit(0)
-        # Complete Triangulation
+        # compute CenterT from T_0
+        tmp = deepcopy(dt.triangulations[0])
+        for flip in flips:
+            for edge in flip:
+                dt.isFlippable(tmp, edge)
+        centerT = tmp
+        flips=[]
+        for i in range(len(dt.triangulations)):
+            whole_pfp = dt.parallel_flip_path(dt.triangulations[i], centerT)
+            list_pfp = []
+            for pf in whole_pfp:
+                list_pf = []
+                for f in pf:
+                    list_pf.append(list(f[0]))
+                list_pfp.append(list_pf)
+            flips.append(list_pfp)
+            #flips.append(dt.generate_pfp(dt.triangulations[i], centerT)) #don't care best
+        #print("flips = ")
+        #print(flips)
 
-        # Insert Hull edges <- maybe? done by make_triangulation()
+        Tris_path = './data/benchmark_instances/'
+        with open(Tris_path + dt.instance_uid + '.json', "r") as f:
+            file = json.load(f)
+            instance = CGSHOP2026Instance(
+                    instance_uid = file["instance_uid"],
+                    points_x = file["points_x"],
+                    points_y = file["points_y"],
+                    triangulations=file["triangulations"]
+                    )
+            solution = CGSHOP2026Solution(
+                    instance_uid = file["instance_uid"],
+                    flips=flips
+                    )
 
-        # convert_to_string(adjmat) <- This going to be written in search_output_{i+1}.txt for next tokenize
+        errors = check_for_errors(instance, solution)
+        assert not errors, f"Errors found in solution: {errors}"
 
+        flip_len=[len(f) for f in flips]
+        min_len_idx = flip_len.index(min(flip_len)) #idx of Triangulation with shortest pfd
 
+        obj, rew = local_search_on_object(db, dt, min_len_idx, centerT, flips, 1)
+        single_thread_obj.append(obj)
+        single_thread_rew.append(rew)
 
-        center = Triangulation(dt.pts, C_edges)
-        dt.center = center #???? it works? and.. it is needed?
+    # add_db! part
+    add_db(db, single_thread_obj, single_thread_rew)
 
-        single_thread_obj=[]
-        single_thread_rew =[]
-        for i in range(20):
-            obj, rew = local_search_on_object(db, dt, center, input_file)
-            single_thread_obj.append(obj)
-            single_thread_rew.append(rew)
-
-        # add_db! part
-        add_db(db, single_thread_obj, single_thread_rew)
-
-        # Write search_output.txt file
-        write_output_to_file(db, path)
+    # Write search_output.txt file
+    write_output_to_file(db, path)
 
 
 
@@ -255,27 +291,21 @@ def local_search(db, path, input_file):
             root = json.load(f)
         dt = Data(root["meta"]["input"]) # Data class from th_data.py
         flips = root["flips"]
-        flip_len=[len(f) for f in flips]
-        max_len_idx = flip_len.index(max(flip_len)) #idx of Triangulation with longest pfd
-        min_len_idx = flip_len.index(min(flip_len)) #idx of Triangulation with shortest pfd
-
-        max_pll_flip = flips[max_len_idx] #longest pfd
-        min_pll_flip = flips[min_len_idx] #shortest pfd
-
-        Tmin = dt.triangulations[min_len_idx]
-        tmpTmin = deepcopy(Tmin)
-
-        for pll_flip in min_pll_flip:
+        firstT = deepcopy(dt.triangulations[0])
+        for pll_flip in flips[0]:
             for flip in pll_flip:
-                dt.flipDiagonal(tmpTmin, [flip])
-        centerT = deepcopy(tmpTmin)
+                dt.flipDiagonal(firstT, [flip])
+        centerT = deepcopy(firstT)
+
+        flip_len=[len(f) for f in flips]
+        min_len_idx = flip_len.index(min(flip_len)) #idx of Triangulation with shortest pfd
+        #min_pll_flip = flips[min_len_idx] #shortest pfd
+
 
     single_thread_obj=[]
     single_thread_rew =[]
-    for i in range(1):
-        obj, rew = local_search_on_object(db, dt, max_len_idx, max_pll_flip, centerT, flips)
-        # obj = pfp from Tmin to center_j
-        # rew = sum(pfp(T_i, center_j))
+    for i in range(20):
+        obj, rew = local_search_on_object(db, dt, min_len_idx, centerT, flips, i)
         single_thread_obj.append(obj)
         single_thread_rew.append(rew)
 
@@ -288,6 +318,7 @@ def local_search(db, path, input_file):
     # Write search_output.txt file
     write_output_to_file(db, path)
     # Write plot file
+
 
 
 def get_parser():
@@ -680,7 +711,6 @@ if __name__ == '__main__':
         #os.environ["JULIA_NUM_THREADS"] = str(args.nb_threads)  # Set the environment variable
         #logger.info(f"JULIA_NUM_THREADS is set to {os.environ['JULIA_NUM_THREADS']}")
 
-        #subprocess.run(["julia", "search_pfd.jl", args.dump_path, str(args.nb_local_searches), str(args.num_initial_empty_objects), str(args.final_database_size), str(args.target_db_size), '-i', args.dump_path + '/transformer-output-decoded.txt'])
 
         #### Instead of search.jl ######
         local_search_from_decoded(db, inst_file, args.dump_path,'/transformer-output-decoded.txt')
