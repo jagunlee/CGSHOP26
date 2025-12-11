@@ -2,12 +2,12 @@ class Triangle:
     # p, q, r: point(hy: node) index
     def __init__(self, p: int, q: int, r: int):
         self.pts = [p, q, r]
-        self.neis = [None, None, None]
+        self.neis = [None, None, None] #hy: Each internal Triangle surrounded by three triangles.
 
     def get_ind(self, p: int):
         for i in range(3):
-            if self.pts[i] == p:
-                return i
+            if self.pts[i] == p: #hy: if node p is in Triangle,
+                return i #hy: then return i
         return -1
 
     def pt(self, i: int):

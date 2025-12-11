@@ -141,14 +141,40 @@ class Data:
     def flip(self, tri: Triangulation, t: Triangle, i: int):
 
         tt = t.neis[i]
-        j = tt.get_ind(t.pt(i + 1))
+        print("t.neis[",i,"]:")
+        print([tt.pts[0], tt.pts[1], tt.pts[2]])
+        print("t.pt(",i+1,") = ", t.pt(i+1))
+        print("tt.pts = ", tt.pts[0], tt.pts[1], tt.pts[2])
+        j = tt.get_ind(t.pt(i + 1)) #hy: t's i+1'th neis's node's index in tt's pts ㅋㅋㅋㅋㅋ
+        print("j = ", j)
+
+        #hy: coordinates
+        print("t.pt(",i+2,") = ")
+        print("t.pts[",i,"] = ")
+        print("t.pt(",i+1,") = ")
         p = self.pts[t.pt(i + 2)]
         pr = self.pts[t.pts[i]]
         pl = self.pts[t.pt(i + 1)]
+        print("tt.pt(",j+2,") = ")
         q = self.pts[tt.pt(j + 2)]
-        # self.print_triangle(t)
-        # print("flipping in", i)
-        # self.print_triangle(tt)
+        #print("************** flip() *************")
+        #print("t is:")
+        #self.print_triangle(t)
+        #print("         ****** t.neis *******")
+        #for i in range(3):
+        #    if t.neis[i] == None:
+        #        continue
+        #    print("         t.neis[",i,"]: ")
+        #    self.print_triangle(t.neis[i])
+        #    print()
+        #print("\n*************flipping in", i)
+        #print("tt is t.neis[", i, "], and it is:")
+        #self.print_triangle(tt)
+        #print("         ****** tt.neis *******")
+        #for i in range(3):
+        #    if tt.neis[i] == None: continue
+        #    print("         tt.neis[",i,"]: ")
+        #    self.print_triangle(tt.neis[i])
         while True:
             if turn(p, pr, q) <= 0:
                 t = tt
@@ -217,6 +243,7 @@ class Data:
     #    pass
 
     def flipDiagonal(self, tri: Triangulation, F):
+        #print("~~~~~~~~ flipDiagonal ~~~~~~")
         change = False
 
         for t in tri.triangles:
@@ -237,74 +264,46 @@ class Data:
 
         assert(change)
 
-    # Is e=[con1,con2] edge in tri be flippable?
+    # Flip e=[con1,con2] edge in tri, if it is flippable.
     def isFlippable(self, tri:Triangulation, e):
+        print("~~~~~~~ is Flippable ~~~~~~")
         for t in tri.triangles:
             a, b = e
             E = sorted([a,b])
-            if None in t.neis:
-                print(t.neis)
-                exit(0)
+            #if None in t.neis:
+            #    for i in range(3):
+            #        if t.neis[i]==None: continue
+            #        print("t.neis[",i,"]:")
+            #        self.print_triangle(t.neis[i])
+            #    exit(0)
             if sorted([t.pts[0], t.pts[1]]) == E:
+                print(E, "EEEEEEEEEEEEE")
+                print("???????? Fliped 0")
+                print([t.pts[0], t.pts[1]])
+                print([t.pts[1], t.pts[2]])
+                print([t.pts[2], t.pts[0]])
                 self.flip(tri, t, 0)
+                print("!!!!!!!!! Fliped 0")
                 return True
             elif sorted([t.pts[1], t.pts[2]]) == E:
+                print(E, "EEEEEEEEEEEEE")
+                print("???????? Fliped 1")
+                print([t.pts[0], t.pts[1]])
+                print([t.pts[1], t.pts[2]])
+                print([t.pts[2], t.pts[0]])
                 self.flip(tri, t, 1)
+                print("!!!!!!!!! Fliped 1")
                 return True
             elif sorted([t.pts[2], t.pts[0]]) == E:
+                print(E, "EEEEEEEEEEEEE")
+                print("???????? Fliped 2", )
+                print([t.pts[0], t.pts[1]])
+                print([t.pts[1], t.pts[2]])
+                print([t.pts[2], t.pts[0]])
                 self.flip(tri, t, 2)
+                print("!!!!!!!!! Fliped 2")
                 return True
         return False
-
-    '''
-    # def flip(self, tri: Triangulation, t: Triangle, i: int)
-    # flipped diagonal F: ((a, b), (c, d)) 꼴
-    def flipDiagonal(self, tri: Triangulation, F, t_pts):
-
-        change = False
-
-        for t in tri.triangles:
-            if t_pts == sorted(t.pts):
-
-                print('t_pts:', t_pts) 
-                print('t.pts:', t.pts, 'sorted(t.pts):', sorted(t.pts))
-
-                a, b = F[0]
-                print('a:', a, 'b:', b)
-
-                if sorted([t.pts[0], t.pts[1]]) == sorted([a, b]):
-                    self.flip(tri, t, 0)
-                    change = True
-                    break
-                elif sorted([t.pts[1], t.pts[2]]) == sorted([a, b]):
-                    self.flip(tri, t, 1)
-                    change = True
-                    break
-                elif sorted([t.pts[2], t.pts[0]]) == sorted([a, b]):
-                    self.flip(tri, t, 2)
-                    change = True
-                    break
-
-                if not change:
-                    a, b = F[1]
-                    print('c:', a, 'd:', b)
-
-                    for t in tri.triangles:
-                        if sorted([t.pts[0], t.pts[1]]) == sorted([a, b]):
-                            self.flip(tri, t, 0)
-                            change = True
-                            break
-                        elif sorted([t.pts[1], t.pts[2]]) == sorted([a, b]):
-                            self.flip(tri, t, 1)
-                            change = True
-                            break
-                        elif sorted([t.pts[2], t.pts[0]]) == sorted([a, b]):
-                            self.flip(tri, t, 2)
-                            change = True
-                            break
-
-        assert(change)
-    '''
 
     def flip_sequence(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
         fs = []
@@ -523,18 +522,19 @@ class Data:
 
 
     def print_triangle(self, t: Triangle):
-        print("Triangle :", end="")
-        print(t)
-        print(t.pts[0], ":", self.pts[t.pts[0]])
-        print(t.pts[1], ":", self.pts[t.pts[1]])
-        print(t.pts[2], ":", self.pts[t.pts[2]])
-        print(t.neis[0])
-        print(t.neis[1])
-        print(t.neis[2])
+        #print("Triangle :", end="")
+        #print(t)
+        print("print_triangle :")
+        print("node ", t.pts[0], ":(x,y)= ", self.pts[t.pts[0]])
+        print("node ", t.pts[1], ":(x,y)= ", self.pts[t.pts[1]])
+        print("node ", t.pts[2], ":(x,y)= ", self.pts[t.pts[2]])
+        #print(t.neis[0])
+        #print(t.neis[1])
+        #print(t.neis[2])
 
     # w1:w2 내분점에서 가장 가까운 중간 triangulation을 반환
     def internal_division(self, T1: Triangulation, w1: int, T2: Triangulation, w2: int):
-
+        #print("________ internal_division _________")
         T1copy = deepcopy(T1)
 
         # parallel version

@@ -230,8 +230,10 @@ def local_search_from_decoded(db, inst_file, path, input_file):
             flips.append(int_nodes)
 
         # compute CenterT from T_0
+        print("................... compute CenterT from T_0 .......")
         tmp = deepcopy(dt.triangulations[0])
         for flip in flips:
+            print("~~~~~~~ flip = ", flip)
             for edge in flip:
                 dt.isFlippable(tmp, edge)
         centerT = tmp
@@ -292,8 +294,10 @@ def local_search(db, path, input_file):
         dt = Data(root["meta"]["input"]) # Data class from th_data.py
         flips = root["flips"]
         firstT = deepcopy(dt.triangulations[0])
+
         for pll_flip in flips[0]:
             for flip in pll_flip:
+                #print("flip = ", flip)
                 dt.flipDiagonal(firstT, [flip])
         centerT = deepcopy(firstT)
 
