@@ -1,0 +1,67 @@
+INFO - 12/12/25 13:51:31 - 0:00:00 - ============ Initialized logger ============
+INFO - 12/12/25 13:51:31 - 0:00:00 - batch_size: 32
+                                     command: python 4cgshop.py --exp_id "ortu8l2vf4"
+                                     cpu: True
+                                     dump_path: checkpoint/debug/ortu8l2vf4
+                                     exp_id: ortu8l2vf4
+                                     exp_name: debug
+                                     gen_batch_size: 10
+                                     learning_rate: 0.0005
+                                     max_epochs: 10
+                                     max_output_length: 160
+                                     max_steps: 200
+                                     n_embd: 64
+                                     n_embd2: 32
+                                     n_head: 8
+                                     n_layer: 2
+                                     n_tokens: 100
+                                     sample_only: 500
+                                     temperature: 1.0
+                                     top_k: -1
+                                     type: transformer
+                                     weight_decay: 0.01
+INFO - 12/12/25 13:51:31 - 0:00:00 - The experiment will be stored in checkpoint/debug/ortu8l2vf4
+                                     
+INFO - 12/12/25 13:51:31 - 0:00:00 - Running command: python 4cgshop.py
+
+INFO - 12/12/25 13:51:32 - 0:00:01 - Created checkpoint/debug/ortu8l2vf4/temp.txt and training tokenizer...
+INFO - 12/12/25 13:51:32 - 0:00:01 - Directory 'checkpoint/debug/ortu8l2vf4/tokenizer_data' created.
+INFO - 12/12/25 13:51:32 - 0:00:01 - File 'checkpoint/debug/ortu8l2vf4/temp.txt' has been deleted.
+INFO - 12/12/25 13:51:32 - 0:00:01 - 0 / 20
+INFO - 12/12/25 13:51:32 - 0:00:01 - initializing at generation: 1
+INFO - 12/12/25 13:51:32 - 0:00:01 - number of examples in the dataset: 20
+INFO - 12/12/25 13:51:32 - 0:00:01 - max word length: 60
+INFO - 12/12/25 13:51:32 - 0:00:01 - number of unique characters in the vocabulary: 15
+INFO - 12/12/25 13:51:32 - 0:00:01 - vocabulary:
+INFO - 12/12/25 13:51:32 - 0:00:01 - ['V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15']
+INFO - 12/12/25 13:51:32 - 0:00:01 - split up the dataset into 18 training examples and 2 test examples
+INFO - 12/12/25 13:51:32 - 0:00:01 - dataset determined that: vocab_size=16, block_size=161
+INFO - 12/12/25 13:51:32 - 0:00:01 - model #params: 112448
+INFO - 12/12/25 13:51:32 - 0:00:01 - ============ Start of generation 1 ============
+INFO - 12/12/25 13:51:32 - 0:00:01 - cuda Memory allocated:  0.00MB, cuda reserved: 0.00MB
+INFO - 12/12/25 13:51:32 - 0:00:01 - training
+INFO - 12/12/25 13:51:32 - 0:00:02 - step 0/200 | loss 2.8015 | step time 44.38ms
+INFO - 12/12/25 13:51:34 - 0:00:03 - step 100/200 | loss 0.9343 | step time 18.77ms
+INFO - 12/12/25 13:51:36 - 0:00:05 - Memory allocated:  0.00MB, reserved: 0.00MB
+INFO - 12/12/25 13:51:36 - 0:00:05 - generating
+INFO - 12/12/25 13:52:06 - 0:00:35 - distribution of sample lengths: average: 146.99 max: 390
+INFO - 12/12/25 13:52:06 - 0:00:35 - decoding
+INFO - 12/12/25 13:52:06 - 0:00:35 - Decoding complet. Check the output in checkpoint/debug/ortu8l2vf4/transformer-output-decoded.txt
+INFO - 12/12/25 13:52:06 - 0:00:35 - Memory allocated:  0.00MB, reserved: 0.00MB
+INFO - 12/12/25 13:52:06 - 0:00:35 - ============ End of generation 1 ============
+INFO - 12/12/25 13:52:20 - 0:00:49 - tokenizing
+INFO - 12/12/25 13:52:20 - 0:00:49 - Loading tokenizer from checkpoint/debug/ortu8l2vf4/tokenizer_data/tokenizer.json...
+INFO - 12/12/25 13:52:20 - 0:00:49 - 0 / 50
+INFO - 12/12/25 13:52:20 - 0:00:49 - number of examples in the dataset: 50
+INFO - 12/12/25 13:52:20 - 0:00:49 - max word length: 68
+INFO - 12/12/25 13:52:20 - 0:00:49 - number of unique characters in the vocabulary: 15
+INFO - 12/12/25 13:52:20 - 0:00:49 - vocabulary:
+INFO - 12/12/25 13:52:20 - 0:00:49 - ['V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15']
+INFO - 12/12/25 13:52:20 - 0:00:49 - split up the dataset into 45 training examples and 5 test examples
+INFO - 12/12/25 13:52:20 - 0:00:49 - ============ Start of generation 2 ============
+INFO - 12/12/25 13:52:20 - 0:00:49 - cuda Memory allocated:  0.00MB, cuda reserved: 0.00MB
+INFO - 12/12/25 13:52:20 - 0:00:49 - training
+INFO - 12/12/25 13:52:20 - 0:00:49 - step 0/200 | loss 1.1209 | step time 42.61ms
+INFO - 12/12/25 13:52:23 - 0:00:52 - step 100/200 | loss 0.4233 | step time 28.96ms
+INFO - 12/12/25 13:52:25 - 0:00:54 - Memory allocated:  0.00MB, reserved: 0.00MB
+INFO - 12/12/25 13:52:25 - 0:00:54 - generating

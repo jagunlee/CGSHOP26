@@ -47,6 +47,7 @@ class Data:
             self.triangulations.append(self.make_triangulation(t))
             print(len(self.triangulations),"/",len(root["triangulations"]))
 
+
         #print(len(self.triangulations))
         # self.distance = [] * len(self.triangulations)
         self.pFlips = [None] * len(self.triangulations)
@@ -137,32 +138,29 @@ class Data:
             else:
                 return f + self.resolve_cross(tri, con, t.nei(i + 2))
 
+    #hy:
     def flip_from_seq(self, tri:Triangulation, t:Triangle, i:int):
-        for k in range(3):
-            if t.neis[k] ==None: continue
-            print("t.neis[",k,"] = ")
-            self.print_triangle(t.neis[k])
 
         tt = t.neis[i]
-        print("---t.neis[",i,"] = tt:")
-        self.print_triangle(tt)
-        print("---t.pts[",i+1,"] = ", t.pt(i+1))
-        print("tt.pts = ", [tt.pts[0], tt.pts[1], tt.pts[2]])
+        #print("---t.neis[",i,"] = tt:")
+        #self.print_triangle(tt)
+        #print("---t.pts[",i+1,"] = ", t.pt(i+1))
+        #print("tt.pts = ", [tt.pts[0], tt.pts[1], tt.pts[2]])
         j = tt.get_ind(t.pt(i + 1)) #hy: t's i+1'th neis's node's index in tt's pts ㅋㅋㅋㅋㅋ
-        print("tt.pts[",j,"] = ", t.pt(i+1))
+        #print("tt.pts[",j,"] = ", t.pt(i+1))
 
         #hy: coordinates
         p = self.pts[t.pt(i + 2)]
-        print("p = coordinate of t.pt(",i+2,") = ", p)
+        #print("p = coordinate of t.pt(",i+2,") = ", p)
 
         pr = self.pts[t.pts[i]]
-        print("pr = coordinate of t.pts[",i,"] = ", pr)
+        #print("pr = coordinate of t.pts[",i,"] = ", pr)
 
         pl = self.pts[t.pt(i + 1)]
-        print("pl = coordinate of t.pt(",i+1,") = ", pl)
+        #print("pl = coordinate of t.pt(",i+1,") = ", pl)
 
         q = self.pts[tt.pt(j + 2)]
-        print("q = coordinate of tt.pt(",j+2,") = ", q)
+        #print("q = coordinate of tt.pt(",j+2,") = ", q)
         #print("************** flip() *************")
         #print("t is:")
         #self.print_triangle(t)
@@ -228,6 +226,15 @@ class Data:
         t.neis[(i + 1) % 3] = tt
         tri.dict[(t.pt(i), t.pt(i+1))] = t
         tri.dict[(t.pt(i+1), t.pt(i+2))] = t
+        ##hy
+        #if (t.pt(i), t.pt(i+1)) not in tri.dict:
+        #    tri.dict[(t.pt(i), t.pt(i+1))] = []
+        #tri.dict[(t.pt(i), t.pt(i+1))].append(t)
+        #if (t.pt(i+1), t.pt(i+2)) not in tri.dict:
+        #    tri.dict[(t.pt(i+1), t.pt(i+2))] = []
+        #tri.dict[(t.pt(i+1), t.pt(i+2))].append(t)
+
+
 
         # incidence update for tt
         tt.pts[(j + 1) % 3] = pi
@@ -237,6 +244,14 @@ class Data:
         tt.neis[(j + 1) % 3] = t
         tri.dict[(tt.pt(j), tt.pt(j+1))] = tt
         tri.dict[(tt.pt(j+1), tt.pt(j+2))] = tt
+        ##hy
+        #if (tt.pt(i), tt.pt(i+1)) not in tri.dict:
+        #    tri.dict[(tt.pt(i), tt.pt(i+1))] = []
+        #tri.dict[(tt.pt(i), tt.pt(i+1))].append(t)
+        #if (tt.pt(i+1), tt.pt(i+2)) not in tri.dict:
+        #    tri.dict[(tt.pt(i+1), tt.pt(i+2))] = []
+        #tri.dict[(tt.pt(i+1), tt.pt(i+2))].append(t)
+
         #return f
         return Fe_De
 
@@ -315,8 +330,6 @@ class Data:
     # flip F: ((a, b), (c, d)) 꼴
     # point-in-polygon 여러 번. point-in-polygon은 halfplane으로.
     # 삼각형 정렬.
-    #def isFlippable(self, F):
-    #    pass
 
     def flipDiagonal(self, tri: Triangulation, F):
         #print("~~~~~~~~ flipDiagonal ~~~~~~")
@@ -340,37 +353,72 @@ class Data:
 
         assert(change)
 
-    # Flip e=[con1,con2] edge in tri, if it is flippable.
-    def isFlippable(self, tri:Triangulation, e):
-        #print("~~~~~~~ is Flippable ~~~~~~")
-        #for t in tri.triangles:
-        #    a, b = e
-        #    E = sorted([a,b])
-        #    #if None in t.neis:
-        #    #    for i in range(3):
-        #    #        if t.neis[i]==None: continue
-        #    #        print("t.neis[",i,"]:")
-        #    #        self.print_triangle(t.neis[i])
-        #    #    exit(0)
-        #    if sorted([t.pts[0], t.pts[1]]) == E:
-        #        print(E, "EEEEEEEEEEEEE")
-        #        print("???????? Fliped 0 in t:", [t.pts[0], t.pts[1], t.pts[2]])
-        #        self.flip_from_seq(tri, t, 0)
-        #        print("!!!!!!!!! Fliped 0")
-        #        return True
-        #    elif sorted([t.pts[1], t.pts[2]]) == E:
-        #        print(E, "EEEEEEEEEEEEE")
-        #        print("???????? Fliped 1 in t:", [t.pts[0], t.pts[1], t.pts[2]])
-        #        self.flip_from_seq(tri, t, 1)
-        #        print("!!!!!!!!! Fliped 1")
-        #        return True
-        #    elif sorted([t.pts[2], t.pts[0]]) == E:
-        #        print(E, "EEEEEEEEEEEEE")
-        #        print("???????? Fliped 2 in t:", [t.pts[0], t.pts[1], t.pts[2]])
-        #        self.flip_from_seq(tri, t, 2)
-        #        print("!!!!!!!!! Fliped 2")
-        #        return True
-        return False
+    #hy
+    def isFlippable(self, tri:Triangulation, e:tuple):
+        if e not in tri.edges:
+            return False
+
+        v1, v2 = e
+        e_r = (v2,v1)
+        #hy: Find two faces if exist
+        if e in tri.dict:
+            face1 = tri.dict[e]
+            if e_r in tri.dict:
+                face2 = tri.dict[e_r]
+            else:#hy: e is convex hull
+                return False
+        else: #hy: e_r is convex hull
+            return False
+
+
+        #hy: set order (v1, v2, v3, v4)
+        #hy: (v1, v3) is e
+        if v1 == face2.pts[0] and v2 == face2.pts[2]:
+            v1, v2, v3 = face2.pts
+            Face = face2
+            v4 = int(list(set(face1.pts)-set(face2.pts))[0])
+        elif v1 == face2.pts[2] and v2 == face2.pts[1]:
+            v2, v3, v1 = face2.pts
+            Face = face2
+            v4 = int(list(set(face1.pts)-set(face2.pts))[0])
+        elif v1 == face2.pts[1] and v2 == face2.pts[0]:
+            v3, v1, v2 = face2.pts
+            Face = face2
+            v4 = int(list(set(face1.pts)-set(face2.pts))[0])
+
+        #elif v1 == face1.pts[0] and v2 == face1.pts[2]:
+        #    v1, v2, v3 = face1.pts
+        #    Face = face1
+        #    v4 = int(list(set(face2.pts)-set(face1.pts))[0])
+        #elif v1 == face1.pts[2] and v2 == face1.pts[1]:
+        #    v2, v3, v1 = face1.pts
+        #    Face = face1
+        #    v4 = int(list(set(face2.pts)-set(face1.pts))[0])
+        #elif v1 == face1.pts[1] and v2 == face1.pts[0]:
+        #    v2, v1, v3 = face1.pts
+        #    Face = face1
+        #    v4 = int(list(set(face2.pts)-set(face1.pts))[0])
+
+        #self.print_triangle(face1)
+        #self.print_triangle(face2)
+
+        #print(v1, v2, v3, v4)
+        v1 = self.pts[v1]
+        v2 = self.pts[v2]
+        v3 = self.pts[v3]
+        v4 = self.pts[v4]
+        if turn(v1, v2, v3) <0 or turn(v2, v3, v4)<0 or turn(v3, v4, v1)<0 or turn(v4, v1, v2)<0:
+            return False
+        else:
+            if sorted([Face.pts[0], Face.pts[1]])== sorted(e):
+                self.flip_from_seq(tri, Face, 0)
+                return True
+            elif sorted([Face.pts[1], Face.pts[2]])== sorted(e):
+                self.flip_from_seq(tri, Face, 1)
+                return True
+            elif sorted([Face.pts[2], Face.pts[0]])== sorted(e):
+                self.flip_from_seq(tri, Face, 2)
+                return True
 
     def flip_sequence(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
         fs = []
@@ -590,11 +638,16 @@ class Data:
 
     def print_triangle(self, t: Triangle):
         #print("Triangle :", end="")
-        #print(t)
-        print("print_triangle :")
-        print("node ", t.pts[0], ":(x,y)= ", self.pts[t.pts[0]])
-        print("node ", t.pts[1], ":(x,y)= ", self.pts[t.pts[1]])
-        print("node ", t.pts[2], ":(x,y)= ", self.pts[t.pts[2]])
+        print("node ", t.pts[0],t.pts[1],t.pts[2])
+        #print("print_triangle :")
+        #print("node ", t.pts[0], ":(x,y)= ", self.pts[t.pts[0]])
+        #print("node ", t.pts[1], ":(x,y)= ", self.pts[t.pts[1]])
+        #print("node ", t.pts[2], ":(x,y)= ", self.pts[t.pts[2]])
+        if turn(self.pts[t.pts[0]], self.pts[t.pts[1]], self.pts[t.pts[2]])<0:
+            print("negative!")
+            print("node ", t.pts[0], ":(x,y)= ", self.pts[t.pts[0]])
+            print("node ", t.pts[1], ":(x,y)= ", self.pts[t.pts[1]])
+            print("node ", t.pts[2], ":(x,y)= ", self.pts[t.pts[2]])
         #print(t.neis[0])
         #print(t.neis[1])
         #print(t.neis[2])

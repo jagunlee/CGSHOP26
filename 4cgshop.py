@@ -39,6 +39,7 @@ def find_next_available_filename(write_path, base, extension):
 def write_output_to_file(db, write_path):
     final_database_size = 50
     sorted_score = sorted(db.rewards)
+    print("score = ", sorted_score)
     base_name = "search_output"
     extension = "txt"
     filename = find_next_available_filename(write_path, base_name, extension)
@@ -54,7 +55,7 @@ def write_output_to_file(db, write_path):
     file.close()
     print("---------------- write_output_to_file()")
     print(f"Data written to {filename}")
-    print(f"An example of an object with minimum reward ({str(sorted_score[-1])}): {db.rewards[sorted_score[-1]][0]}")
+    print(f"An example of an object with minimum reward ({str(sorted_score[0])}): {db.rewards[sorted_score[0]][0]}")
     print("---------------------------------------")
 
     #print("Read file..")
@@ -92,6 +93,7 @@ def reward(db, obj):
 
 def add_db(db, list_obj, list_rew):
     for i in range(len(list_obj)):
+        if list_obj[i] == []: continue
         obj = list_obj[i][0]
         if obj not in db.objects:
             rew = list_rew[i][0]
@@ -182,7 +184,7 @@ def local_search_on_object(db, dt, idx, centerT, flips, first):
     assert not errors, f"Errors found in solution: {errors}"
 
     rew = dt.computeDistanceSum(centerT)
-    obj = convert_to_string(flips[0])
+    obj = convert_to_string(flips[0]) #hy: T_0 to centerT
 
     new = reward(db, obj)
     if new:
@@ -230,12 +232,14 @@ def local_search_from_decoded(db, inst_file, path, input_file):
             flips.append(int_nodes)
 
         # compute CenterT from T_0
-        print("................... compute CenterT from T_0 .......")
+        #print("................... compute CenterT from T_0 .......")
         tmp = deepcopy(dt.triangulations[0])
+        flip_occur = False
         for flip in flips:
-            print("~~~~~~~ flip = ", flip)
+            #print("~~~~~~~ flip = ", flip)
             for edge in flip:
-                dt.isFlippable(tmp, edge)
+                flip_occur = dt.isFlippable(tmp, tuple(edge))
+        if flip_occur == False: continue
         centerT = tmp
         flips=[]
         for i in range(len(dt.triangulations)):
@@ -553,7 +557,8 @@ if __name__ == '__main__':
     Tris_path = './data/benchmark_instances/'
     #inst_file = 'random_instance_110_15_3'
     #inst_file = 'random_instance_93_40_10'
-    inst_file = 'random_instance_444_15_10'
+    #inst_file = 'random_instance_444_15_10'
+    inst_file = 'random_instance_771_15_20'
 
 
     num_pts = int(inst_file.split('_')[-1])
@@ -725,9 +730,9 @@ if __name__ == '__main__':
         if os.path.exists(args.dump_path+"/distribution.txt"):
             with open(args.dump_path+"/distribution.txt", 'r') as file:
                 d_lines = file.readlines()
-        logger.info("distribution of scores")
-        for l in d_lines:
-            logger.info(l[:-1])
+            logger.info("distribution of scores")
+            for l in d_lines:
+                logger.info(l[:-1])
 
 
         logger.info("tokenizing")

@@ -1,0 +1,86 @@
+INFO - 12/12/25 13:49:37 - 0:00:00 - ============ Initialized logger ============
+INFO - 12/12/25 13:49:37 - 0:00:00 - batch_size: 32
+                                     command: python 4cgshop.py --exp_id "h9s1ljb3e7"
+                                     cpu: True
+                                     dump_path: checkpoint/debug/h9s1ljb3e7
+                                     exp_id: h9s1ljb3e7
+                                     exp_name: debug
+                                     gen_batch_size: 10
+                                     learning_rate: 0.0005
+                                     max_epochs: 10
+                                     max_output_length: 160
+                                     max_steps: 200
+                                     n_embd: 64
+                                     n_embd2: 32
+                                     n_head: 8
+                                     n_layer: 2
+                                     n_tokens: 100
+                                     sample_only: 500
+                                     temperature: 1.0
+                                     top_k: -1
+                                     type: transformer
+                                     weight_decay: 0.01
+INFO - 12/12/25 13:49:37 - 0:00:00 - The experiment will be stored in checkpoint/debug/h9s1ljb3e7
+                                     
+INFO - 12/12/25 13:49:37 - 0:00:00 - Running command: python 4cgshop.py
+
+INFO - 12/12/25 13:49:38 - 0:00:01 - Created checkpoint/debug/h9s1ljb3e7/temp.txt and training tokenizer...
+INFO - 12/12/25 13:49:38 - 0:00:01 - Directory 'checkpoint/debug/h9s1ljb3e7/tokenizer_data' created.
+INFO - 12/12/25 13:49:38 - 0:00:01 - File 'checkpoint/debug/h9s1ljb3e7/temp.txt' has been deleted.
+INFO - 12/12/25 13:49:38 - 0:00:01 - 0 / 20
+INFO - 12/12/25 13:49:38 - 0:00:01 - initializing at generation: 1
+INFO - 12/12/25 13:49:38 - 0:00:01 - number of examples in the dataset: 20
+INFO - 12/12/25 13:49:38 - 0:00:01 - max word length: 40
+INFO - 12/12/25 13:49:38 - 0:00:01 - number of unique characters in the vocabulary: 13
+INFO - 12/12/25 13:49:38 - 0:00:01 - vocabulary:
+INFO - 12/12/25 13:49:38 - 0:00:01 - ['V1', 'V2', 'V3', 'V4', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14']
+INFO - 12/12/25 13:49:38 - 0:00:01 - split up the dataset into 18 training examples and 2 test examples
+INFO - 12/12/25 13:49:38 - 0:00:01 - dataset determined that: vocab_size=14, block_size=161
+INFO - 12/12/25 13:49:38 - 0:00:01 - model #params: 112192
+INFO - 12/12/25 13:49:38 - 0:00:01 - ============ Start of generation 1 ============
+INFO - 12/12/25 13:49:38 - 0:00:01 - cuda Memory allocated:  0.00MB, cuda reserved: 0.00MB
+INFO - 12/12/25 13:49:38 - 0:00:01 - training
+INFO - 12/12/25 13:49:38 - 0:00:01 - step 0/200 | loss 2.7784 | step time 44.01ms
+INFO - 12/12/25 13:49:40 - 0:00:03 - step 100/200 | loss 0.7096 | step time 18.52ms
+INFO - 12/12/25 13:49:42 - 0:00:05 - Memory allocated:  0.00MB, reserved: 0.00MB
+INFO - 12/12/25 13:49:42 - 0:00:05 - generating
+INFO - 12/12/25 13:50:11 - 0:00:34 - distribution of sample lengths: average: 95.488 max: 252
+INFO - 12/12/25 13:50:11 - 0:00:34 - decoding
+INFO - 12/12/25 13:50:11 - 0:00:34 - Decoding complet. Check the output in checkpoint/debug/h9s1ljb3e7/transformer-output-decoded.txt
+INFO - 12/12/25 13:50:11 - 0:00:34 - Memory allocated:  0.00MB, reserved: 0.00MB
+INFO - 12/12/25 13:50:11 - 0:00:34 - ============ End of generation 1 ============
+INFO - 12/12/25 13:50:22 - 0:00:45 - tokenizing
+INFO - 12/12/25 13:50:22 - 0:00:45 - Loading tokenizer from checkpoint/debug/h9s1ljb3e7/tokenizer_data/tokenizer.json...
+INFO - 12/12/25 13:50:22 - 0:00:45 - 0 / 50
+INFO - 12/12/25 13:50:22 - 0:00:45 - number of examples in the dataset: 50
+INFO - 12/12/25 13:50:22 - 0:00:45 - max word length: 44
+INFO - 12/12/25 13:50:22 - 0:00:45 - number of unique characters in the vocabulary: 13
+INFO - 12/12/25 13:50:22 - 0:00:45 - vocabulary:
+INFO - 12/12/25 13:50:22 - 0:00:45 - ['V1', 'V2', 'V3', 'V4', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14']
+INFO - 12/12/25 13:50:22 - 0:00:45 - split up the dataset into 45 training examples and 5 test examples
+INFO - 12/12/25 13:50:22 - 0:00:45 - ============ Start of generation 2 ============
+INFO - 12/12/25 13:50:22 - 0:00:45 - cuda Memory allocated:  0.00MB, cuda reserved: 0.00MB
+INFO - 12/12/25 13:50:22 - 0:00:45 - training
+INFO - 12/12/25 13:50:22 - 0:00:45 - step 0/200 | loss 0.9678 | step time 42.29ms
+INFO - 12/12/25 13:50:25 - 0:00:47 - step 100/200 | loss 0.2977 | step time 29.36ms
+INFO - 12/12/25 13:50:27 - 0:00:50 - Memory allocated:  0.00MB, reserved: 0.00MB
+INFO - 12/12/25 13:50:27 - 0:00:50 - generating
+INFO - 12/12/25 13:50:53 - 0:01:16 - distribution of sample lengths: average: 106.228 max: 254
+INFO - 12/12/25 13:50:53 - 0:01:16 - decoding
+INFO - 12/12/25 13:50:53 - 0:01:16 - Decoding complet. Check the output in checkpoint/debug/h9s1ljb3e7/transformer-output-decoded.txt
+INFO - 12/12/25 13:50:53 - 0:01:16 - Memory allocated:  0.00MB, reserved: 0.00MB
+INFO - 12/12/25 13:50:53 - 0:01:16 - ============ End of generation 2 ============
+INFO - 12/12/25 13:51:08 - 0:01:31 - tokenizing
+INFO - 12/12/25 13:51:08 - 0:01:31 - Loading tokenizer from checkpoint/debug/h9s1ljb3e7/tokenizer_data/tokenizer.json...
+INFO - 12/12/25 13:51:08 - 0:01:31 - 0 / 50
+INFO - 12/12/25 13:51:08 - 0:01:31 - number of examples in the dataset: 50
+INFO - 12/12/25 13:51:08 - 0:01:31 - max word length: 44
+INFO - 12/12/25 13:51:08 - 0:01:31 - number of unique characters in the vocabulary: 13
+INFO - 12/12/25 13:51:08 - 0:01:31 - vocabulary:
+INFO - 12/12/25 13:51:08 - 0:01:31 - ['V1', 'V2', 'V3', 'V4', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14']
+INFO - 12/12/25 13:51:08 - 0:01:31 - split up the dataset into 45 training examples and 5 test examples
+INFO - 12/12/25 13:51:08 - 0:01:31 - ============ Start of generation 3 ============
+INFO - 12/12/25 13:51:08 - 0:01:31 - cuda Memory allocated:  0.00MB, cuda reserved: 0.00MB
+INFO - 12/12/25 13:51:08 - 0:01:31 - training
+INFO - 12/12/25 13:51:08 - 0:01:31 - step 0/200 | loss 0.4110 | step time 47.47ms
+INFO - 12/12/25 13:51:11 - 0:01:33 - step 100/200 | loss 0.1661 | step time 29.18ms
