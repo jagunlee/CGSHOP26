@@ -153,6 +153,8 @@ class Transformer(nn.Module):
         # if we are given some desired targets also calculate the loss
         loss = None
         if targets is not None:
+            #hy: logits[0] = 단어장에서 인덱스 0을 갖는 단어가 다음 토큰일 확률에 대한 모델의 상대적인 확신도
+            #hy: target = 예측해야할 다음 토큰의 정답 인덱스
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=-1)
 
         return logits, loss
@@ -437,9 +439,12 @@ def generate(model, idx, max_new_tokens, temperature=1.0, do_sample=False, top_k
     block_size = model.get_block_size()
     for _ in range(max_new_tokens):
         # if the sequence context is growing too long we must crop it at block_size
+        print("idx.size(1) = ", idx.size(1), ", block_size = ", block_size)
         idx_cond = idx if idx.size(1) <= block_size else idx[:, -block_size:]
+        print("idx_cond size = ", idx_cond.size())
         # forward the model to get the logits for the index in the sequence
         logits, _ = model(idx_cond)
+        print("logits size = ", logits.size())
         # pluck the logits at the final step and scale by desired temperature
         logits = logits[:, -1, :] / temperature
         # optionally crop the logits to only the top k options
@@ -455,7 +460,8 @@ def generate(model, idx, max_new_tokens, temperature=1.0, do_sample=False, top_k
             _, idx_next = torch.topk(probs, k=1, dim=-1)
         # append sampled index to the running sequence and continue
         idx = torch.cat((idx, idx_next), dim=1)
-
+        print("idx = ", idx)
+        exit(0)
     return idx
 
 def print_samples(num=10):
@@ -499,7 +505,7 @@ def write_samples(num=10, new_file=False, use_logger=False):
     out_file = args.work_dir + "/out.txt"
     if use_logger:
         logger.info(f"Printing {len(samples)} samples to {out_file}.")
-    else: 
+    else:
         print(f"Printing {len(samples)} samples to {out_file}.")
     if not new_file:
         with open(out_file, "a") as file:
@@ -511,15 +517,18 @@ def write_samples(num=10, new_file=False, use_logger=False):
             for word in samples:
                 file.write(word)
                 file.write("\n")
-    
+
 @torch.inference_mode()
 def evaluate(model, dataset, device, batch_size=50, max_batches=None):
     model.eval()
+    #hy: num_workers=0 means that the data will be loaded in the main process.
     loader = DataLoader(dataset, shuffle=True, batch_size=batch_size, num_workers=0)
     losses = []
     for i, batch in enumerate(loader):
         batch = [t.to(device) for t in batch]
         X, Y = batch
+        #print("X = ", X) # hy: 항상 시작은 "0"
+        #print("Y = ", Y)
         logits, loss = model(X, Y)
         losses.append(loss.item())
         if max_batches is not None and i >= max_batches:
@@ -530,10 +539,10 @@ def evaluate(model, dataset, device, batch_size=50, max_batches=None):
 
 def logprobs(dataset):
     """Return the log of the probability that the model will generate a given sequence.
-    
+
     Note: What we actually calculate is the probability given a sequence (A,B,..,X) that the
     model will generate a sequence (A,B,...X,...). I.e. we don't care that it stops correctly.
-    
+
     """
 
     encoded_words = torch.stack(tuple([dataset[i][0] for i in range(len(dataset))])).to(args.device)
@@ -588,7 +597,7 @@ class CharDataset(Dataset):
         ix = self.encode(word)
         x = torch.zeros(self.max_word_length + 1, dtype=torch.long)
         y = torch.zeros(self.max_word_length + 1, dtype=torch.long)
-        x[1:1+len(ix)] = ix
+        x[1:1+len(ix)] = ix #hy: x[0]=0 start from "0"
         y[:len(ix)] = ix
         y[len(ix)+1:] = -1 # index -1 will mask the loss at the inactive locations
         return x, y
@@ -620,13 +629,13 @@ def create_datasets(input_file):
     train_words = [words[i] for i in rp[:-test_set_size]]
     test_words = [words[i] for i in rp[-test_set_size:]]
     print(f"split up the dataset into {len(train_words)} training examples and {len(test_words)} test examples")
-    
+
     # wrap in dataset objects
     train_dataset = CharDataset(train_words, chars, max_word_length)
     test_dataset = CharDataset(test_words, chars, max_word_length)
 
     return train_dataset, test_dataset
-    
+
 def create_eval_dataset(input_file):
     """
     Sometimes we have a list of good sequences, and we would like to see whether
@@ -668,6 +677,7 @@ class InfiniteDataLoader:
         #train_sampler = torch.utils.data.RandomSampler(dataset, replacement=True, num_samples=int(1e10))#hy
         #print(len(dataset))
         train_sampler = torch.utils.data.RandomSampler(dataset, replacement=True, num_samples=len(dataset))
+
         self.train_loader = DataLoader(dataset, sampler=train_sampler, **kwargs)
         self.data_iter = iter(self.train_loader)
 
@@ -680,143 +690,144 @@ class InfiniteDataLoader:
         return batch
 
 # -----------------------------------------------------------------------------
-if __name__ == '__main__':
-
-    # parse command line args
-    parser = argparse.ArgumentParser(description="Make More")
-    # system/input/output
-    parser.add_argument('--input-file', '-i', type=str, default='V-input.txt', help="input file with things one per line")
-    parser.add_argument('--work-dir', '-o', type=str, default='out', help="output working directory")
-    parser.add_argument('--resume', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
-    parser.add_argument('--sample-only', type=int, default=0, help="sample the specified number from the model and quit, don't train")
-    parser.add_argument('--num-workers', '-n', type=int, default=4, help="number of data workers for both train/test")
-    parser.add_argument('--max-steps', type=int, default=-1, help="max number of optimization steps to run for, or -1 for infinite.")
-    parser.add_argument('--device', type=str, default='cpu', help="device to use for compute, examples: cpu|cuda|cuda:2|mps")
-    parser.add_argument('--seed', type=int, default=3407, help="seed")
-    # sampling
-    parser.add_argument('--top-k', type=int, default=-1, help="top-k for sampling, -1 means no top-k")
-    # model
-    parser.add_argument('--type', type=str, default='transformer', help="model class type to use, bigram|mlp|rnn|gru|bow|transformer")
-    parser.add_argument('--n-layer', type=int, default=4, help="number of layers")
-    parser.add_argument('--n-head', type=int, default=4, help="number of heads (in a transformer)")
-    parser.add_argument('--n-embd', type=int, default=16, help="number of feature channels in the model")
-    parser.add_argument('--n-embd2', type=int, default=16, help="number of feature channels elsewhere in the model")
-    # optimization
-    parser.add_argument('--batch-size', '-b', type=int, default=32, help="batch size during optimization")
-    parser.add_argument('--learning-rate', '-l', type=float, default=5e-4, help="learning rate")
-    parser.add_argument('--weight-decay', '-w', type=float, default=0.01, help="weight decay")
-    # evaluation against known "good sequences"
-    parser.add_argument('--eval-file', type=str, default=None, help="file with braids to evaluate logprobs against")
-
-    args = parser.parse_args()
-    print(vars(args))
-
-    # system inits
-    torch.manual_seed(args.seed)
-    torch.cuda.manual_seed_all(args.seed)
-    os.makedirs(args.work_dir, exist_ok=True)
-    if not args.sample_only:
-        writer = SummaryWriter('logs/'+datetime.datetime.now().strftime("%Y%m%d-%H%M"))
-
-    # init datasets
-    train_dataset, test_dataset = create_datasets(args.input_file)
-    vocab_size = train_dataset.get_vocab_size()
-    block_size = train_dataset.get_output_length()
-    print(f"dataset determined that: {vocab_size=}, {block_size=}")
-
-    # init model
-    config = ModelConfig(vocab_size=vocab_size, block_size=block_size,
-                       n_layer=args.n_layer, n_head=args.n_head,
-                       n_embd=args.n_embd, n_embd2=args.n_embd2)
-    if args.type == 'transformer':
-        model = Transformer(config)
-    elif args.type == 'bigram':
-        model = Bigram(config)
-    elif args.type == 'mlp':
-        model = MLP(config)
-    elif args.type == 'rnn':
-        model = RNN(config, cell_type='rnn')
-    elif args.type == 'gru':
-        model = RNN(config, cell_type='gru')
-    elif args.type == 'bow':
-        model = BoW(config)
-    else:
-        raise ValueError(f'model type {args.type} is not recognized')
-    model.to(args.device)
-    print(f"model #params: {sum(p.numel() for p in model.parameters())}")
-    if args.resume or args.sample_only: # note: if we sample-only then we also assume we are resuming
-        print("resuming from existing model in the workdir")
-        model.load_state_dict(torch.load(os.path.join(args.work_dir, 'model.pt')))
-    if args.sample_only:
-        sample_batch_size = 1000 # reduce this if GPU crashes, increase it if sampling is slow
-        todo = args.sample_only
-        write_samples(num=0, new_file=True)
-        while sample_batch_size < todo:
-            print (f'{todo} samples remaining', end="\r")
-            write_samples(num=sample_batch_size)
-            todo = todo - sample_batch_size
-        write_samples(num=todo)
-        sys.exit()
-        
-    if args.eval_file:
-        print("loading sequences to evaluate against")
-        eval = create_eval_dataset(args.eval_file)
-
-    # init optimizer
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay, betas=(0.9, 0.99), eps=1e-8)
-
-    # init dataloader
-    batch_loader = InfiniteDataLoader(train_dataset, batch_size=args.batch_size, pin_memory=True, num_workers=args.num_workers)
-
-    # training loop
-    best_loss = None
-    step = 0
-    while True:
-
-        t0 = time.time()
-
-        # get the next batch, ship to device, and unpack it to input and target
-        batch = batch_loader.next()
-        batch = [t.to(args.device) for t in batch]
-        X, Y = batch
-
-        # feed into the model
-        logits, loss = model(X, Y)
-
-        # calculate the gradient, update the weights
-        model.zero_grad(set_to_none=True)
-        loss.backward()
-        optimizer.step()
-
-        # wait for all CUDA work on the GPU to finish then calculate iteration time taken
-        if args.device.startswith('cuda'):
-            torch.cuda.synchronize()
-        t1 = time.time()
-
-        # logging
-        if step % 10 == 0:
-            print(f"step {step} | loss {loss.item():.4f} | step time {(t1-t0)*1000:.2f}ms")
-
-        # evaluate the model
-        if step > 0 and step % 500 == 0:
-            train_loss = evaluate(model, train_dataset, args.device, batch_size=100, max_batches=10)
-            test_loss  = evaluate(model, test_dataset,  args.device, batch_size=100, max_batches=10)
-            writer.add_scalars("loss", {'train':train_loss,'test':test_loss}, step)
-            if args.eval_file:
-                writer.add_scalar("eval-logits", np.mean(np.array(logprobs(eval))), step)
-            writer.flush()
-
-            print(f"step {step} train loss: {train_loss} test loss: {test_loss}")
-            # save the model to disk if it has improved
-            if best_loss is None or test_loss < best_loss:
-                out_path = os.path.join(args.work_dir, "model.pt")
-                print(f"test loss {test_loss} is the best so far, saving model to {out_path}")
-                torch.save(model.state_dict(), out_path)
-                best_loss = test_loss
-#            print_samples(num=10)
-                
-        step += 1
-        # termination conditions
-        if args.max_steps >= 0 and step >= args.max_steps:
-            break
+#if __name__ == '__main__':
+#
+#    # parse command line args
+#    parser = argparse.ArgumentParser(description="Make More")
+#    # system/input/output
+#    parser.add_argument('--input-file', '-i', type=str, default='V-input.txt', help="input file with things one per line")
+#    parser.add_argument('--work-dir', '-o', type=str, default='out', help="output working directory")
+#    parser.add_argument('--resume', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
+#    parser.add_argument('--sample-only', type=int, default=0, help="sample the specified number from the model and quit, don't train")
+#    parser.add_argument('--num-workers', '-n', type=int, default=4, help="number of data workers for both train/test")
+#    parser.add_argument('--max-steps', type=int, default=-1, help="max number of optimization steps to run for, or -1 for infinite.")
+#    parser.add_argument('--device', type=str, default='cpu', help="device to use for compute, examples: cpu|cuda|cuda:2|mps")
+#    parser.add_argument('--seed', type=int, default=3407, help="seed")
+#    # sampling
+#    parser.add_argument('--top-k', type=int, default=-1, help="top-k for sampling, -1 means no top-k")
+#    # model
+#    parser.add_argument('--type', type=str, default='transformer', help="model class type to use, bigram|mlp|rnn|gru|bow|transformer")
+#    parser.add_argument('--n-layer', type=int, default=4, help="number of layers")
+#    parser.add_argument('--n-head', type=int, default=4, help="number of heads (in a transformer)")
+#    parser.add_argument('--n-embd', type=int, default=16, help="number of feature channels in the model")
+#    parser.add_argument('--n-embd2', type=int, default=16, help="number of feature channels elsewhere in the model")
+#    # optimization
+#    parser.add_argument('--batch-size', '-b', type=int, default=32, help="batch size during optimization")
+#    parser.add_argument('--learning-rate', '-l', type=float, default=5e-4, help="learning rate")
+#    parser.add_argument('--weight-decay', '-w', type=float, default=0.01, help="weight decay")
+#    # evaluation against known "good sequences"
+#    parser.add_argument('--eval-file', type=str, default=None, help="file with braids to evaluate logprobs against")
+#
+#    args = parser.parse_args()
+#    print("----makemoretokens.py-----")
+#    print(vars(args))
+#
+#    # system inits
+#    torch.manual_seed(args.seed)
+#    torch.cuda.manual_seed_all(args.seed)
+#    os.makedirs(args.work_dir, exist_ok=True)
+#    if not args.sample_only:
+#        writer = SummaryWriter('logs/'+datetime.datetime.now().strftime("%Y%m%d-%H%M"))
+#
+#    # init datasets
+#    train_dataset, test_dataset = create_datasets(args.input_file)
+#    vocab_size = train_dataset.get_vocab_size()
+#    block_size = train_dataset.get_output_length()
+#    print(f"dataset determined that: {vocab_size=}, {block_size=}")
+#
+#    # init model
+#    config = ModelConfig(vocab_size=vocab_size, block_size=block_size,
+#                       n_layer=args.n_layer, n_head=args.n_head,
+#                       n_embd=args.n_embd, n_embd2=args.n_embd2)
+#    if args.type == 'transformer':
+#        model = Transformer(config)
+#    elif args.type == 'bigram':
+#        model = Bigram(config)
+#    elif args.type == 'mlp':
+#        model = MLP(config)
+#    elif args.type == 'rnn':
+#        model = RNN(config, cell_type='rnn')
+#    elif args.type == 'gru':
+#        model = RNN(config, cell_type='gru')
+#    elif args.type == 'bow':
+#        model = BoW(config)
+#    else:
+#        raise ValueError(f'model type {args.type} is not recognized')
+#    model.to(args.device)
+#    print(f"----makemoretokens.py: model #params: {sum(p.numel() for p in model.parameters())}")
+#    if args.resume or args.sample_only: # note: if we sample-only then we also assume we are resuming
+#        print("resuming from existing model in the workdir")
+#        model.load_state_dict(torch.load(os.path.join(args.work_dir, 'model.pt')))
+#    if args.sample_only:
+#        sample_batch_size = 1000 # reduce this if GPU crashes, increase it if sampling is slow
+#        todo = args.sample_only
+#        write_samples(num=0, new_file=True)
+#        while sample_batch_size < todo:
+#            print (f'{todo} samples remaining', end="\r")
+#            write_samples(num=sample_batch_size)
+#            todo = todo - sample_batch_size
+#        write_samples(num=todo)
+#        sys.exit()
+#
+#    if args.eval_file:
+#        print("loading sequences to evaluate against")
+#        eval = create_eval_dataset(args.eval_file)
+#
+#    # init optimizer
+#    optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay, betas=(0.9, 0.99), eps=1e-8)
+#
+#    # init dataloader
+#    batch_loader = InfiniteDataLoader(train_dataset, batch_size=args.batch_size, pin_memory=True, num_workers=args.num_workers)
+#
+#    # training loop
+#    best_loss = None
+#    step = 0
+#    while True:
+#
+#        t0 = time.time()
+#
+#        # get the next batch, ship to device, and unpack it to input and target
+#        batch = batch_loader.next()
+#        batch = [t.to(args.device) for t in batch]
+#        X, Y = batch
+#
+#        # feed into the model
+#        logits, loss = model(X, Y)
+#
+#        # calculate the gradient, update the weights
+#        model.zero_grad(set_to_none=True)
+#        loss.backward()
+#        optimizer.step()
+#
+#        # wait for all CUDA work on the GPU to finish then calculate iteration time taken
+#        if args.device.startswith('cuda'):
+#            torch.cuda.synchronize()
+#        t1 = time.time()
+#
+#        # logging
+#        if step % 10 == 0:
+#            print(f"makemoretokens.py: step {step} | loss {loss.item():.4f} | step time {(t1-t0)*1000:.2f}ms")
+#
+#        # evaluate the model
+#        if step > 0 and step % 500 == 0:
+#            train_loss = evaluate(model, train_dataset, args.device, batch_size=100, max_batches=10)
+#            test_loss  = evaluate(model, test_dataset,  args.device, batch_size=100, max_batches=10)
+#            writer.add_scalars("loss", {'train':train_loss,'test':test_loss}, step)
+#            if args.eval_file:
+#                writer.add_scalar("eval-logits", np.mean(np.array(logprobs(eval))), step)
+#            writer.flush()
+#
+#            print(f"step {step} train loss: {train_loss} test loss: {test_loss}")
+#            # save the model to disk if it has improved
+#            if best_loss is None or test_loss < best_loss:
+#                out_path = os.path.join(args.work_dir, "model.pt")
+#                print(f"test loss {test_loss} is the best so far, saving model to {out_path}")
+#                torch.save(model.state_dict(), out_path)
+#                best_loss = test_loss
+##            print_samples(num=10)
+#
+#        step += 1
+#        # termination conditions
+#        if args.max_steps >= 0 and step >= args.max_steps:
+#            break
 

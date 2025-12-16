@@ -100,6 +100,19 @@ class Data:
     def resolve_cross_random(self):
         pass
 
+    ##hy
+    #def resolve_cross_fast(self, tri:Triangulation, con:tuple):
+    #    q1 = con[0]
+    #    q2 = con[1]
+    #    # Find edges having q1 = (q1, a)
+    #    # Find edges having q2 = (q2, b)
+    #    list_a = [(set(key)-{q1}).pop() for key in tri.dict.keys() if q1 in key]
+    #    list_b = [(set(key)-{q2}).pop() for key in tri.dict.keys() if q2 in key]
+    #    # If (a,b) in tri, test isFlippable()
+    #    for a in list_a:
+    #        for b in list_b:
+    #            if check_Flippable(tri, (a,b)):
+
 
     # con: edge in T2 that may be not in T1
     def resolve_cross(self, tri: Triangulation, con: tuple, t=None):
@@ -124,10 +137,6 @@ class Data:
         else:
             q1 = con[0]
             q2 = con[1]
-            # print("resolving", q1, q2)
-            # print("----- Starting triangle -----")
-            # self.print_triangle(t)
-            # print("-----------------------------")
             i = t.get_ind(q1)
             f = self.flip(tri, t, (i + 1) % 3) #hy: f = [(flip edge), (diagonal edge)]
             r = t.pt(i + 2)
@@ -142,28 +151,13 @@ class Data:
     def flip_from_seq(self, tri:Triangulation, t:Triangle, i:int):
 
         tt = t.neis[i]
-        #print("---t.neis[",i,"] = tt:")
-        #self.print_triangle(tt)
-        #print("---t.pts[",i+1,"] = ", t.pt(i+1))
-        #print("tt.pts = ", [tt.pts[0], tt.pts[1], tt.pts[2]])
         j = tt.get_ind(t.pt(i + 1)) #hy: t's i+1'th neis's node's index in tt's pts ㅋㅋㅋㅋㅋ
-        #print("tt.pts[",j,"] = ", t.pt(i+1))
 
         #hy: coordinates
         p = self.pts[t.pt(i + 2)]
-        #print("p = coordinate of t.pt(",i+2,") = ", p)
-
         pr = self.pts[t.pts[i]]
-        #print("pr = coordinate of t.pts[",i,"] = ", pr)
-
         pl = self.pts[t.pt(i + 1)]
-        #print("pl = coordinate of t.pt(",i+1,") = ", pl)
-
         q = self.pts[tt.pt(j + 2)]
-        #print("q = coordinate of tt.pt(",j+2,") = ", q)
-        #print("************** flip() *************")
-        #print("t is:")
-        #self.print_triangle(t)
         #print("         ****** t.neis *******")
         #for i in range(3):
         #    if t.neis[i] == None:
@@ -335,25 +329,91 @@ class Data:
         #print("~~~~~~~~ flipDiagonal ~~~~~~")
         change = False
 
-        for t in tri.triangles:
-            a, b = F[0] #hy: F[0] is edge in tri. After flip F[0], then F[1] will appear.
+        #for t in tri.triangles:
+        #    a, b = F[0] #hy: F[0] is edge in tri. After flip F[0], then F[1] will appear.
 
-            if sorted([t.pts[0], t.pts[1]]) == sorted([a, b]):
-                self.flip(tri, t, 0)
-                change = True
-                break
-            elif sorted([t.pts[1], t.pts[2]]) == sorted([a, b]):
-                self.flip(tri, t, 1)
-                change = True
-                break
-            elif sorted([t.pts[2], t.pts[0]]) == sorted([a, b]):
-                self.flip(tri, t, 2)
-                change = True
-                break
+        #    if sorted([t.pts[0], t.pts[1]]) == sorted([a, b]):
+        #        self.flip(tri, t, 0)
+        #        change = True
+        #        break
+        #    elif sorted([t.pts[1], t.pts[2]]) == sorted([a, b]):
+        #        self.flip(tri, t, 1)
+        #        change = True
+        #        break
+        #    elif sorted([t.pts[2], t.pts[0]]) == sorted([a, b]):
+        #        self.flip(tri, t, 2)
+        #        change = True
+        #        break
+
+        #hy: faster
+        v1, v2 = F[0]
+        e = (v1,v2)
+        Face = tri.dict[e]
+        if sorted([Face.pts[0], Face.pts[1]])== sorted(e):
+            self.flip_from_seq(tri, Face, 0)
+            change = True
+        elif sorted([Face.pts[1], Face.pts[2]])== sorted(e):
+            self.flip_from_seq(tri, Face, 1)
+            change = True
+        elif sorted([Face.pts[2], Face.pts[0]])== sorted(e):
+            self.flip_from_seq(tri, Face, 2)
+            change = True
 
         assert(change)
 
-    #hy
+    ##hy: Only check flippable or not.
+    #def check_Flippable(self, tri:Triangulation, e:tuple):
+    #    if e not in tri.edges:
+    #        return False
+
+    #    v1, v2 = e
+    #    e_r = (v2,v1)
+    #    #hy: Find two faces if exist
+    #    if e in tri.dict:
+    #        face1 = tri.dict[e]
+    #        if e_r in tri.dict:
+    #            face2 = tri.dict[e_r]
+    #        else:#hy: e is convex hull
+    #            return False
+    #    else: #hy: e_r is convex hull
+    #        return False
+
+
+    #    #hy: set order (v1, v2, v3, v4)
+    #    #hy: (v1, v3) is e
+    #    if v1 == face2.pts[0] and v2 == face2.pts[2]:
+    #        v1, v2, v3 = face2.pts
+    #        Face = face2
+    #        v4 = int(list(set(face1.pts)-set(face2.pts))[0])
+    #    elif v1 == face2.pts[2] and v2 == face2.pts[1]:
+    #        v2, v3, v1 = face2.pts
+    #        Face = face2
+    #        v4 = int(list(set(face1.pts)-set(face2.pts))[0])
+    #    elif v1 == face2.pts[1] and v2 == face2.pts[0]:
+    #        v3, v1, v2 = face2.pts
+    #        Face = face2
+    #        v4 = int(list(set(face1.pts)-set(face2.pts))[0])
+
+    #    v1 = self.pts[v1]
+    #    v2 = self.pts[v2]
+    #    v3 = self.pts[v3]
+    #    v4 = self.pts[v4]
+    #    if turn(v1, v2, v3) <0 or turn(v2, v3, v4)<0 or turn(v3, v4, v1)<0 or turn(v4, v1, v2)<0:
+    #        return False
+    #    else:
+    #        return True
+    #        #if sorted([Face.pts[0], Face.pts[1]])== sorted(e):
+    #        #    self.flip_from_seq(tri, Face, 0)
+    #        #    return True
+    #        #elif sorted([Face.pts[1], Face.pts[2]])== sorted(e):
+    #        #    self.flip_from_seq(tri, Face, 1)
+    #        #    return True
+    #        #elif sorted([Face.pts[2], Face.pts[0]])== sorted(e):
+    #        #    self.flip_from_seq(tri, Face, 2)
+    #        #    return True
+
+
+    #hy: Flip e if it is flippable.
     def isFlippable(self, tri:Triangulation, e:tuple):
         if e not in tri.edges:
             return False
@@ -386,23 +446,6 @@ class Data:
             Face = face2
             v4 = int(list(set(face1.pts)-set(face2.pts))[0])
 
-        #elif v1 == face1.pts[0] and v2 == face1.pts[2]:
-        #    v1, v2, v3 = face1.pts
-        #    Face = face1
-        #    v4 = int(list(set(face2.pts)-set(face1.pts))[0])
-        #elif v1 == face1.pts[2] and v2 == face1.pts[1]:
-        #    v2, v3, v1 = face1.pts
-        #    Face = face1
-        #    v4 = int(list(set(face2.pts)-set(face1.pts))[0])
-        #elif v1 == face1.pts[1] and v2 == face1.pts[0]:
-        #    v2, v1, v3 = face1.pts
-        #    Face = face1
-        #    v4 = int(list(set(face2.pts)-set(face1.pts))[0])
-
-        #self.print_triangle(face1)
-        #self.print_triangle(face2)
-
-        #print(v1, v2, v3, v4)
         v1 = self.pts[v1]
         v2 = self.pts[v2]
         v3 = self.pts[v3]
@@ -431,9 +474,9 @@ class Data:
             fs += self.resolve_cross(tri, e) #hy: fs = [((need-to-flip edge in T1), (to-get "e" in T2)), ((), ()), ....]
             #print("fs = ", fs)
             #print("-----------------")
-            cnt += 1
-            if cnt % 100 == 0:
-                print(cnt, "/", len(edges), " in flip_sequence")
+            #cnt += 1
+            #if cnt % 100 == 0:
+            #    print(cnt, "/", len(edges), " in flip_sequence")
         del tri
         return fs
 
@@ -548,12 +591,13 @@ class Data:
     # tri1에서 tri2로의 pfp
     # tri2에서 tri1로 가는 경우 리스트를 반대로 뒤집어야 함
     def parallel_flip_path(self, tri1: Triangulation, tri2: Triangulation):
+        #print("parallel_flip_path")
         best = []
         bestscore = len(tri1.edges) * 2
         trial = 0
-        # NUM_TRIAL = len(self.pts) // 10
-        NUM_TRIAL = 1
-        while trial < NUM_TRIAL or bestscore == len(tri1.edges) * 2:
+        NUM_TRIAL = len(self.pts) // 10
+        #NUM_TRIAL = 1
+        while trial < NUM_TRIAL or bestscore == len(tri1.edges)*2:
 
             trial += 1
 
@@ -588,12 +632,52 @@ class Data:
                 for _, con in fps:
                     self.resolve_cross(tri, con)
                 pfp.append(fps)
+            #best = pfp#hy
             if len(pfp) < bestscore:
                 best = pfp
                 bestscore = len(pfp)
                 trial = 0
         #print("len(best) = ", len(best))
         return best
+
+    def parallel_flip_path_fast(self, tri1: Triangulation, tri2: Triangulation):
+        #print("parallel_flip_path_fast")
+        # flip sequence 자체에서 들어감
+        fs = self.flip_sequence(tri1, tri2)
+        done = [False] * len(fs)
+        tri = deepcopy(tri1)
+        pfp = []
+        donenum = 0
+        while not all(done):
+            fps = []
+            usedtri = set()
+            for i in range(len(fs)):
+                if done[i]: continue
+                (p1, p2), (p3, p4) = fs[i]
+                t1 = tri.find_triangle(p1,p2)
+                if not t1 or t1 in usedtri: continue
+                t2 = tri.find_triangle(p2,p1)
+                assert (t2)
+                if t2 in usedtri: continue
+                p5, p6 = t1.pt(t1.get_ind(p2) + 1), t2.pt(t2.get_ind(p1) + 1)
+                if (min(p5, p6), max(p5, p6)) != (p3, p4): continue
+                done[i] = True
+                usedtri.add(t1)
+                usedtri.add(t2)
+                fps.append(fs[i])
+            donenum += len(fps)
+            #print("*", donenum, "/", len(done))
+            for _, con in fps:
+                self.resolve_cross(tri, con)
+            pfp.append(fps)
+        best = pfp#hy
+        #if len(pfp) < bestscore:
+        #    best = pfp
+        #    bestscore = len(pfp)
+        #    trial = 0
+        #print("len(best) = ", len(best))
+        return best
+
 
     #hy: just generate pfp, no need to best
     def generate_pfp(self, tri1: Triangulation, tri2: Triangulation):
@@ -658,17 +742,24 @@ class Data:
         T1copy = deepcopy(T1)
 
         # parallel version
+        #start = time.time()
         pfp = self.parallel_flip_path(T1, T2)
+        #pfp = self.parallel_flip_path_fast(T1, T2)
+        #end = time.time() - start
+        #print("parallel_flip_path_fast time = ", end)
         midVal = int(len(pfp) * (w2 / (w1 + w2)))
         #print('len(pfp):', len(pfp), 'w1:', w1, 'w2:', w2, 'midVal:', midVal)
 
         # use_pfp: 사용되는 parallel flip들 모음
         use_pfp = pfp[:midVal]
 
+        #start = time.time()
         for flips in use_pfp:
             for flip in flips:
 
                 self.flipDiagonal(T1copy, flip)
+        #end = time.time() - start
+        #print("flipDiagonal time = ", end)
 
         return T1copy
 
@@ -693,20 +784,20 @@ class Data:
 
     def findCenter(self):
 
-        start = time.time()
-
+        #start = time.time()
+        #print("in findCenter")
         # random.shuffle(self.triangulations)
         centerT = self.triangulations[0]
         weight = 1
 
         for i in range(1, len(self.triangulations)):
-            #print(i,"th triangle")
+            #print("... ", i,"th triangle")
             nextT = self.triangulations[i]
             # 내분을 통해 새로운 central triangulation 계산
             centerT = self.internal_division(centerT, weight, nextT, 1)
             weight += 1
 
-            end = time.time()
+            #end = time.time()
             #print('time:', f"{end - start:.5f} sec")
 
         #with open("centers/" + self.instance_uid + ".json", "w", encoding="utf-8") as f:
@@ -781,7 +872,7 @@ class Data:
 
     def computeDistanceSum(self, centerT):
 
-        start = time.time()
+        #start = time.time()
 
         #print("self.pFlips = ", self.pFlips)
         #print("len() = ", len(self.pFlips))
@@ -794,13 +885,15 @@ class Data:
             self.pFlips[i] = []
 
             # list[list[list[tuple(int, int), tuple(int, int)]]]
+            #pFlips_paired = self.parallel_flip_path_fast(self.triangulations[i], centerT)
             pFlips_paired = self.parallel_flip_path(self.triangulations[i], centerT)
+            #pFlips_paired = self.generate_pfp(self.triangulations[i], centerT)#hy for short time
 
-            for round in pFlips_paired:
+            for round_ in pFlips_paired:
 
                 round_temp = []
 
-                for oneFlip in round:
+                for oneFlip in round_:
 
                     # (p1, p2), (p3, p4) = fs[i]
                     (p1, p2), (p3, p4) = oneFlip
@@ -828,7 +921,7 @@ class Data:
             #print('parallel flip distance from the center to T', i, ':', len(self.pFlips[i]))
             #print('pfd from the center to T_', i, ':', len(self.pFlips[i]))
 
-            end = time.time()
+            #end = time.time()
             #print('time:', f"{end - start:.5f} sec")
         return Dsum #hy
 

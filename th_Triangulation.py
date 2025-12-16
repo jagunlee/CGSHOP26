@@ -5,10 +5,12 @@ class Triangle:
         self.neis = [None, None, None] #hy: Each internal Triangle surrounded by three triangles.
 
     def get_ind(self, p: int):
-        for i in range(3):
-            if self.pts[i] == p: #hy: if node p is in Triangle,
-                return i #hy: then return i
-        return -1
+        if p in self.pts: return (self.pts).index(p)
+        else: return -1
+        #for i in range(3):
+        #    if self.pts[i] == p: #hy: if node p is in Triangle,
+        #        return i #hy: then return i
+        #return -1
 
     def pt(self, i: int):
         return self.pts[i % 3]
