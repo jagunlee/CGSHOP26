@@ -179,7 +179,7 @@ def local_search_on_object(db, dt, idx, centerT, T0_flip, first):
         min_len_idx = flip_len.index(min(flip_len)) #idx of Triangulation with shortest pfd
         idx = min_len_idx
         pool_centerT = newCT
-        rew = 146-dt.computeDistanceSum(pool_centerT) #hy: 839 for rirs-1500-50-49040875
+        rew = 32-dt.computeDistanceSum(pool_centerT) #hy: 839 for rirs-1500-50-49040875
         #print(rew, " in _on_object")
 
         Tris_path = './data/benchmark_instances/'
@@ -211,7 +211,8 @@ def local_search_on_object(db, dt, idx, centerT, T0_flip, first):
 
 
 
-def local_search_from_decoded(db, inst_file, path, input_file):
+def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file = 'transformer-output-decoded.txt'
+    print("hy: from_decoded:")
     Tris_path = './data/benchmark_instances/'
     #if 'decoded' in input_file:
     lines=[]
@@ -223,7 +224,6 @@ def local_search_from_decoded(db, inst_file, path, input_file):
     # Read Triangulations Ts
     dt = Data(Tris_path + inst_file + '.json')
     N = db.num_pts
-    print("hy: from_decoded:")
     single_thread_obj=[]
     single_thread_rew =[]
     # Ah... no need to make it parallel... sequential is enough!!!!
@@ -478,6 +478,7 @@ def decode():
 
         # Decode each line and collect the results
         decoded_text = [decode_tokens(line.strip()) for line in tokenized_lines if len(line) > 1]
+        print("hy: decoded_txt total lines = ", len(tokenized_lines, " -> ", len(decoded_text)))
 
         # Write the decoded text to the output file
         output_file = args.dump_path+"/transformer-output-decoded.txt"
@@ -529,20 +530,18 @@ def create_datasets(input_file):
 
 def write_samples(num=10, new_file=False, use_logger=False):
     """ samples from the model and pretty prints the decoded samples """
+    #hy: write_samples() will generate 'num=10' rows.
+
     X_init = torch.zeros(num, 1, dtype=torch.long).to(args.device) #hy: start from zero!
     top_k = args.top_k if args.top_k != -1 else None
     steps = train_dataset.get_output_length() - 1 # -1 because we already start with <START> token (index 0)
-    print("steps = max_new_tokens = ", steps)
+    #hy
+    steps = 200
     X_samp = generate(model, X_init, steps, temperature = args.temperature, top_k=top_k, do_sample=True).to('cpu')
-    #logger.info(f"generated")
     n_samp =0
     max_samp=0
     sum_samp=0
     samples = []
-#    train_samples, test_samples, new_samples = [], [], []
-    print("X_init size = ", X_init.size())
-    print("X_samp.size() = ", X_samp.size())
-    exit(0)
     for i in range(X_samp.size(0)):
         # get the i'th row of sampled integers, as python list
         row = X_samp[i, 1:].tolist() # note: we need to crop out the first <START> token
@@ -557,9 +556,6 @@ def write_samples(num=10, new_file=False, use_logger=False):
         sum_samp += len(s)
         max_samp = max(max_samp, len(s))
     out_file = args.dump_path + "/out.txt"
-    #if use_logger:
-        #logger.info("decoded")
-        # logger.info(f"Printing {len(samples)} samples to {out_file}.")
     #else:
         # print(f"Printing {len(samples)} samples to {out_file}.")
     if not new_file:
@@ -593,8 +589,8 @@ if __name__ == '__main__':
     Tris_path = './data/benchmark_instances/'
     #inst_file = 'random_instance_110_15_3'
     #inst_file = 'random_instance_93_40_10'
-    #inst_file = 'random_instance_444_15_10'
-    inst_file = 'random_instance_552_320_20'
+    inst_file = 'random_instance_444_15_10'
+    #inst_file = 'random_instance_552_320_20'
     #inst_file = 'random_instance_826_320_20'
     #inst_file = 'rirs-1500-50-49040875'
     #inst_file = 'rirs-1500-20-abcb179b'
@@ -617,6 +613,8 @@ if __name__ == '__main__':
         local_search(db, args.dump_path, inst_file+'.solution.json')
         #### -------------------- ######
 
+        #hy
+        #args.n_tokens = num_pts
         tokenize(f"{args.dump_path}/search_output_1.txt", args.n_tokens)
         initial_gen = 1
 
@@ -765,7 +763,7 @@ if __name__ == '__main__':
         tot_max = max(tot_max,mx)
         logger.info(f"distribution of sample lengths: average: {tot_sum/tot_n if tot_n != 0 else 0} max: {tot_max}")
         logger.info('decoding')
-        decode()
+        decode() #hy: output = transformer-output-decoded.txt
         logger.info(f"Memory allocated:  {torch.cuda.memory_allocated(0)/(1024*1024):.2f}MB, reserved: {torch.cuda.memory_reserved(0)/(1024*1024):.2f}MB")
         logger.info(f"============ End of generation {generation} ============")
         #logger.info(f"launching search.jl")

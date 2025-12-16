@@ -439,12 +439,12 @@ def generate(model, idx, max_new_tokens, temperature=1.0, do_sample=False, top_k
     block_size = model.get_block_size()
     for _ in range(max_new_tokens):
         # if the sequence context is growing too long we must crop it at block_size
-        print("idx.size(1) = ", idx.size(1), ", block_size = ", block_size)
+        #print("idx.size() = ", idx.size()," idx.size(1) = ", idx.size(1), ", block_size = ", block_size)
         idx_cond = idx if idx.size(1) <= block_size else idx[:, -block_size:]
-        print("idx_cond size = ", idx_cond.size())
+        #print("idx_cond size = ", idx_cond.size())
         # forward the model to get the logits for the index in the sequence
         logits, _ = model(idx_cond)
-        print("logits size = ", logits.size())
+        #print("logits size = ", logits.size())
         # pluck the logits at the final step and scale by desired temperature
         logits = logits[:, -1, :] / temperature
         # optionally crop the logits to only the top k options
@@ -460,8 +460,8 @@ def generate(model, idx, max_new_tokens, temperature=1.0, do_sample=False, top_k
             _, idx_next = torch.topk(probs, k=1, dim=-1)
         # append sampled index to the running sequence and continue
         idx = torch.cat((idx, idx_next), dim=1)
-        print("idx = ", idx)
-        exit(0)
+        #print("idx = ", idx)
+        #print("-----------------")
     return idx
 
 def print_samples(num=10):
