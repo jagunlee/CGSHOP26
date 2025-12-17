@@ -2,10 +2,11 @@
 # 4cgshop.py is generating better C.
 ####
 
+import os
+os.environ["TOKENIZERS_PARALLELISM"]="false"
 #from jg_data import *
 from th_data import *
 from multiprocessing import Pool
-import os
 
 import numpy as np
 import argparse
@@ -152,15 +153,90 @@ def local_search_on_object(db, dt, idx, centerT, T0_flip):
     newCT = now_centerT
     ####################
 
-    #new_flip=[]
-    #for i in range(len(dt.triangulations)):
-    #    new_pfp = dt.generate_pfp(dt.triangulations[i], newCT)
-    #    list_flip = []
-    #    for j in range(len(new_pfp)):
-    #        outside = new_pfp[j]
-    #        list_outside = [list(outside[k]) for k in range(len(outside))]
-    #        list_flip.append(list_outside)
-    #    new_flip.append(list_flip)
+    #### computeDistanceSum ####
+    #rew = -dt.computeDistanceSum(newCT)
+    #obj = convert_to_string(dt.pFlips[0]) #hy: T_0 to centerT
+    Dsum=0
+    new_pFlips=[]
+    for i in range(len(dt.triangulations)):
+        _pFlips=[]
+        pFlips_paired = dt.parallel_flip_path(dt.triangulations[i], newCT)
+        for round_ in pFlips_paired:
+            round_temp=[]
+            for oneFlip in round_:
+                (p1, p2), _ = oneFlip
+                round_temp.append([p1,p2])
+            _pFlips.append(round_temp)
+        new_pFlips.append(_pFlips)
+        Dsum += len(new_pFlips[i])
+    rew = -Dsum
+    obj = convert_to_string(new_pFlips[0])
+
+
+    new = reward(db, obj)
+    if new:
+       objects.append(obj)
+       rewards.append(rew)
+    return objects, rewards
+
+def local_search_on_object2(db, dt, centerT, flips):
+    objects=[]
+    rewards=[]
+    newCT = deepcopy(centerT)
+    #### computeDistanceSum ####
+    #rew = -dt.computeDistanceSum(pool_centerT)
+    #obj = convert_to_string(dt.pFlips[0]) #hy: T_0 to centerT
+    rew = -sum([len(f) for f in flips])
+    obj = convert_to_string(flips[0])
+
+    new = reward(db, obj)
+    if new:
+       objects.append(obj)
+       rewards.append(rew)
+    return objects, rewards
+
+def _from_decoded(db, dt, obj):
+    objects=[]
+    rewards=[]
+    flips=[]
+    for pll in obj.split(','):
+        if pll =='': continue
+        int_nodes=[]
+        str_nodes = pll.split('.')
+        del str_nodes[-1]
+        edge=[]
+        if '' in str_nodes or str_nodes==[] or len(str_nodes)%2==1: continue
+        for n in str_nodes:
+            if len(edge)<2:
+                edge.append(int(n))
+            else:
+                int_nodes.append(edge)
+                edge=[]
+                edge.append(int(n))
+        int_nodes.append(edge)
+        flips.append(int_nodes)
+
+    tmp = deepcopy(dt.triangulations[0])
+    flip_occur = False
+    for flip in flips:
+        for edge in flip:
+            flip_occur = dt.isFlippable(tmp, tuple(edge)) #hy: Flip (edge) if it's flippable.
+    if flip_occur == False:
+        return [],[]
+    centerT = tmp
+    flips=[]
+    Dsum=0
+    for i in range(len(dt.triangulations)):
+        whole_pfp = dt.parallel_flip_path(dt.triangulations[i], centerT)
+        list_pfp = []
+        for pf in whole_pfp:
+            list_pf = []
+            for f in pf:
+                list_pf.append(list(f[0]))
+            list_pfp.append(list_pf)
+        flips.append(list_pfp)
+        Dsum += len(flips[i])
+    print("flips T0 to newT = ", len(flips[0]))
 
     #Tris_path = './data/benchmark_instances/'
     #with open(Tris_path + dt.instance_uid + '.json', "r") as f:
@@ -173,45 +249,25 @@ def local_search_on_object(db, dt, idx, centerT, T0_flip):
     #            )
     #    solution = CGSHOP2026Solution(
     #            instance_uid = file["instance_uid"],
-    #            flips=new_flip
+    #            flips=flips
     #            )
+
     #errors = check_for_errors(instance, solution)
     #assert not errors, f"Errors found in solution: {errors}"
 
-    #### computeDistanceSum ####
-    my_Flips=[]
-    M = len(dt.triangulations)
-    with Pool() as pool:
-        my_Flips = pool.starmap(dt.parallel_flip_path, [(dt.triangulations[i], newCT) for i in range(M)])
-    rew = 0
-    for i in range(M):
-        pFlips_paired = my_Flips[i]
-        rew -= len(pFlips_paired)
-
-    new_flip_T0=[]
-    pFlips_paired = my_Flips[0]
-    for round_ in pFlips_paired:
-        round_temp=[]
-        for oneFlip in round_:
-            (p1, p2), _ = oneFlip
-            round_temp.append([p1,p2])
-        new_flip_T0.append(round_temp)
-
-    obj = convert_to_string(new_flip_T0) #hy: T_0 to centerT
-    #rew = -dt.computeDistanceSum(newCT)
+    rew = -Dsum
+    obj = convert_to_string(flips[0])
 
     new = reward(db, obj)
     if new:
-       objects.append(obj)
-       rewards.append(rew)
+        objects.append(obj)
+        rewards.append(rew)
     return objects, rewards
-
 
 
 def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file = 'transformer-output-decoded.txt'
     print("hy: from_decoded:")
     Tris_path = './data/benchmark_instances/'
-    #if 'decoded' in input_file:
     lines=[]
     with open(path+input_file,"r") as file:
         for line in file:
@@ -221,78 +277,18 @@ def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file 
     # Read Triangulations Ts
     dt = Data(Tris_path + inst_file + '.json')
     N = db.num_pts
+
     single_thread_obj=[]
     single_thread_rew =[]
-    # Ah... no need to make it parallel... sequential is enough!!!!
-    # Later, change it for the speed-up.
-    for obj in lines:
-        # string flip -> int list flip
-        #print("obj = ", obj)
-        flips=[]
-        for pll in obj.split(','):
-            if pll =='': continue
-            int_nodes=[]
-            str_nodes = pll.split('.')
-            del str_nodes[-1]
-            edge=[]
-            if '' in str_nodes or str_nodes==[] or len(str_nodes)%2==1: continue
-            for n in str_nodes:
-                if len(edge)<2:
-                    edge.append(int(n))
-                else:
-                    int_nodes.append(edge)
-                    edge=[]
-                    edge.append(int(n))
-            int_nodes.append(edge)
-            flips.append(int_nodes)
 
-        # compute CenterT from T_0
-        #print("................... compute CenterT from T_0 .......")
-        tmp = deepcopy(dt.triangulations[0])
-        flip_occur = False
-        for flip in flips:
-            #print("~~~~~~~ flip = ", flip)
-            for edge in flip:
-                flip_occur = dt.isFlippable(tmp, tuple(edge))
-        if flip_occur == False: continue
-        centerT = tmp
-        flips=[]
-        for i in range(len(dt.triangulations)):
-            whole_pfp = dt.parallel_flip_path(dt.triangulations[i], centerT)
-            list_pfp = []
-            for pf in whole_pfp:
-                list_pf = []
-                for f in pf:
-                    list_pf.append(list(f[0]))
-                list_pfp.append(list_pf)
-            flips.append(list_pfp)
-            #flips.append(dt.generate_pfp(dt.triangulations[i], centerT)) #don't care best
-        #print("flips = ")
-        #print(flips)
-
-        Tris_path = './data/benchmark_instances/'
-        with open(Tris_path + dt.instance_uid + '.json', "r") as f:
-            file = json.load(f)
-            instance = CGSHOP2026Instance(
-                    instance_uid = file["instance_uid"],
-                    points_x = file["points_x"],
-                    points_y = file["points_y"],
-                    triangulations=file["triangulations"]
-                    )
-            solution = CGSHOP2026Solution(
-                    instance_uid = file["instance_uid"],
-                    flips=flips
-                    )
-
-        errors = check_for_errors(instance, solution)
-        assert not errors, f"Errors found in solution: {errors}"
-
-        flip_len=[len(f) for f in flips]
-        min_len_idx = flip_len.index(min(flip_len)) #idx of Triangulation with shortest pfd
-
-        obj, rew = local_search_on_object(db, dt, min_len_idx, centerT, flips[0])
+    start=time.time()
+    with Pool() as pool:
+        obj_rew = pool.starmap(_from_decoded, [(db, dt, obj) for obj in lines])
+    for obj, rew in obj_rew:
         single_thread_obj.append(obj)
         single_thread_rew.append(rew)
+    end =time.time()-start
+    print(f"hy: pool in local_search_from_decoded() time {end*1000:.2f}ms")
 
     # add_db! part
     add_db(db, single_thread_obj, single_thread_rew)
@@ -317,41 +313,30 @@ def local_search(db, path, input_file):
 
         for pll_flip in flips[0]:
             for flip in pll_flip:
-                #print("flip = ", flip)
                 dt.flipDiagonal(firstT, [flip])
         centerT = deepcopy(firstT)
 
         flip_len=[len(f) for f in flips]
         total_len = sum(flip_len)
         min_len_idx = flip_len.index(min(flip_len)) #idx of Triangulation with shortest pfd
-        #min_pll_flip = flips[min_len_idx] #shortest pfd
-
 
     single_thread_obj=[]
     single_thread_rew =[]
-
+    start=time.time()
     first_obj = convert_to_string(flips[0])
     first_rew = total_len
-    #with Pool() as pool:
-    #    obj_rew = pool.starmap(local_search_on_object, [(db, dt, min_len_idx, centerT, flips[0]) for _ in range(1, 10)])
-
-    start = time.time()
-    for _ in range(1,10):
-        obj, rew = local_search_on_object(db, dt, min_len_idx, centerT, flips[0])
+    with Pool() as pool:
+        obj_rew = pool.starmap(local_search_on_object, [(db, dt, min_len_idx, centerT, flips[0]) for _ in range(1, 10)])
+    for obj, rew in obj_rew:
         single_thread_obj.append(obj)
         single_thread_rew.append(rew)
-    #    obj_rew = local_search_on_object(db, dt, min_len_idx, centerT, flips[0])
-    #for obj, rew in obj_rew:
-    #    single_thread_obj.append(obj)
-    #    single_thread_rew.append(rew)
 
+    end =time.time()-start
+    print(f"hy: pool local_search_on_object() time {end*1000:.2f}ms")
     new = reward(db, first_obj)
     if new:
         single_thread_obj.append([first_obj])
-        single_thread_rew.append([first_rew])
-
-    end = time.time()-start
-    print(f"hy: pool in local_search_on_object() time = {end*1000:.2f}")
+        single_thread_rew.append([-first_rew])
     # add_db! part
     add_db(db, single_thread_obj, single_thread_rew)
 
@@ -539,6 +524,7 @@ def create_datasets(input_file):
     return train_dataset, test_dataset
 
 def write_samples(num=10, new_file=False, use_logger=False):
+    print("----------in write_samples()")
     """ samples from the model and pretty prints the decoded samples """
     #hy: write_samples() will generate 'num=10' rows.
 
@@ -547,7 +533,7 @@ def write_samples(num=10, new_file=False, use_logger=False):
     #hy: steps == args.max_output_length
     steps = train_dataset.get_output_length() - 1 # -1 because we already start with <START> token (index 0)
     X_samp = generate(model, X_init, steps, temperature = args.temperature, top_k=top_k, do_sample=True).to('cpu')
-    #print(X_samp) #hy: torch.Size([1, num, args.max_output_length+1])
+    print(X_samp.size(), " _____ X_samp.size()") #hy: torch.Size([1, num, args.max_output_length+1])
     n_samp =0
     max_samp=0
     sum_samp=0
@@ -559,11 +545,10 @@ def write_samples(num=10, new_file=False, use_logger=False):
 
         #print("row = ", row, ", len(row) = ", len(row)) #hy: len(row) = args.max_output_length
         crop_index = row.index(0) if 0 in row else len(row)
-        print("crop_index = ", crop_index, "/", steps+1)
+        #print("crop_index = ", crop_index, "/", steps+1)
         row = row[:crop_index]
         word_samp = train_dataset.decode(row) #hy: row element should be less than number of unique characters in vocabulary
         samples.append(word_samp)
-    print("----------in write_samples()")
     for s in samples:
         n_samp +=1
         sum_samp += len(s)
@@ -582,6 +567,7 @@ def write_samples(num=10, new_file=False, use_logger=False):
                 file.write(word)
                 file.write("\n")
     #logger.info("printed")
+    print("------------------------ wrtie_sample done")
     return n_samp, sum_samp, max_samp
 
 
@@ -603,7 +589,8 @@ if __name__ == '__main__':
     #inst_file = 'random_instance_110_15_3'
     #inst_file = 'random_instance_93_40_10'
     #inst_file = 'random_instance_444_15_10'
-    inst_file = 'random_instance_552_320_20'
+    inst_file = 'random_instance_440_160_20'
+    #inst_file = 'random_instance_552_320_20'
     #inst_file = 'random_instance_826_320_20'
     #inst_file = 'rirs-1500-50-49040875'
     #inst_file = 'rirs-1500-20-abcb179b'
@@ -759,20 +746,20 @@ if __name__ == '__main__':
             for word in words:
                 file.write(word)
                 file.write("\n")
-        print("hy: almost ", int(todo/sample_batch_size), " times write_sample() called")
         count=0
         while sample_batch_size < todo:
             if todo % 50000 ==0 :
                 logger.info(f'{todo} samples remaining')
             n, sm, mx = write_samples(num=sample_batch_size)
             count+=1
+            print(f"{count} times write_samples()")
             tot_n+=n
             tot_sum+=sm
             tot_max = max(tot_max,mx)
             todo = todo - sample_batch_size
         n, sm, mx = write_samples(num=todo)
         count+=1
-        print("hy: write_samples() count = ", count)
+        print(f"{count} times write_samples()")
         tot_n+=n
         tot_sum+=sm
         tot_max = max(tot_max,mx)

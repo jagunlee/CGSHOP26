@@ -632,7 +632,6 @@ class Data:
                 for _, con in fps:
                     self.resolve_cross(tri, con)
                 pfp.append(fps)
-            #best = pfp#hy
             if len(pfp) < bestscore:
                 best = pfp
                 bestscore = len(pfp)
@@ -640,6 +639,7 @@ class Data:
         #print("len(best) = ", len(best))
         return best
 
+    #hy: same with generate_pfp() but different return shape
     def parallel_flip_path_fast(self, tri1: Triangulation, tri2: Triangulation):
         #print("parallel_flip_path_fast")
         # flip sequence 자체에서 들어감
