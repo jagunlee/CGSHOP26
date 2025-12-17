@@ -81,8 +81,8 @@ if __name__=="__main__":
         print()
         '''
         
-        centerT = D.findCenter1()
-        D.computeDistanceSum(centerT)
+        centerT = D.findCenter2()
+        D.computeDistanceSum2(centerT)
     
         D.WriteData()
 

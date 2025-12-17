@@ -21,6 +21,7 @@ class Triangulation:
         self.triangles = set()
         self.edges = set()
         self.dict = dict()
+        self.adj = []
 
     # need to fix, due to time issue
     def getEdges(self):
@@ -52,7 +53,6 @@ class Triangulation:
             return self.dict[(q1,q2)]
         else:
             return None
-        return None
 
     def copy(self):
         newtri = Triangulation()
