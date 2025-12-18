@@ -353,7 +353,7 @@ def get_parser():
     # For mkdirs in checkpoint/debug/
     parser = argparse.ArgumentParser('Generate training sample of low braids via reservoir sampling')
 
-    parser.add_argument('--sample-only', type=int, default=11, help="sample the specified number from the model in each loop")
+    parser.add_argument('--sample-only', type=int, default=100, help="sample the specified number from the model in each loop")
     parser.add_argument('--max-steps', type=int, default=200, help="max number of optimization steps to run for, or -1 for infinite.")
     parser.add_argument("--dump_path", type=str, default="checkpoint",
                         help="Experiment dump path")
@@ -375,7 +375,7 @@ def get_parser():
     parser.add_argument('--learning-rate', '-l', type=float, default=5e-4, help="learning rate")
     parser.add_argument('--weight-decay', '-w', type=float, default=0.01, help="weight decay")
     # evaluation against known "good sequences"
-    parser.add_argument('--max-output-length', type=int, default=160, help="maximum output length")
+    parser.add_argument('--max-output-length', type=int, default=250, help="maximum output length")
     #parser.add_argument('--max-output-length', type=int, default=31100, help="maximum output length") #hy: rirs-1500
     parser.add_argument('--gen_batch_size', type=int, default=10, help="generation batch size")
     parser.add_argument('--n_tokens', type=int, default=100, help="nr tokens in tokenizer")
@@ -524,7 +524,7 @@ def create_datasets(input_file):
     return train_dataset, test_dataset
 
 def write_samples(num=10, new_file=False, use_logger=False):
-    print("----------in write_samples()")
+    #print("----------in write_samples()")
     """ samples from the model and pretty prints the decoded samples """
     #hy: write_samples() will generate 'num=10' rows.
 
@@ -533,7 +533,7 @@ def write_samples(num=10, new_file=False, use_logger=False):
     #hy: steps == args.max_output_length
     steps = train_dataset.get_output_length() - 1 # -1 because we already start with <START> token (index 0)
     X_samp = generate(model, X_init, steps, temperature = args.temperature, top_k=top_k, do_sample=True).to('cpu')
-    print(X_samp.size(), " _____ X_samp.size()") #hy: torch.Size([1, num, args.max_output_length+1])
+    #print(X_samp.size(), " _____ X_samp.size()") #hy: torch.Size([1, num, args.max_output_length+1])
     n_samp =0
     max_samp=0
     sum_samp=0
@@ -567,7 +567,7 @@ def write_samples(num=10, new_file=False, use_logger=False):
                 file.write(word)
                 file.write("\n")
     #logger.info("printed")
-    print("------------------------ wrtie_sample done")
+    #print("------------------------ wrtie_sample done")
     return n_samp, sum_samp, max_samp
 
 
@@ -587,9 +587,9 @@ if __name__ == '__main__':
 
     Tris_path = './data/benchmark_instances/'
     #inst_file = 'random_instance_110_15_3'
-    #inst_file = 'random_instance_93_40_10'
+    inst_file = 'random_instance_93_40_10'
     #inst_file = 'random_instance_444_15_10'
-    inst_file = 'random_instance_440_160_20'
+    #inst_file = 'random_instance_440_160_20'
     #inst_file = 'random_instance_552_320_20'
     #inst_file = 'random_instance_826_320_20'
     #inst_file = 'rirs-1500-50-49040875'
@@ -676,8 +676,13 @@ if __name__ == '__main__':
             # get the next batch, ship to device, and unpack it to input and target
             batch = batch_loader.next() #hy: batch = [tensor(), tensor()]
             #print(batch[0].size(), batch[1].size()) #hy: Size([9,161]), Size([9,161])
+
+            #hy: drop some candidates if its length exceeds block_size
             batch = [t.to(args.device) for t in batch]
             X, Y = batch
+            b, t = X.size()
+            if t > block_size:
+                print(f"sequence of length {t}, block size {block_size}")
             #hy: train_dataset[i] = (X,Y) 이렇게 이뤄져 있음. X, Y 차이는, X[0]=0이고(token 0에서 시작), 필요없는 부분은 모두 0이지만, Y에서는 필요없는 부분이 -1임.
             #hy: Y is ground truth flip sequence from train_dataset. step=0일 때는 Y는 local_search에서 구한 flip sequence 가 된다.
             #hy: generation=1에서는 X, Y가 처음 train_dataset 에서 정해진다. 즉, local_search_on_object()에서 구한 결과.
@@ -748,11 +753,11 @@ if __name__ == '__main__':
                 file.write("\n")
         count=0
         while sample_batch_size < todo:
-            if todo % 50000 ==0 :
+            if todo % 100 ==0 :
                 logger.info(f'{todo} samples remaining')
             n, sm, mx = write_samples(num=sample_batch_size)
             count+=1
-            print(f"{count} times write_samples()")
+            #print(f"{count} times write_samples()")
             tot_n+=n
             tot_sum+=sm
             tot_max = max(tot_max,mx)

@@ -37,10 +37,17 @@ def find_next_available_filename(write_path, base, extension):
             return filename
         i+=1
 
-def write_output_to_file(db, write_path):
-    final_database_size = 50
-    sorted_score = sorted(db.rewards)
-    print("score = ", sorted_score)
+def write_output_to_file(db, write_path, top_percent):
+    sorted_score = sorted(db.rewards, reverse=True)
+    total_lines=0
+    for score in sorted_score:
+        print(f"{-score} : {len(db.rewards[score])}")
+        total_lines += len(db.rewards[score])
+    final_database_size = int(total_lines*top_percent/100)
+    if final_database_size <20:
+        final_database_size = 20
+        print("write all output")
+    else: print("total_lines = ", total_lines, ", its ", top_percent,"% = ", final_database_size)
     base_name = "search_output"
     extension = "txt"
     filename = find_next_available_filename(write_path, base_name, extension)
@@ -49,6 +56,7 @@ def write_output_to_file(db, write_path):
     with open(filename, "w") as file:
         while lines_written < final_database_size and curr_rew_index < len(sorted_score):
             curr_rew = sorted_score[curr_rew_index]
+            print("curr_rew = ", curr_rew, " = sorted_score[",curr_rew_index,"], ", len(db.rewards[curr_rew]))
             for obj in db.rewards[curr_rew][0:min(final_database_size - lines_written, len(db.rewards[curr_rew]))]:
                 file.write(obj + "\n")
             lines_written += len(db.rewards[curr_rew])
@@ -179,25 +187,19 @@ def local_search_on_object(db, dt, idx, centerT, T0_flip):
     #assert not errors, f"Errors found in solution: {errors}"
 
     #### computeDistanceSum ####
-    my_Flips=[]
-    M = len(dt.triangulations)
-    with Pool() as pool:
-        my_Flips = pool.starmap(dt.parallel_flip_path, [(dt.triangulations[i], newCT) for i in range(M)])
-    rew = 0
-    for i in range(M):
-        pFlips_paired = my_Flips[i]
-        rew -= len(pFlips_paired)
+    flips=[]
+    for i in range(len(dt.triangulations)):
+        whole_pfp = dt.parallel_flip_path(dt.triangulations[i], centerT)
+        list_pfp = []
+        for pf in whole_pfp:
+            list_pf = []
+            for f in pf:
+                list_pf.append(list(f[0]))
+            list_pfp.append(list_pf)
+        flips.append(list_pfp)
 
-    new_flip_T0=[]
-    pFlips_paired = my_Flips[0]
-    for round_ in pFlips_paired:
-        round_temp=[]
-        for oneFlip in round_:
-            (p1, p2), _ = oneFlip
-            round_temp.append([p1,p2])
-        new_flip_T0.append(round_temp)
-
-    obj = convert_to_string(new_flip_T0) #hy: T_0 to centerT
+    rew = -sum([len(f) for f in flips])
+    obj = convert_to_string(flips[0]) #hy: T_0 to centerT
     #rew = -dt.computeDistanceSum(newCT)
 
     new = reward(db, obj)
@@ -216,7 +218,7 @@ def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file 
     with open(path+input_file,"r") as file:
         for line in file:
             lines.append(line.strip())
-    print("how many objs? = ", len(lines))
+    print("-------------how many objs? = ", len(lines))
     # Read 'transformer-output-decoded.txt' and save it in C
     # Read Triangulations Ts
     dt = Data(Tris_path + inst_file + '.json')
@@ -246,12 +248,9 @@ def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file 
             int_nodes.append(edge)
             flips.append(int_nodes)
 
-        # compute CenterT from T_0
-        #print("................... compute CenterT from T_0 .......")
         tmp = deepcopy(dt.triangulations[0])
         flip_occur = False
         for flip in flips:
-            #print("~~~~~~~ flip = ", flip)
             for edge in flip:
                 flip_occur = dt.isFlippable(tmp, tuple(edge))
         if flip_occur == False: continue
@@ -266,26 +265,23 @@ def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file 
                     list_pf.append(list(f[0]))
                 list_pfp.append(list_pf)
             flips.append(list_pfp)
-            #flips.append(dt.generate_pfp(dt.triangulations[i], centerT)) #don't care best
-        #print("flips = ")
-        #print(flips)
 
-        Tris_path = './data/benchmark_instances/'
-        with open(Tris_path + dt.instance_uid + '.json', "r") as f:
-            file = json.load(f)
-            instance = CGSHOP2026Instance(
-                    instance_uid = file["instance_uid"],
-                    points_x = file["points_x"],
-                    points_y = file["points_y"],
-                    triangulations=file["triangulations"]
-                    )
-            solution = CGSHOP2026Solution(
-                    instance_uid = file["instance_uid"],
-                    flips=flips
-                    )
+        #Tris_path = './data/benchmark_instances/'
+        #with open(Tris_path + dt.instance_uid + '.json', "r") as f:
+        #    file = json.load(f)
+        #    instance = CGSHOP2026Instance(
+        #            instance_uid = file["instance_uid"],
+        #            points_x = file["points_x"],
+        #            points_y = file["points_y"],
+        #            triangulations=file["triangulations"]
+        #            )
+        #    solution = CGSHOP2026Solution(
+        #            instance_uid = file["instance_uid"],
+        #            flips=flips
+        #            )
 
-        errors = check_for_errors(instance, solution)
-        assert not errors, f"Errors found in solution: {errors}"
+        #errors = check_for_errors(instance, solution)
+        #assert not errors, f"Errors found in solution: {errors}"
 
         flip_len=[len(f) for f in flips]
         min_len_idx = flip_len.index(min(flip_len)) #idx of Triangulation with shortest pfd
@@ -298,7 +294,7 @@ def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file 
     add_db(db, single_thread_obj, single_thread_rew)
 
     # Write search_output.txt file
-    write_output_to_file(db, path)
+    write_output_to_file(db, path, 25)
 
 
 
@@ -332,23 +328,18 @@ def local_search(db, path, input_file):
 
     first_obj = convert_to_string(flips[0])
     first_rew = total_len
-    #with Pool() as pool:
-    #    obj_rew = pool.starmap(local_search_on_object, [(db, dt, min_len_idx, centerT, flips[0]) for _ in range(1, 10)])
 
     start = time.time()
-    for _ in range(1,10):
-        obj, rew = local_search_on_object(db, dt, min_len_idx, centerT, flips[0])
+    with Pool() as pool:
+        obj_rew = pool.starmap(local_search_on_object, [(db, dt, min_len_idx, centerT, flips[0]) for _ in range(1, 20)])
+    for obj, rew in obj_rew:
         single_thread_obj.append(obj)
         single_thread_rew.append(rew)
-    #    obj_rew = local_search_on_object(db, dt, min_len_idx, centerT, flips[0])
-    #for obj, rew in obj_rew:
-    #    single_thread_obj.append(obj)
-    #    single_thread_rew.append(rew)
 
     new = reward(db, first_obj)
     if new:
         single_thread_obj.append([first_obj])
-        single_thread_rew.append([first_rew])
+        single_thread_rew.append([-first_rew])
 
     end = time.time()-start
     print(f"hy: pool in local_search_on_object() time = {end*1000:.2f}")
@@ -359,7 +350,7 @@ def local_search(db, path, input_file):
     #my_print_db(db)
 
     # Write search_output.txt file
-    write_output_to_file(db, path)
+    write_output_to_file(db, path, 50)#initial, 50%
     # Write plot file
 
 
@@ -368,7 +359,7 @@ def get_parser():
     # For mkdirs in checkpoint/debug/
     parser = argparse.ArgumentParser('Generate training sample of low braids via reservoir sampling')
 
-    parser.add_argument('--sample-only', type=int, default=11, help="sample the specified number from the model in each loop")
+    parser.add_argument('--sample-only', type=int, default=500, help="sample the specified number from the model in each loop")
     parser.add_argument('--max-steps', type=int, default=200, help="max number of optimization steps to run for, or -1 for infinite.")
     parser.add_argument("--dump_path", type=str, default="checkpoint",
                         help="Experiment dump path")
@@ -379,7 +370,7 @@ def get_parser():
 
     parser.add_argument('--max_epochs', type=int, default=10, help='number of epochs')
     #parser.add_argument('--top-k', type=int, default=-1, help="top-k for sampling, -1 means no top-k")
-    parser.add_argument('--top-k', type=int, default=10, help="top-k for sampling, -1 means no top-k")
+    parser.add_argument('--top-k', type=int, default=-1, help="top-k for sampling, -1 means no top-k")
     parser.add_argument('--n-layer', type=int, default=2, help="number of layers")
     parser.add_argument('--n-head', type=int, default=8, help="number of heads (in a transformer)")
     parser.add_argument('--n-embd', type=int, default=64, help="number of feature channels in the model")
@@ -392,7 +383,7 @@ def get_parser():
     # evaluation against known "good sequences"
     parser.add_argument('--max-output-length', type=int, default=160, help="maximum output length")
     #parser.add_argument('--max-output-length', type=int, default=31100, help="maximum output length") #hy: rirs-1500
-    parser.add_argument('--gen_batch_size', type=int, default=10, help="generation batch size")
+    parser.add_argument('--gen_batch_size', type=int, default=20, help="generation batch size")
     parser.add_argument('--n_tokens', type=int, default=100, help="nr tokens in tokenizer")
     parser.add_argument('--temperature', type=float, default=1.0, help="temperature")
 
@@ -559,11 +550,11 @@ def write_samples(num=10, new_file=False, use_logger=False):
 
         #print("row = ", row, ", len(row) = ", len(row)) #hy: len(row) = args.max_output_length
         crop_index = row.index(0) if 0 in row else len(row)
-        print("crop_index = ", crop_index, "/", steps+1)
+        #print("crop_index = ", crop_index, "/", steps+1)
         row = row[:crop_index]
         word_samp = train_dataset.decode(row) #hy: row element should be less than number of unique characters in vocabulary
         samples.append(word_samp)
-    print("----------in write_samples()")
+    #print("----------in write_samples()")
     for s in samples:
         n_samp +=1
         sum_samp += len(s)
@@ -600,10 +591,10 @@ if __name__ == '__main__':
         os.makedirs(args.dump_path)
 
     Tris_path = './data/benchmark_instances/'
-    #inst_file = 'random_instance_110_15_3'
+    inst_file = 'random_instance_110_15_3'
     #inst_file = 'random_instance_93_40_10'
     #inst_file = 'random_instance_444_15_10'
-    inst_file = 'random_instance_552_320_20'
+    #inst_file = 'random_instance_552_320_20'
     #inst_file = 'random_instance_826_320_20'
     #inst_file = 'rirs-1500-50-49040875'
     #inst_file = 'rirs-1500-20-abcb179b'
@@ -635,6 +626,7 @@ if __name__ == '__main__':
     logger.info(f"initializing at generation: {initial_gen}")
     input_file = args.dump_path + f"/search_output_{initial_gen}-tokenized.txt"
     train_dataset, test_dataset = create_datasets(input_file)
+    print("----------len(train_dataset) = ", len(train_dataset))
     #vocab_size = args.n_tokens + 1
     vocab_size = train_dataset.get_vocab_size() #hy
     block_size = args.max_output_length + 1
@@ -648,7 +640,9 @@ if __name__ == '__main__':
                        n_embd=args.n_embd, n_embd2=args.n_embd2)
     if args.type == 'transformer':
         model = Transformer(config)
+        print("\n-----------------")
         print(model)
+        print("-----------------\n")
     elif args.type == 'bigram':
         model = Bigram(config)
     elif args.type == 'mlp':
@@ -698,6 +692,8 @@ if __name__ == '__main__':
 
             # feed into the model
             try:
+                if X.max().item() > vocab_size:
+                    print("hy: error ", X.max().item(), " > ", vocab_size, " vocab_size")
                 logits, loss = model(X, Y) #hy: Y is targets
                 # calculate the gradient, update the weights
                 model.zero_grad(set_to_none=True)

@@ -42,10 +42,12 @@ class Data:
         self.pts = []
         for i in range(len(self.pts_y)):
             self.pts.append(Point(self.pts_x[i], self.pts_y[i])) #hy: !!! This is pts in Data!!!! not in Triangulation
-        print("---ReadData: Triangulations")
+        #print("---ReadData: Triangulations")
+        print(len(root["triangulations"]), ": ", end = " ")
         for t in root["triangulations"]:
             self.triangulations.append(self.make_triangulation(t))
-            print(len(self.triangulations),"/",len(root["triangulations"]))
+            print(len(self.triangulations), end=" ")
+        print()
 
 
         #print(len(self.triangulations))
@@ -191,7 +193,7 @@ class Data:
             else:
                 # t_pts = sorted([t.pts[0], t.pts[1], t.pts[2]])
                 break
-
+            print("hy: t.neis[i] = ", t.neis)
             tt = t.neis[i]
             j = tt.get_ind(t.pt(i + 1))
             q = self.pts[tt.pt(j + 2)]
