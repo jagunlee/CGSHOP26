@@ -81,12 +81,12 @@ if __name__=="__main__":
         print()
         '''
         
-        centerT = D.findCenter1()
+        centerT = D.findCenter()
         D.computeDistanceSum(centerT)
     
         D.WriteData()
 
-        D.verify()
+        # D.verify()
 
         end = time.time()
         print('total time:', f"{end - start:.5f} sec")
