@@ -9,6 +9,7 @@ import time
 import os
 import pandas as pd
 import datetime
+import numpy as np
 # from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
 # from cgshop2026_pyutils.geometry import FlippableTriangulation
 # from cgshop2026_pyutils.verify import check_for_errors
@@ -32,24 +33,62 @@ class Data:
         # self.pFlips = []
 
     def ReadData(self):
+        if "solution" not in self.input:
         # print("--------------------ReadData--------------------")
-        f = open(self.input, "r", encoding="utf-8")
-        root = json.load(f)
-        # print(root)
-        self.instance_name = root["instance_uid"]
-        self.pts_x = root["points_x"]
-        self.pts_y = root["points_y"]
-        self.pts = []
-        for i in range(len(self.pts_y)):
-            self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
-        for t in root["triangulations"]:
-            self.triangulations.append(self.make_triangulation(t))
-            print(len(self.triangulations),"/",len(root["triangulations"]))
+            f = open(self.input, "r", encoding="utf-8")
+            root = json.load(f)
+            # print(root)
+            self.instance_name = root["instance_uid"]
+            self.pts_x = root["points_x"]
+            self.pts_y = root["points_y"]
+            self.pts = []
+            for i in range(len(self.pts_y)):
+                self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
+            for t in root["triangulations"]:
+                self.triangulations.append(self.make_triangulation(t))
+                print(len(self.triangulations),"/",len(root["triangulations"]))
 
-        #print(len(self.triangulations))
-        # self.distance = [] * len(self.triangulations)
-        self.pFlips = [None] * len(self.triangulations)
-        # print(len(self.pFlips))
+            #print(len(self.triangulations))
+            # self.distance = [] * len(self.triangulations)
+            self.pFlips = [None] * len(self.triangulations)
+            # print(len(self.pFlips))
+        else:
+            f = open(self.input, "r", encoding="utf-8")
+            root = json.load(f)
+            self.instance_name = root["instance_uid"]
+            self.pFlips = root["flips"]
+            self.dist = sum([len(x) for x in self.pFlips])
+            org_input = root["meta"]["input"]
+
+            self.input = org_input
+            f = open(self.input, "r", encoding="utf-8")
+            root = json.load(f)
+            self.pts_x = root["points_x"]
+            self.pts_y = root["points_y"]
+            self.pts = []
+            for i in range(len(self.pts_y)):
+                self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
+            for t in root["triangulations"]:
+                self.triangulations.append(self.make_triangulation(t))
+                print(len(self.triangulations),"/",len(root["triangulations"]))
+
+            print(f"num of pts: {len(self.pts)}")
+            print(f"num of triangulations: {len(self.triangulations)}")
+            print(f"Original dist: {self.dist}")
+
+            min_flip_ind = np.argmin([len(x) for x in self.pFlips])
+            self.center = copy.deepcopy(self.triangulations[min_flip_ind])
+            for flip_seq in self.pFlips[min_flip_ind]:
+                for flp in flip_seq:
+                    self.center.flip((flp[0], flp[1]))
+            new_dist = 0
+            for i in range(len(self.triangulations)):
+                p_i = self.parallel_flip_path(self.triangulations[i], self.center)
+                new_dist+=len(p_i)
+            print(f"Original dist: {new_dist}")
+            if new_dist<self.dist:
+                self.dist = new_dist
+
 
     def make_triangulation(self, t: Triangulation):
         tri = Triangulation()
@@ -157,7 +196,7 @@ class Data:
             if not cand:
                 break
             cand.sort(key=lambda x: x[1],reverse=True)
-            print(cand)
+            # print(cand)
             # print(len(cand))
             flips = []
             marked = set()
@@ -173,7 +212,7 @@ class Data:
             for e in flips:
                 tri.flip(e)
             pfp.append(flips)
-            print(len(flips))
+            # print(len(flips))
         assert(tri.edges == tri2.edges)
         return pfp
             
