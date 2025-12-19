@@ -277,6 +277,51 @@ class Data:
 
         return centerT
         
+    def findCenterGlobal(self):
+        start = time.time()
+        mtriangulations = [copy.deepcopy(t) for t in self.triangulations]
+        pfps =[[] for _ in self.triangulations]
+        while True:
+            mscore = 0
+            for i in len(mtriangulations):
+                ncand = []
+                nscore = 0
+                tri = mtriangulations[i]
+                edges = list(tri.edges)
+                for e in edges:
+                    escore = 0
+                    for j in len(mtriangulations):
+                        if i==j: continue
+                        score = self.flip_score(tri, mtriangulations[j], e, SEARCH_DEPTH)
+                        if score > 0:
+                            escore += score
+                    if escore > 0:
+                        nscore += escore
+                        ncand.append((e, escore))
+                if nscore > mscore:
+                    mscore = nscore
+                    mt = tri
+                    mcand = ncand
+                    mi = i
+            if mscore == 0:
+                break
+            mcand.sort(key=lambda x:x[1], reverse=True)
+            marked = set()
+            for (p1, p2), _ in mcand:
+                t1 = mt.find_triangle(p1, p2)
+                t2 = mt.find_triangle(p2, p1)
+                if t1 in marked or t2 in marked:
+                    continue
+                # print(p1, p2)
+                flips.append((p1, p2))
+                marked.add(t1)
+                marked.add(t2)
+            for e in flips:
+                mt.flip(e)
+            pfps[mi].append(flips)
+                    
+
+
     def WriteData(self):
 
         inst = dict()
@@ -362,7 +407,7 @@ class Data:
                 for oneFlip in round:
                     
                     # (p1, p2), (p3, p4) = fs[i]
-                    (p1, p2), (p3, p4) = oneFlip
+                    (p1, p2) = oneFlip
                 
                     oneFlip_temp = [p1, p2]
 
@@ -412,7 +457,7 @@ class Data:
                 for oneFlip in round:
                     
                     # (p1, p2), (p3, p4) = fs[i]
-                    (p1, p2), (p3, p4) = oneFlip
+                    (p1, p2) = oneFlip
                 
                     oneFlip_temp = [p1, p2]
 

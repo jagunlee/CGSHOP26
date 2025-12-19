@@ -1,5 +1,5 @@
 class Triangle:
-    # p, q, r: point index
+    # p, q, r: node index
     def __init__(self, p: int, q: int, r: int):
         self.pts = [p, q, r]
         self.neis = [None, None, None]
@@ -33,7 +33,7 @@ class Triangulation:
         else:
             return None
             
-    def flip(self, e:tuple):
+    def flip(self, e):
         p1, p2 = e
         t1 = self.find_triangle(p1, p2)
         t2 = self.find_triangle(p2, p1)
