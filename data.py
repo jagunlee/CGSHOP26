@@ -3,7 +3,7 @@ import sys
 import random
 from Point import Point
 from Triangulation import Triangle, Triangulation
-from copy import deepcopy
+import copy
 # import cv2
 import time
 import os
@@ -15,10 +15,10 @@ import datetime
 # import cgshop2026_pyutils
 
 sys.setrecursionlimit(1000000)
+SEARCH_DEPTH = 5
+PAR_LEN = 2.5
+PAR_CROSS = 1
 
-class Edge:
-    def __init__(self, ):
-        self.endpoints = []
 
 class Data:
     def __init__(self, inp):
@@ -98,561 +98,130 @@ class Data:
                         tri.triangles.add(t)
         return tri
 
-    def resolve_cross_random(self):
-        pass
-
-    # con: edge in T2 that may be not in T1
-    def resolve_cross(self, tri: Triangulation, con: tuple, t=None):
+    def find_triangle_containing(self, tri: Triangulation, con: tuple):
+        q1, q2 = con
+        if tri.find_triangle(q1, q2) or tri.find_triangle(q2, q1):
+            return None
+        p = tri.adj[q1]
+        assert((min(p, q1), max(p, q1)) in tri.edges)
+        t = tri.find_triangle(q1, p)
         if not t:
-            q1 = con[0]
-            q2 = con[1]
-            for t in tri.triangles:
-                i = t.get_ind(q1)
-                if i != -1:
-                    r1 = self.pts[q1]
-                    r2 = self.pts[t.pt(i + 1)]
-                    r3 = self.pts[t.pt(i + 2)]
-                    r4 = self.pts[q2]
-                    if (turn(r1, r2, r4) < 0 or turn(r1, r3, r4) > 0):
-                        continue
-                    if r2 == r4:
-                        return []
-                    elif r3 == r4:
-                        return []
-                    else:
-                        return self.resolve_cross(tri, con, t)
-        else:
-            q1 = con[0]
-            q2 = con[1]
-            # print("resolving", q1, q2)
-            # print("----- Starting triangle -----")
-            # self.print_triangle(t)
-            # print("-----------------------------")
-            i = t.get_ind(q1)
-            f = self.flip(tri, t, (i + 1) % 3)
-            r = t.pt(i + 2)
-            if (r == q2):
-                return f
-            elif (turn(self.pts[q2], self.pts[q1], self.pts[r]) < 0):
-                return f + self.resolve_cross(tri, con, t)
-            else:
-                return f + self.resolve_cross(tri, con, t.nei(i + 2))
-
-    # triangulation tri에서, triangle t의 i번째 edge를 flip
-    def flip(self, tri: Triangulation, t: Triangle, i: int):
-
-        tt = t.neis[i]
-        j = tt.get_ind(t.pt(i + 1))
-        p = self.pts[t.pt(i + 2)]
-        pr = self.pts[t.pts[i]]
-        pl = self.pts[t.pt(i + 1)]
-        q = self.pts[tt.pt(j + 2)]
-        # self.print_triangle(t)
-        # print("flipping in", i)
-        # self.print_triangle(tt)
-        while True:
-            if turn(p, pr, q) <= 0:
-                t = tt
-                i = (j + 2) % 3
-                pr = q
-            elif turn(self.pts[t.pt(i + 2)], self.pts[t.pts[i]], q) <= 0:
-                t = tt
-                i = (j + 2) % 3
-            elif turn(p, pl, q) >= 0:
-                pl = q
-                t = tt
-                i = (j + 1) % 3
-            elif turn(self.pts[t.pt(i + 2)], self.pts[tt.pts[j]], q) >= 0:
-                t = tt
-                i = (j + 1) % 3
-            else:
-                # t_pts = sorted([t.pts[0], t.pts[1], t.pts[2]])
-                break
-
-            tt = t.neis[i]
-            j = tt.get_ind(t.pt(i + 1))
-            q = self.pts[tt.pt(j + 2)]
-
-        # compute the flip
-        ti = t.nei(i + 1)
-        tj = tt.nei(j + 1)
-        pi = t.pt(i + 2)
-        pj = tt.pt(j + 2)
-        q1, q2 = min(t.pts[i], tt.pts[j]), max(t.pts[i], tt.pts[j])
-        f = [((q1, q2), (min(pi, pj), max(pi, pj)))]
-        # f = [(q1, q2)]
-        del(tri.dict[(q1, q2)])
-        del(tri.dict[(q2, q1)])
-
-        # edge update (for the triangulation)
-        tri.edges.remove((q1, q2))
-        tri.edges.add(((min(pi, pj), max(pi, pj))))
-        tri.adj[pi] = pj
-        tri.adj[pj] = pi
-        tri.adj[q1] = pi
-        tri.adj[q2] = pi
-
-        # incidence update for t
-        t.pts[(i + 1) % 3] = pj
-        t.neis[i] = tj
-        if tj:
-            tj.neis[tj.get_ind(pj)] = t
-        t.neis[(i + 1) % 3] = tt
-        tri.dict[(t.pt(i), t.pt(i+1))] = t
-        tri.dict[(t.pt(i+1), t.pt(i+2))] = t
-
-        # incidence update for tt
-        tt.pts[(j + 1) % 3] = pi
-        tt.neis[j] = ti
-        if ti:
-            ti.neis[ti.get_ind(pi)] = tt
-        tt.neis[(j + 1) % 3] = t
-        tri.dict[(tt.pt(j), tt.pt(j+1))] = tt
-        tri.dict[(tt.pt(j+1), tt.pt(j+2))] = tt
-        return f
-        # L = [f[0], t_pts]
-        # return L
-
-    # flip F: ((a, b), (c, d)) 꼴
-    # point-in-polygon 여러 번. point-in-polygon은 halfplane으로.
-    # 삼각형 정렬.
-    def isFlippable(self, F):
-        pass
-    
-    def flipDiagonal(self, tri: Triangulation, F):
-        change = False
-
-        t = tri.dict[F[0]]
+            t = tri.find_triangle(p, q1)
+        # print(p, q1)
         assert(t)
-        i = t.get_ind(F[0][0])
-        
-        if t.pt(i+1) == F[0][1]:
-            self.flip(tri, t, i)
-        else:
-            self.flip(tri, t, (i-1)%3)
-
-
-    '''
-    # def flip(self, tri: Triangulation, t: Triangle, i: int)
-    # flipped diagonal F: ((a, b), (c, d)) 꼴
-    def flipDiagonal(self, tri: Triangulation, F, t_pts):
-
-        change = False
-
-        for t in tri.triangles:
-            if t_pts == sorted(t.pts):
-                
-                print('t_pts:', t_pts) 
-                print('t.pts:', t.pts, 'sorted(t.pts):', sorted(t.pts))
-
-                a, b = F[0]
-                print('a:', a, 'b:', b)
-
-                if sorted([t.pts[0], t.pts[1]]) == sorted([a, b]):
-                    self.flip(tri, t, 0)
-                    change = True
-                    break
-                elif sorted([t.pts[1], t.pts[2]]) == sorted([a, b]):
-                    self.flip(tri, t, 1)
-                    change = True
-                    break
-                elif sorted([t.pts[2], t.pts[0]]) == sorted([a, b]):
-                    self.flip(tri, t, 2)
-                    change = True
-                    break
-        
-                if not change:
-                    a, b = F[1]
-                    print('c:', a, 'd:', b)
-
-                    for t in tri.triangles:
-                        if sorted([t.pts[0], t.pts[1]]) == sorted([a, b]):
-                            self.flip(tri, t, 0)
-                            change = True
-                            break
-                        elif sorted([t.pts[1], t.pts[2]]) == sorted([a, b]):
-                            self.flip(tri, t, 1)
-                            change = True
-                            break
-                        elif sorted([t.pts[2], t.pts[0]]) == sorted([a, b]):
-                            self.flip(tri, t, 2)
-                            change = True
-                            break
-
-        assert(change)
-    '''
-                
-    def flip_sequence(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
-        fs = []
-        tri = deepcopy(tri1)
-        edges = list(tri2.edges)
-        random.shuffle(edges)
-        cnt = 0
-        for e in edges:
-            fs += self.resolve_cross(tri, e)
-            cnt += 1
-            if cnt % 100 == 0:
-                print(cnt, "/", len(edges))
-        del tri
-        return fs
-
-
-    def resolve_cross2(self, tri: Triangulation, con: tuple, t=None):
-        if not t:
-            q1 = con[0]
-            q2 = con[1]
-            for t in tri.triangles:
-                i = t.get_ind(q1)
-                if i != -1:
-                    r1 = self.pts[q1]
-                    r2 = self.pts[t.pt(i + 1)]
-                    r3 = self.pts[t.pt(i + 2)]
-                    r4 = self.pts[q2]
-                    if (turn(r1, r2, r4) < 0 or turn(r1, r3, r4) > 0):
-                        continue
-                    if r2 == r4:
-                        return []
-                    elif r3 == r4:
-                        return []
-                    else:
-                        return self.resolve_cross(tri, con, t)
-        else:
-            q1 = con[0]
-            q2 = con[1]
-            # print("resolving", q1, q2)
-            # print("----- Starting triangle -----")
-            # self.print_triangle(t)
-            # print("-----------------------------")
-            
+        r1 = self.pts[q1]
+        r4 = self.pts[q2]
+        while True:
             i = t.get_ind(q1)
-            ts = [(t, (i + 1) % 3)]
-            while True:
-                tt, j = ts[-1]
-                ttt = tt.neis[j]
-                k = (ttt.get_ind(tt.pts[j]) + 1) % 3
-                if turn(self.pts[q1], self.pts[q2], self.pts[ttt.pts[k]]) <= 0:
-                    ts.append((ttt, k))
-                else:
-                    ts.append((ttt, (k-1)%3))
-                if ttt.pts[k] == q2:
-                    break
-            ind = 0
-            f = []
-            while ind < len(ts) - 1:
-                tt, j = ts[ind]
-                ttt = tt.neis[j]
-                k = (ttt.get_ind(tt.pts[j]) + 1) % 3
-                r1 = self.pts[tt.pt(j - 1)]
-                r2 = self.pts[tt.pt(j)]
-                r3 = self.pts[tt.pt(j + 1)]
-                r4 = self.pts[ttt.pt(k)]
-                if (turn(r1, r2, r4) <= 0 or turn(r1, r3, r4) >= 0):
-                    ind += 1
-                    continue
-                if ind > 0:
-                    tb, ib = ts[ind - 1]
-                    r1 = self.pts[tb.pt(ib - 1)]
-                    r2 = self.pts[tb.pt(ib)]
-                    r3 = self.pts[tb.pt(ib + 1)]
-                    if (turn(r1, r2, r4) <= 0 or turn(r1, r3, r4) >= 0):
-                        ind += 1
-                        continue
-                f += self.flip(tri, tt, j)
-                ind += 2
-            r = t.pt(i + 2)
-            if (r == q2):
-                return f
-            elif (turn(self.pts[q2], self.pts[q1], self.pts[r]) < 0):
-                return f + self.resolve_cross2(tri, con, t)
+            r2 = self.pts[t.pt(i + 1)]
+            r3 = self.pts[t.pt(i + 2)]
+            if turn(r1, r2, r4) < 0:
+                t = t.neis[i]
+            elif turn(r1, r3, r4) > 0:
+                t = t.nei(i+2)
             else:
-                return f + self.resolve_cross2(tri, con, t.nei(i + 2))
-                
-    def flip_sequence2(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
-        fs = []
-        tri = deepcopy(tri1)
-        edges = list(tri2.edges)
-        random.shuffle(edges)
-        done = [False] * len(edges)
-        cnt = 0
-        while not all(done):
-            covered = set()
-            current = []
-            for i in range(len(edges)):
-                if done[i]: continue
-                q1, q2 = edges[i]
-                if (q1, q2) in tri.edges:
-                    done[i] = True
-                    cnt += 1
-                    continue
-                for t in tri.triangles:
-                    j = t.get_ind(q1)
-                    if j != -1:
-                        r1 = self.pts[q1]
-                        r2 = self.pts[t.pt(j + 1)]
-                        r3 = self.pts[t.pt(j + 2)]
-                        r4 = self.pts[q2]
-                        if (turn(r1, r2, r4) < 0 or turn(r1, r3, r4) > 0):
-                            continue
-                        if r2 == r4:
-                            return []
-                        elif r3 == r4:
-                            return []
-                        else:
-                            break
-                assert(t)
-                if t in covered: continue
-                j = t.get_ind(q1)
-                ts = [(t, (j + 1) % 3)]
-                flag = True
-                while True: 
-                    tt, j = ts[-1]
-                    ttt = tt.neis[j]
-                    if ttt in covered:
-                        flag = False
-                        break
-                    k = (ttt.get_ind(tt.pts[j]) + 1) % 3
-                    if turn(self.pts[q1], self.pts[q2], self.pts[ttt.pts[k]]) <= 0:
-                        ts.append((ttt, k))
-                    else:
-                        ts.append((ttt, (k-1)%3))
-                    if ttt.pts[k] == q2:
-                        for t, _ in ts:
-                            covered.add(t)
-                        break
-                if flag:
-                    done[i] = True
-                    cnt += 1
-                    current.append(edges[i])
-            for e in current:
-                fs += self.resolve_cross2(tri, e)
-            print(cnt, "/", len(edges))
-        del tri
-        return fs
-        
-    def parallel_flip_path2(self, tri1: Triangulation, tri2: Triangulation):
-        best = []
-        bestscore = len(tri1.edges) * 2
-        trial = 0
-        # NUM_TRIAL = len(self.pts) // 10
-        NUM_TRIAL = 1
-        while trial < NUM_TRIAL or bestscore == len(tri1.edges) * 2:
-            
-            trial += 1
-
-            # flip sequence 자체에서 들어감
-            fs = self.flip_sequence2(tri1, tri2)
-            done = [False] * len(fs)
-            tri = deepcopy(tri1)
-            pfp = []
-            donenum = 0
-            while not all(done):
-                fps = []
-                usedtri = set()
-                for i in range(len(fs)):
-                    if done[i]: continue
-                    (p1, p2), (p3, p4) = fs[i]
-                    t1 = tri.find_triangle(p1, p2)
-                    if not t1 or t1 in usedtri:
-                        continue
-                    t2 = tri.find_triangle(p2, p1)
-                    assert (t2)
-                    if t2 in usedtri:
-                        continue
-                    p5, p6 = t1.pt(t1.get_ind(p2) + 1), t2.pt(t2.get_ind(p1) + 1)
-                    if (min(p5, p6), max(p5, p6)) != (p3, p4):
-                        continue
-                    done[i] = True
-                    usedtri.add(t1)
-                    usedtri.add(t2)
-                    fps.append(fs[i])
-                donenum += len(fps)
-                print(donenum, "/", len(done))
-                for _, con in fps:
-                    self.resolve_cross(tri, con)
-                pfp.append(fps)
-            if len(pfp) < bestscore:
-                best = pfp
-                bestscore = len(pfp)
-                trial = 0
-        print(len(best))
-        return best
-    '''
-    def flip_sequence_new(self, tri1: Triangulation, tri2: Triangulation, numTrials: int = 1):
-        # numTrials = 10
-        bestDist = 10000
-        bestSeq = None
-        
-        for i in range(numTrials):
-        
-            fs = []
-            tri = tri1.copy()
-            edges = list(tri2.edges)
-            random.shuffle(edges)
-
-            # list of (triangulation, len(fs) so far)
-            L = []
-            
-            for e in edges:
-
-                before = len(fs)
-                
-                ADDED = self.resolve_cross(tri, e)
-                # print('added length:', len(ADDED))
-                fs += ADDED
-                # fs += self.resolve_cross(tri, e)
-
-                # if something added
-                if len(fs) != before:
-                    L.append([deepcopy(tri), len(fs)])
-                
-            del tri
+                return t
     
-            if len(fs) < bestDist:
-                bestDist = len(fs)
-                bestSeq = fs
-        
-        return bestSeq, L
-    '''
+    def count_cross(self, tri: Triangulation, con: tuple):
+        t = self.find_triangle_containing(tri, con)
+        if not t:
+            return 0
+        q1, q2 = con
+        i = t.get_ind(q1)
+        tt = t.nei(i + 1)
+        j = tt.get_ind(t.pt(i + 1))
+        cnt = 1
+        while tt.pt(j + 1) != q2:
+            cnt += 1
+            t, i = tt, j
+            if turn(self.pts[q1], self.pts[q2], self.pts[t.pt(i + 1)]) < 0:
+                tt = t.nei(i + 1)
+                j = tt.get_ind(t.pt(i + 1))
+            else:
+                tt = t.neis[i]
+                j = tt.get_ind(t.pts[i])
+        return cnt
 
-    # tri1에서 tri2로의 pfp
-    # tri2에서 tri1로 가는 경우 리스트를 반대로 뒤집어야 함
-    def parallel_flip_path(self, tri1: Triangulation, tri2: Triangulation):
-        best = []
-        bestscore = len(tri1.edges) * 2
-        trial = 0
-        # NUM_TRIAL = len(self.pts) // 10
-        NUM_TRIAL = 1
-        while trial < NUM_TRIAL or bestscore == len(tri1.edges) * 2:
-            
-            trial += 1
-
-            # flip sequence 자체에서 들어감
-            fs = self.flip_sequence(tri1, tri2)
-            done = [False] * len(fs)
-            tri = deepcopy(tri1)
-            pfp = []
-            donenum = 0
-            while not all(done):
-                fps = []
-                usedtri = set()
-                for i in range(len(fs)):
-                    if done[i]: continue
-                    (p1, p2), (p3, p4) = fs[i]
-                    t1 = tri.find_triangle(p1, p2)
-                    if not t1 or t1 in usedtri:
-                        continue
-                    t2 = tri.find_triangle(p2, p1)
-                    assert (t2)
-                    if t2 in usedtri:
-                        continue
-                    p5, p6 = t1.pt(t1.get_ind(p2) + 1), t2.pt(t2.get_ind(p1) + 1)
-                    if (min(p5, p6), max(p5, p6)) != (p3, p4):
-                        continue
-                    done[i] = True
-                    usedtri.add(t1)
-                    usedtri.add(t2)
-                    fps.append(fs[i])
-                donenum += len(fps)
-                print(donenum, "/", len(done))
-                for _, con in fps:
-                    self.resolve_cross(tri, con)
-                pfp.append(fps)
-            if len(pfp) < bestscore:
-                best = pfp
-                bestscore = len(pfp)
-                trial = 0
-        print(len(best))
-        return best
-
-    def parallel_flip_path3(self, tri1: Triangulation, tri2: Triangulation):
-        tri = deepcopy(tri1)
+    def parallel_flip_path(self, tri1:Triangulation, tri2:Triangulation):
+        tri = copy.deepcopy(tri1)
         pfp = []
-        edges = list(tri2.edges)
-        total = len(edges)
-        cnt = 0
-        random.shuffle(edges)
-        while edges:
-            nedges = []
-            done = set()
-            flips = []
+        while True:
+            cand = []
+            edges = list(tri.edges)
             for e in edges:
-                if e in tri.edges:
-                    cnt += 1
+                if self.flippable(tri, e):
+                    # 전에 뒤집은거 안뒤집게 해야할듯?
+                    score = self.flip_score(tri, tri2, e, SEARCH_DEPTH)
+                    if score[0] > 0:
+                        cand.append((e, score))
+            if not cand:
+                break
+            cand.sort(key=lambda x: x[1],reverse=True)
+            print(cand)
+            # print(len(cand))
+            flips = []
+            marked = set()
+            for (p1, p2), _ in cand:
+                t1 = tri.find_triangle(p1, p2)
+                t2 = tri.find_triangle(p2, p1)
+                if t1 in marked or t2 in marked:
                     continue
-                nedges.append(e)
-                q1, q2 = e
-                for t in tri.triangles:
-                    j = t.get_ind(q1)
-                    if j != -1:
-                        r1 = self.pts[q1]
-                        r2 = self.pts[t.pt(j + 1)]
-                        r3 = self.pts[t.pt(j + 2)]
-                        r4 = self.pts[q2]
-                        if (turn(r1, r2, r4) < 0 or turn(r1, r3, r4) > 0):
-                            continue
-                        else:
-                            break
-                i = (t.get_ind(q1) + 1) % 3
-                flag = True
-                tb = None
-                while True: 
-                    tt = t.neis[i]
-                    j = (tt.get_ind(t.pts[i]) + 1) % 3
-                    flag = (tt.pts[j] == q2)
-                    #self.print_triangle(t)
-                    #print(i)
-                    #self.print_triangle(tt)
-                    #print(j)
-                    #print(self.pts[q1])
-                    #print(self.pts[q2])
-                    if turn(self.pts[q1], self.pts[q2], self.pts[tt.pts[j]]) > 0:
-                        k = (j-1) % 3
-                    else:
-                        k = j
-                    #print(k)
-                    #input()
-                    if t in done or tt in done:
-                        if flag:
-                            break
-                        tb, ib = t, i
-                        t, i = tt, k
-                        continue
-                    r1 = self.pts[t.pt(i - 1)]
-                    r2 = self.pts[t.pt(i)]
-                    r3 = self.pts[t.pt(i + 1)]
-                    r4 = self.pts[tt.pt(j)]
-                    if (turn(r1, r2, r4) <= 0 or turn(r1, r3, r4) >= 0):
-                        if flag: break
-                        tb, ib = t, i
-                        t, i = tt, k
-                        continue
-                    if tb and tb not in done:
-                        r1 = self.pts[tb.pt(ib - 1)]
-                        r2 = self.pts[tb.pt(ib)]
-                        r3 = self.pts[tb.pt(ib + 1)]
-                        if (turn(r1, r2, r4) <= 0 or turn(r1, r3, r4) >= 0):
-                            if flag: break
-                            tb, ib = t, i
-                            t, i = tt, k
-                            continue
-                    p1, p2 = t.pt(i), t.pt(i+1)
-                    p1, p2 = min(p1, p2), max(p1, p2)
-                    p3, p4 = t.pt(i-1), tt.pt(j)
-                    p3, p4 = min(p3, p4), max(p3, p4)
-                    flips.append(((p1, p2),(p3, p4)))
-                    done.add(t)
-                    done.add(tt)
-                    if flag: break
-                    tb, ib = t, i
-                    t, i = tt, k
-            print(cnt, "/", total)
+                # print(p1, p2)
+                flips.append((p1, p2))
+                marked.add(t1)
+                marked.add(t2)
+            for e in flips:
+                tri.flip(e)
             pfp.append(flips)
-            for F in flips:
-                self.flipDiagonal(tri, F)
-            edges = nedges
-            
+            print(len(flips))
+        assert(tri.edges == tri2.edges)
         return pfp
-    
+            
+    def flippable(self, tri:Triangulation, e:tuple):
+        p1, p3 = e
+        t1 = tri.find_triangle(p1, p3)
+        t2 = tri.find_triangle(p3, p1)
+        if (not t1) or (not t2):
+            return False
+        i = t1.get_ind(p3)
+        p4 = t1.pt(i + 1)
+        j = t2.get_ind(p1)
+        p2 = t2.pt(j + 1)
+        return (turn(self.pts[p2], self.pts[p3], self.pts[p4]) > 0) and (turn(self.pts[p2], self.pts[p1], self.pts[p4]) < 0)
+        
+    def flip_score(self, tri:Triangulation, tri_dest:Triangulation, e:tuple, depth:int):
+        p1, p3 = e
+        # print(depth, e)
+        t1 = tri.find_triangle(p1, p3)
+        t2 = tri.find_triangle(p3, p1)
+        #self.print_triangle(t1)
+        #self.print_triangle(t2)
+        i = t1.get_ind(p3)
+        p4 = t1.pt(i + 1)
+        j = t2.get_ind(p1)
+        p2 = t2.pt(j + 1)
+        ori_cross = self.count_cross(tri_dest, e)
+        new_cross = self.count_cross(tri_dest, (p2, p4))
+        n_cross = ori_cross - new_cross
+        m_score = (n_cross, depth)
+        return m_score
+        if depth == 1:
+            return m_score
+        # self.print_triangle(t1)
+        # self.print_triangle(t2)
+        #print("try flipping(1)",e)
+        tri.flip(e)
+        # self.print_triangle(t1)
+        # self.print_triangle(t2)
+        for pe in [(p1, p2), (p2, p3), (p3, p4), (p4, p1)]:
+            if self.flippable(tri, pe):
+                # print(pe)
+                nsc = self.flip_score(tri, tri_dest, pe, depth - 1)
+                m_score = max(m_score, (nsc[0] + m_score[0], nsc[1]))
+        
+        #print("try flipping(2)",(p2, p4))
+        tri.flip((p2, p4))
+        return m_score    
 
     def print_triangle(self, t: Triangle):
         print("Triangle :", end="")
@@ -667,7 +236,7 @@ class Data:
     # w1:w2 내분점에서 가장 가까운 중간 triangulation을 반환
     def internal_division(self, T1: Triangulation, w1: int, T2: Triangulation, w2: int):
 
-        T1copy = deepcopy(T1)
+        T1copy = copy.deepcopy(T1)
         
         # parallel version
         pfp = self.parallel_flip_path(T1, T2)
@@ -680,100 +249,10 @@ class Data:
         for flips in use_pfp:
             for flip in flips:
                 
-                self.flipDiagonal(T1copy, flip)
-
+                T1copy.flip(flip)
         return T1copy
-
-
-    def internal_division2(self, T1: Triangulation, w1: int, T2: Triangulation, w2: int):
-
-        T1copy = deepcopy(T1)
         
-        # parallel version
-        pfp = self.parallel_flip_path2(T1, T2)
-        midVal = int(len(pfp) * (w2 / (w1 + w2)))
-        print('len(pfp):', len(pfp), 'w1:', w1, 'w2:', w2, 'midVal:', midVal)
-
-        # use_pfp: 사용되는 parallel flip들 모음
-        use_pfp = pfp[:midVal]
-
-        for flips in use_pfp:
-            for flip in flips:
-                
-                self.flipDiagonal(T1copy, flip)
-
-        return T1copy
-        # sequential version
-        '''
-        fs = self.flip_sequence(T1, T2)
-
-        midVal = int(len(fs) * (w1 / (w1 + w2)))
-        print('len(fs):', len(fs), 'w1:', w1, 'w2:', w2, 'midVal:', midVal)
-
-        # use_fs: 사용되는 sequential flip들 모음
-        use_fs = fs[:midVal]
-
-        for F in use_fs:
-            self.flipDiagonal(T1copy, F)
-
-        return T1copy
-        '''
-        
-    # reconstruction이 필요
-    # 우선, 한 번의 diagonal flip이 이루어진 triangulation 계산?
-    
     def findCenter(self):
-
-        start = time.time()
-
-        # random.shuffle(self.triangulations)
-        centerT = self.triangulations[0]
-        weight = 1
-        
-        for i in range(1, len(self.triangulations)):
-            print(i,"th triangle")
-            nextT = self.triangulations[i]
-            # 내분을 통해 새로운 central triangulation 계산
-            centerT = self.internal_division(centerT, weight, nextT, 1) 
-            weight += 1
-
-            end = time.time()
-            print('time:', f"{end - start:.5f} sec")
-
-        with open("centers/" + self.instance_uid + ".json", "w", encoding="utf-8") as f:
-            json.dump(list(centerT.edges), f, indent='\t')
-
-        return centerT
-        # local search to move to a certain direction
-
-        # A -> B로 가는 것과 A -> C로 가는 게 비슷하면 좋겠지.
-
-    def findCenter2(self):
-
-        start = time.time()
-
-        # random.shuffle(self.triangulations)
-
-        wc = [(t, 1) for t in self.triangulations]
-        while len(wc) > 1:
-            print(len(wc), "triangles left")
-            random.shuffle(wc)
-            t1, w1 = wc.pop()
-            t2, w2 = wc.pop()
-            tc = self.internal_division2(t1, w1, t2, w2)
-            
-            end = time.time()
-            print('time:', f"{end - start:.5f} sec")
-            wc.append((tc, w1 + w2))
-        
-        centerT = wc[0][0]
-        
-        with open("centers/" + self.instance_uid + ".json", "w", encoding="utf-8") as f:
-            json.dump(list(centerT.edges), f, indent='\t')
-
-        return centerT
-        
-    def findCenter1(self):
 
         start = time.time()
 

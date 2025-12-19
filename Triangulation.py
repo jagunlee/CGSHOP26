@@ -23,27 +23,6 @@ class Triangulation:
         self.dict = dict()
         self.adj = []
 
-    # need to fix, due to time issue
-    def getEdges(self):
-        edges = []
-
-        for t in self.triangles:
-            edges.append(sorted([t.pts[0], t.pts[1]]))
-            edges.append(sorted([t.pts[1], t.pts[2]]))
-            edges.append(sorted([t.pts[2], t.pts[0]]))
-
-        unique_edges = []
-        for e in edges:
-            if e not in unique_edges:  # 이미 추가된 엣지가 아니면
-                unique_edges.append(e)
-
-        return unique_edges
-
-        '''
-        edges = list(set(edges))
-        return edges
-        '''
-
     def __del__(self):
         for t in self.triangles:
             del t
@@ -53,18 +32,43 @@ class Triangulation:
             return self.dict[(q1,q2)]
         else:
             return None
+            
+    def flip(self, e:tuple):
+        p1, p2 = e
+        t1 = self.find_triangle(p1, p2)
+        t2 = self.find_triangle(p2, p1)
+        assert(t1)
+        assert(t2)
+        i = t1.get_ind(p2)
+        p3 = t1.pt(i + 1)
+        j = t2.get_ind(p1)
+        p4 = t2.pt(j + 1)
+        tt1 = t2.neis[j]
+        tt2 = t1.neis[i]
 
-    def copy(self):
-        newtri = Triangulation()
-        newtri.edges = set(self.edges)
-        tridict = dict()
-        for t in self.triangles:
-            tt = Triangle(t.pts[0], t.pts[1], t.pts[2])
-            tridict[t] = tt
-            for i in range(3):
-                if t.neis[i] in tridict:
-                    ttt = tridict[t.neis[i]]
-                    tt.neis[i] = ttt
-                    ttt.neis[ttt.get_ind(tt.pt(i + 1))] = tt
-            newtri.triangles.add(tt)
-        return newtri
+        t1.pts[i] = p4
+        t1.neis[i] = t2
+        t1.neis[(i + 2) % 3] = tt1
+        if tt1:
+            ii = tt1.get_ind(p4)
+            tt1.neis[ii] = t1
+        t2.pts[j] = p3
+        t2.neis[j] = t1
+        t2.neis[(j + 2) % 3] = tt2
+        if tt2:
+            jj = tt2.get_ind(p3)
+            tt2.neis[jj] = t2
+        before = len(self.dict)
+        del self.dict[(p1, p2)]
+        del self.dict[(p2, p1)]
+        self.adj[p1] = p3
+        self.adj[p2] = p3
+        for i in range(3):
+            self.dict[(t1.pt(i), t1.pt(i+1))] = t1
+            self.dict[(t2.pt(i), t2.pt(i+1))] = t2
+        assert(before == len(self.dict))
+        assert(self.find_triangle(p3, p1))
+        assert(self.find_triangle(p2, p3))
+        self.edges.add((min(p3, p4), max(p3, p4)))
+        self.edges.remove((min(e), max(e)))
+
