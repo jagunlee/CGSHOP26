@@ -15,7 +15,7 @@ import datetime
 # import cgshop2026_pyutils
 
 sys.setrecursionlimit(1000000)
-SEARCH_DEPTH = 5
+SEARCH_DEPTH = 1
 PAR_LEN = 2.5
 PAR_CROSS = 1
 
@@ -204,7 +204,7 @@ class Data:
         new_cross = self.count_cross(tri_dest, (p2, p4))
         n_cross = ori_cross - new_cross
         m_score = (n_cross, depth)
-        return m_score
+        # return m_score
         if depth == 1:
             return m_score
         # self.print_triangle(t1)
