@@ -81,7 +81,7 @@ if __name__=="__main__":
         print()
         '''
         
-        centerT = D.findCenterGlobal()
+        centerT = D.findCenterGlobal2()
     
         D.WriteData()
 
