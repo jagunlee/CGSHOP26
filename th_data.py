@@ -589,6 +589,41 @@ class Data:
 
         return bestSeq, L
     '''
+    def new_pfp(self, tri1:Triangulation, tri2:Triangulation):
+        tri = copy.deepcopy(tri1)
+        pfp = []
+        while True:
+            cand = []
+            edges = list(tri.edges)
+            for e in edges:
+                if self.flippable(tri, e):
+                    # 전에 뒤집은거 안뒤집게 해야할듯?
+                    score = self.flip_score(tri, tri2, e, SEARCH_DEPTH)
+                    if score[0] > 0:
+                        cand.append((e, score))
+            if not cand:
+                break
+            cand.sort(key=lambda x: x[1],reverse=True)
+            # print(cand)
+            # print(len(cand))
+            flips = []
+            marked = set()
+            for (p1, p2), _ in cand:
+                t1 = tri.find_triangle(p1, p2)
+                t2 = tri.find_triangle(p2, p1)
+                if t1 in marked or t2 in marked:
+                    continue
+                # print(p1, p2)
+                flips.append((p1, p2))
+                marked.add(t1)
+                marked.add(t2)
+            for e in flips:
+                tri.flip(e)
+            pfp.append(flips)
+            # print(len(flips))
+        assert(tri.edges == tri2.edges)
+        return pfp
+
 
     # tri1에서 tri2로의 pfp
     # tri2에서 tri1로 가는 경우 리스트를 반대로 뒤집어야 함
@@ -824,7 +859,7 @@ class Data:
         with open(folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
             json.dump(inst, f, indent='\t')
 
-        opt_folder = "opt"
+        opt_folder = "pb_opt"
         opt_list = os.listdir(opt_folder)
         already_exist = False
 

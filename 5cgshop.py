@@ -4,6 +4,7 @@
 
 #from jg_data import *
 from th_data import *
+import th2_data as th2
 from multiprocessing import Pool
 import os
 
@@ -12,6 +13,7 @@ import argparse
 from utils import initialize_exp
 from cgshop2026_pyutils.verify import check_for_errors
 from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
+from cgshop2026_pyutils.zip.zip_writer import ZipWriter
 
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
@@ -210,7 +212,7 @@ def local_search_on_object(db, dt, idx, centerT, T0_flip):
 
 
 
-def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file = 'transformer-output-decoded.txt'
+def local_search_from_decoded(db, inst_file, path, input_file, write, generation): #hy: input_file = 'transformer-output-decoded.txt'
     print("hy: from_decoded:")
     Tris_path = './data/benchmark_instances/'
     #if 'decoded' in input_file:
@@ -227,6 +229,7 @@ def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file 
     single_thread_rew =[]
     # Ah... no need to make it parallel... sequential is enough!!!!
     # Later, change it for the speed-up.
+    count=1
     for obj in lines:
         # string flip -> int list flip
         #print("obj = ", obj)
@@ -265,6 +268,22 @@ def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file 
                     list_pf.append(list(f[0]))
                 list_pfp.append(list_pf)
             flips.append(list_pfp)
+            dt.pFlips[i] = flips[i]
+
+        if write==True:
+            #### Save several solutions #####
+            inst = dict()
+            inst["content_type"] = "CGSHOP2026_Solution"
+            inst["instance_uid"] = dt.instance_uid
+            inst["flips"] = dt.pFlips
+            inst["meta"] = {"dist": sum([len(pFlip) for pFlip in dt.pFlips])} # , "input": self.input}
+
+            folder = "same_inst_solutions"
+            with open(folder+"/"+dt.instance_uid+f".solution_{generation}_{count}"+".json", "w", encoding="utf-8") as f:
+                json.dump(inst, f, indent='\t')
+            count+=1
+
+
 
         #Tris_path = './data/benchmark_instances/'
         #with open(Tris_path + dt.instance_uid + '.json', "r") as f:
@@ -283,8 +302,10 @@ def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file 
         #errors = check_for_errors(instance, solution)
         #assert not errors, f"Errors found in solution: {errors}"
 
+
         flip_len=[len(f) for f in flips]
         min_len_idx = flip_len.index(min(flip_len)) #idx of Triangulation with shortest pfd
+
 
         obj, rew = local_search_on_object(db, dt, min_len_idx, centerT, flips[0])
         single_thread_obj.append(obj)
@@ -294,7 +315,7 @@ def local_search_from_decoded(db, inst_file, path, input_file): #hy: input_file 
     add_db(db, single_thread_obj, single_thread_rew)
 
     # Write search_output.txt file
-    write_output_to_file(db, path, 25)
+    write_output_to_file(db, path, 50)
 
 
 
@@ -350,7 +371,7 @@ def local_search(db, path, input_file):
     #my_print_db(db)
 
     # Write search_output.txt file
-    write_output_to_file(db, path, 50)#initial, 50%
+    write_output_to_file(db, path, 100)#initial, 50%
     # Write plot file
 
 
@@ -591,9 +612,9 @@ if __name__ == '__main__':
         os.makedirs(args.dump_path)
 
     Tris_path = './data/benchmark_instances/'
-    inst_file = 'random_instance_110_15_3'
+    #inst_file = 'random_instance_110_15_3'
     #inst_file = 'random_instance_93_40_10'
-    #inst_file = 'random_instance_444_15_10'
+    inst_file = 'random_instance_444_15_10'
     #inst_file = 'random_instance_552_320_20'
     #inst_file = 'random_instance_826_320_20'
     #inst_file = 'rirs-1500-50-49040875'
@@ -782,9 +803,16 @@ if __name__ == '__main__':
         #logger.info(f"JULIA_NUM_THREADS is set to {os.environ['JULIA_NUM_THREADS']}")
 
 
+        if generation==5:
+            write=True
+        else: write=False
         #### Instead of search.jl ######
-        local_search_from_decoded(db, inst_file, args.dump_path,'/transformer-output-decoded.txt')
+        local_search_from_decoded(db, inst_file, args.dump_path,'/transformer-output-decoded.txt', True, generation)
         #### -------------------- ######
+        if generation==5: exit(0)
+        #### WriteDataset from search_output_{generation+1}.txt ###
+
+        ########
 
 
 
