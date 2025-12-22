@@ -391,6 +391,9 @@ class Data:
                     score, _ = self.flip_score(tri, mtriangulations[j], e, 1)
                     escore += score
                 scores[i][e] = escore
+            print(i, "/", num)
+            end = time.time()
+            print('time:', f"{end - start:.5f} sec")
         while True:
             mscore = 0
             for i in range(num):
