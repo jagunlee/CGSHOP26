@@ -8,7 +8,6 @@ def mySort(s : str):
     if 'woc' in s: 
         return int(s.split('-')[1]) * 5
     elif 'random' in s:
-        print(s.split('_'))
         return int(s.split('_')[4]) * int(s.split('_')[5].split('.')[0])
     elif 'rirs' in s:
         return int(s.split('-')[1]) * int(s.split('-')[2])
@@ -81,12 +80,11 @@ if __name__=="__main__":
         print()
         '''
         
-        centerT = D.findCenter2()
-        D.computeDistanceSum2(centerT)
+        centerT = D.findCenterGlobal2()
     
         D.WriteData()
 
-        D.verify()
+        # D.verify()
 
         end = time.time()
         print('total time:', f"{end - start:.5f} sec")

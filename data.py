@@ -367,47 +367,144 @@ class Data:
     def findCenterGlobal(self):
         start = time.time()
         mtriangulations = [copy.deepcopy(t) for t in self.triangulations]
-        pfps =[[] for _ in self.triangulations]
+        num = len(mtriangulations)
+        pfps =[[] for _ in range(num)]
+        tl = 0
         while True:
             mscore = 0
-            for i in len(mtriangulations):
+            flips = [[] for _ in range(num)]
+            for i in range(num):
                 ncand = []
                 nscore = 0
                 tri = mtriangulations[i]
                 edges = list(tri.edges)
                 for e in edges:
+                    if not self.flippable(tri, e): continue
                     escore = 0
-                    for j in len(mtriangulations):
+                    for j in range(num):
                         if i==j: continue
-                        score = self.flip_score(tri, mtriangulations[j], e, SEARCH_DEPTH)
-                        if score > 0:
-                            escore += score
+                        score, _ = self.flip_score(tri, mtriangulations[j], e, 1)
+                        escore += score
                     if escore > 0:
-                        nscore += escore
                         ncand.append((e, escore))
+                ncand.sort(key = lambda x:x[1], reverse=True)
+                marked = set()
+                for (p1, p2), score in ncand:
+                    t1 = tri.find_triangle(p1, p2)
+                    t2 = tri.find_triangle(p2, p1)
+                    if t1 in marked or t2 in marked:
+                        continue
+                    flips[i].append((p1, p2))
+                    marked.add(t1)
+                    marked.add(t2)
+                    nscore += score
+                
                 if nscore > mscore:
                     mscore = nscore
-                    mt = tri
-                    mcand = ncand
                     mi = i
             if mscore == 0:
                 break
-            mcand.sort(key=lambda x:x[1], reverse=True)
-            marked = set()
-            for (p1, p2), _ in mcand:
-                t1 = mt.find_triangle(p1, p2)
-                t2 = mt.find_triangle(p2, p1)
-                if t1 in marked or t2 in marked:
-                    continue
-                # print(p1, p2)
-                flips.append((p1, p2))
-                marked.add(t1)
-                marked.add(t2)
-            for e in flips:
-                mt.flip(e)
-            pfps[mi].append(flips)
+            tl+=1
+            print(tl)
+            print(mscore)
+            end = time.time()
+            print('time:', f"{end - start:.5f} sec")
+            pfps[mi].append(flips[mi])
+            for e in flips[mi]:
+                mtriangulations[mi].flip(e)
+        self.pFlips = []
+        for i in range(num):
+            if i < num-1:
+                assert(mtriangulations[i].edges == mtriangulations[i+1].edges)
+            self.pFlips.append(pfps[i])
+        
+        print("total length:",tl)
+        return mtriangulations[0]
                     
-
+    def findCenterGlobal2(self):
+        start = time.time()
+        mtriangulations = [copy.deepcopy(t) for t in self.triangulations]
+        num = len(mtriangulations)
+        pfps =[[] for _ in range(num)]
+        scores = [dict() for _ in range(num)]
+        tl = 0
+        for i in range(num):
+            tri = mtriangulations[i]
+            edges = list(tri.edges)
+            for e in edges:
+                if not self.flippable(tri, e): continue
+                escore = 0
+                for j in range(num):
+                    if i==j: continue
+                    score, _ = self.flip_score(tri, mtriangulations[j], e, 1)
+                    escore += score
+                scores[i][e] = escore
+            print(i, "/", num)
+            end = time.time()
+            print('time:', f"{end - start:.5f} sec")
+        while True:
+            mscore = 0
+            for i in range(num):
+                tri = mtriangulations[i]
+                ncand = []
+                nflips = []
+                nscore = 0
+                for e in scores[i]:
+                    if scores[i][e] > 0:
+                        ncand.append((e, scores[i][e]))
+                ncand.sort(key=lambda x:x[1], reverse=True)
+                marked = set()
+                for (p1, p2), score in ncand:
+                    t1 = tri.find_triangle(p1, p2)
+                    t2 = tri.find_triangle(p2, p1)
+                    if t1 in marked or t2 in marked:
+                        continue
+                    nflips.append((p1, p2))
+                    marked.add(t1)
+                    marked.add(t2)
+                    nscore += score    
+                if nscore > mscore:
+                    mscore = nscore
+                    mi = i
+                    mflips = nflips
+            if mscore == 0:
+                break
+            tl+=1
+            print(tl)
+            print(mscore)
+            end = time.time()
+            print('time:', f"{end - start:.5f} sec")
+            pfps[mi].append(mflips)
+            for e in mflips:
+                mtriangulations[mi].flip(e)
+            for i in range(num):
+                if i == mi:
+                    scores[i].clear()
+                    tri = mtriangulations[i]
+                    edges = list(tri.edges)
+                    for e in edges:
+                        if not self.flippable(tri, e): continue
+                        escore = 0
+                        for j in range(num):
+                            if i==j: continue
+                            score, _ = self.flip_score(tri, mtriangulations[j], e, 1)
+                            escore += score
+                        scores[i][e] = escore
+                else:
+                    tri = mtriangulations[i]
+                    edges = list(tri.edges)
+                    for e in edges:
+                        if not self.flippable(tri, e): continue
+                        score, _ = self.flip_score(tri, mtriangulations[mi], e, 1)
+                        scores[i][e] += score
+        self.pFlips = []
+        for i in range(num):
+            if i < num-1:
+                assert(mtriangulations[i].edges == mtriangulations[i+1].edges)
+            self.pFlips.append(pfps[i])
+        
+        print("total length:",tl)
+        return mtriangulations[0]
 
     def WriteData(self):
 
