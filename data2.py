@@ -1849,7 +1849,7 @@ class Data:
 
         step = 0
         total_step = 0
-        end_step = 10 * len(self.triangulations) * len(self.pts)
+        end_step = 1000 * len(self.triangulations) * len(self.pts)
 
         edges = list(T.edges.keys())
         starting_edge_ind = 0
