@@ -50,7 +50,7 @@ class Data:
                 self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
             for t in root["triangulations"]:
                 self.triangulations.append(self.make_triangulation(t))
-                print(len(self.triangulations),"/",len(root["triangulations"]))
+                # print(len(self.triangulations),"/",len(root["triangulations"]))
 
             #print(len(self.triangulations))
             # self.distance = [] * len(self.triangulations)
@@ -83,7 +83,7 @@ class Data:
 
             # print(f"num of pts: {len(self.pts)}")
             # print(f"num of triangulations: {len(self.triangulations)}")
-            # print(f"Original dist: {self.dist}")
+            print(f"Original dist: {self.dist}")
 
             # pdb.set_trace()
             min_flip_ind = np.argmin([len(x) for x in self.pFlips])
@@ -91,10 +91,11 @@ class Data:
             for flip_seq in self.pFlips[min_flip_ind]:
                 for flp in flip_seq:
                     self.center.flip((flp[0], flp[1]))
-            # self.computeDistanceSum(self.center)
+            self.computeDistanceSum(self.center)
             # print(f"New dist: {self.dist}")
-            # if self.dist<org_dist:
-            #     self.WriteData()
+            if self.dist<org_dist:
+                print(f"{self.instance_uid}: {org_dist} -> {self.dist}")
+                self.WriteData()
             print("---------------------------------")
             
 
@@ -231,10 +232,13 @@ class Data:
         tri = tri1.fast_copy()
         pfp = []
         while True:
+            prev_flip = []
             cand = []
             edges = list(tri.edges)
             for e in edges:
                 if self.flippable(tri, e):
+                    if e in prev_flip:
+                        continue
                     # 전에 뒤집은거 안뒤집게 해야할듯?
                     score = self.flip_score(tri, tri2, e, 0)
                     if score[0] > 0:
@@ -256,7 +260,8 @@ class Data:
                 marked.add(t1)
                 marked.add(t2)
             for e in flips:
-                tri.flip(e)
+                e1 = tri.flip(e)
+                prev_flip.append(e1)
             pfp.append(flips)
             # print(len(flips))
         assert(tri.edges == tri2.edges)
@@ -577,28 +582,39 @@ class Data:
         # print(len(self.triangulations))
         tot_dist = 0
         for i in range(len(self.triangulations)):
-            
+            prev_pFlips_i = self.pFlips[i][:]
             # list[list[list[int, int]]]
             self.pFlips[i] = []
 
             # list[list[list[tuple(int, int), tuple(int, int)]]]
-            pFlips_paired = self.parallel_flip_path(self.triangulations[i], centerT)
+            pFlips_paired1 = self.parallel_flip_path(self.triangulations[i], centerT)
+            pFlips_paired2 = self.parallel_flip_path2(self.triangulations[i], centerT)
+            print(len(pFlips_paired1), len(pFlips_paired2))
 
-            for round in pFlips_paired:
+            if len(pFlips_paired1)<len(pFlips_paired2):
+                pFlips_paired = pFlips_paired1
+            else:
+                pFlips_paired = pFlips_paired2
+            if len(prev_pFlips_i)<len(pFlips_paired):
+                self.pFlips[i] = prev_pFlips_i[:]
+                tot_dist+=len(prev_pFlips_i)
+            else:
 
-                round_temp = []
+                for round in pFlips_paired:
 
-                for oneFlip in round:
+                    round_temp = []
+
+                    for oneFlip in round:
+                        
+                        # (p1, p2), (p3, p4) = fs[i]
+                        (p1, p2) = oneFlip
                     
-                    # (p1, p2), (p3, p4) = fs[i]
-                    (p1, p2) = oneFlip
-                
-                    oneFlip_temp = [p1, p2]
+                        oneFlip_temp = [p1, p2]
 
-                    round_temp.append(oneFlip_temp)
+                        round_temp.append(oneFlip_temp)
 
-                self.pFlips[i].append(round_temp)
-            tot_dist+=len(pFlips_paired)
+                    self.pFlips[i].append(round_temp)
+                tot_dist+=len(pFlips_paired)
         
 
 

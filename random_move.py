@@ -1,7 +1,7 @@
 import sys
 import os
 from data import *
-from multiprocessing import Process
+from multiprocessing import Process, Pool
 import time
 
 def make_random_move(inp):

@@ -1,4 +1,9 @@
 from data import *
+from multiprocessing import Process, Pool
+import os
+
+def read_dt(d):
+    dt = Data(d)
 
 if __name__=="__main__":
     argument = sys.argv
@@ -11,14 +16,17 @@ if __name__=="__main__":
         start = time.time()
         dt = Data(inp)
     else:
-        json_list = os.listdir(inp)
-        json_list.reverse()
-        sol_list = os.listdir("opt")
-        rirs_list = []
-        for inp1 in json_list:
+        inp_list = os.listdir(inp)
+        # json_list.reverse()
+        json_list = []
+        for inp1 in inp_list:
             if "json" not in inp1:
                 continue
+            json_list.append(os.path.join(inp,inp1))
+
             # if "-20-" in inp1:
             #     continue
             # rirs_list.append(os.path.join(inp,inp1))
             dt = Data(os.path.join(inp,inp1))
+        # pool = Pool(13)
+        # pool.map(read_dt, json_list)
