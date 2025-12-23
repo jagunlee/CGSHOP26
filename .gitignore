@@ -4,3 +4,4 @@ opt/*
 checkpoint/*
 data/*
 ignore/*
+same_inst_solutions/*

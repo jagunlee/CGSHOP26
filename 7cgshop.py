@@ -21,9 +21,10 @@ from utils import bool_flag#, initialize_exp
 MAX_OUTPUT_LEN=200
 
 class Database:
-    def __init__(self, objects:dict, rewards:dict, num_pts:int):
+    def __init__(self, objects:dict, rewards:dict, pfd_E:dict, num_pts:int):
         self.objects={}
         self.rewards={}
+        self.pfd_E={}
         self.num_pts=num_pts
 
 
@@ -162,7 +163,7 @@ def LS_from_decoded(db, inst_file, path, write, generation): #hy: input_file = '
     add_db(db, multi_thread_obj, multi_thread_rew)
 
     # Write search_output.txt file
-    write_output_to_file(db, path, 25)
+    write_output_to_file(db, path, 25-generation)
 
 
 def LS_on_object(db, dt, centerT, first=True):
@@ -173,40 +174,115 @@ def LS_on_object(db, dt, centerT, first=True):
     rew = sum([len(f) for f in all_pFlips])
     flip_0 = all_pFlips[0]
 
-    ### perturb centerT ###
     new_centerT = copy.deepcopy(centerT)
     edges = list(copy.deepcopy(centerT.edges))
-    random.shuffle(edges)
-    flip_count = int(len(edges)*0.4) # 10% of edges flip
-    trial=0
-    ei=0
-    while trial < flip_count*2:
-        if dt.flippable(new_centerT, edges[ei]):
-            new_centerT.flip(edges[ei])
-            trial+=1
-        if trial == flip_count:break
-        if  ei == len(edges)-1: break
-        ei+=1
-    all_pFlips = dt.computeDistanceSum(new_centerT)
-    new_rew = sum([len(f) for f in all_pFlips])
-    #print("rew vs. new_rew = ", rew, " vs. ", new_rew)
-    new_flip_0 = all_pFlips[0]
+
+    ### ver1: perturb centerT ###
+    if first==True:
+        random.shuffle(edges)
+        flip_count = int(len(edges)*0.4) # 10% of edges flip
+        trial=0
+        ei=0
+        while trial < flip_count*2:
+            if trial == flip_count:break
+            if ei == len(edges)-1: break
+            if dt.flippable(new_centerT, edges[ei]):
+                new_centerT.flip(edges[ei])
+                trial+=1
+            ei+=1
+
+    ### ver2: perturb centerT ###
+    if first==False:
+        edge_weight = dict()
+        for e in edges:
+            edge_weight[e]=0
+            for t in dt.triangulations:
+                if e in t.edges: edge_weight[e]+=1
+        for e in edge_weight.keys():
+            edge_weight[e] = edge_weight[e]/len(dt.triangulations)
+        sorted_edges = sorted(edge_weight.items(), key=lambda item: item[1])
+        del edge_weight
+        only_edges= [E[0] for E in sorted_edges]
+        del sorted_edges
+        flip_count = int(len(edges)*0.4) # % of edges flip
+        trial=0
+        ei=0
+        while trial < flip_count*2:
+            if trial == flip_count: break
+            if ei == len(edges)-1: break
+            if dt.flippable(new_centerT, only_edges[ei]):
+                p1, p2 = only_edges[ei]
+                t1 = new_centerT.find_triangle(p1, p2)
+                t2 = new_centerT.find_triangle(p2, p1)
+                new_centerT.flip(only_edges[ei])
+                trial+=1
+            ei+=1
+    new_all_pFlips = dt.computeDistanceSum(new_centerT)
+    new_rew = sum([len(f) for f in new_all_pFlips])
+    new_flip_0 = new_all_pFlips[0]
 
     ### if Dsum(centerT) < Dsum(new_centerT), then obj = centerT ###
-    if first==False:
-        if new_rew < rew:
-            obj = convert_to_string(new_flip_0)
-            rew = -new_rew
+    ### However, new_centerT.edges was already generated, then do not save its obj ###
+    ### pool 을 사용할 경우 db에 동시에 접근하는게원치 않는 방향으로 작동할 수도..?###
+    NEW_C=False
+    Shorter_D=False
+    if first:
+        if new_rew not in db.pfd_E:
+            db.pfd_E[new_rew]=[new_centerT.edges]
+
+    if new_rew < rew:
+        if new_rew not in db.pfd_E:
+            db.pfd_E[new_rew]=[new_centerT.edges]
+    elif new_rew == rew:
+        ### Is new_centerT.edges really new? ###
+        new_edges = False
+        for prev_edges in db.pfd_E[new_rew]:
+            if prev_edges == new_centerT.edges:
+                new_edges = False
+                break
+            else:
+                new_edges = True
+        if new_edges:
+            NEW_C=True
+            db.pfd_E[new_rew].append(new_centerT.edges)
+    elif new_rew > rew:
+        if rew not in db.pfd_E:
+            db.pfd_E[rew]=[centerT.edges]
         else:
-            obj = convert_to_string(flip_0)
-            rew = -rew
-    else:
+            new_edges = False
+            for prev_edges in db.pfd_E[rew]:
+                if prev_edges == centerT.edges:
+                    new_edges = False
+                    break
+                else: new_edges = True
+            if new_edges:
+                NEW_C=True
+                db.pfd_E[rew].append(centerT.edges)
+
+    if first: # 여긴 무조건 저장
         obj = convert_to_string(new_flip_0)
         rew = -new_rew
-    new = reward(db, obj)
-    if new:
-        objects.append(obj)
-        rewards.append(rew)
+    else:
+        if new_rew < rew:
+            Shorter_D=True
+            obj = convert_to_string(new_flip_0)
+            rew = -new_rew
+        elif new_rew == rew:
+            # 새로운 center 면 obj로 저장
+            if NEW_C:
+                obj = convert_to_string(new_flip_0)
+                rew = -new_rew
+        else:
+            # 새로운 center 면 obj로 저장
+            if NEW_C:
+                obj = convert_to_string(flip_0)
+                rew = -rew
+
+    if first or Shorter_D or NEW_C:
+        new = reward(db, obj)
+        if new:
+            objects.append(obj)
+            rewards.append(rew)
     return objects, rewards
 
 
@@ -521,7 +597,7 @@ if __name__ == '__main__':
     elif '-' in inst_file:
         num_pts = int(inst_file.split('-')[2])
     ##### Database ####
-    db = Database({},{},num_pts)
+    db = Database({},{},{},num_pts)
     ###################
     i=1
     for i in range(1, args.max_epochs):
@@ -566,9 +642,7 @@ if __name__ == '__main__':
     else:
         logger.error(f'model type {args.type} is not recognized')
 
-    print("\n-----------------")
-    print(model)
-    print("-----------------\n")
+    logger.info(model)
 
     model.to(args.device)
     logger.info(f"model #params: {sum(p.numel() for p in model.parameters())}")
@@ -693,11 +767,7 @@ if __name__ == '__main__':
         logger.info(f"Memory allocated:  {torch.cuda.memory_allocated(0)/(1024*1024):.2f}MB, reserved: {torch.cuda.memory_reserved(0)/(1024*1024):.2f}MB")
         logger.info(f"============ End of generation {generation} ============")
 
-        if generation==5:
-            write=True
-        else: write=False
         LS_from_decoded(db, inst_file, args.dump_path, True, generation)
-        if generation==5: exit(0)
 
         if os.path.exists(args.dump_path+"/distribution.txt"):
             with open(args.dump_path+"/distribution.txt", 'r') as file:
