@@ -2,3 +2,4 @@ opt.zip filter=lfs diff=lfs merge=lfs -text
 data/coreset_instance/*.json filter=lfs diff=lfs merge=lfs -text
 opt/*.json filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
+data/coreset_instance-251219/*.json filter=lfs diff=lfs merge=lfs -text

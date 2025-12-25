@@ -223,9 +223,9 @@ def build_and_save_coresets_for_all_instances(
 if __name__ == "__main__":
     build_and_save_coresets_for_all_instances(
         input_dir="./data/benchmark_instances",
-        output_dir="./data/coreset_instance",
-        eps=0.2,
+        output_dir="./data/coreset_instance-251219",
+        eps=0.1,
         alpha=8.0,
         alpha_min=16.0,
-        center_candidates=0,  # 비랜덤 후보 개수 (0~4번 triangulation 기준)
+        center_candidates=5,  # 비랜덤 후보 개수 (0~4번 triangulation 기준)
     )
