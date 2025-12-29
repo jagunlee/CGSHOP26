@@ -50,7 +50,7 @@ class Data:
                 self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
             for t in root["triangulations"]:
                 self.triangulations.append(self.make_triangulation(t))
-                print(len(self.triangulations),"/",len(root["triangulations"]))
+                # print(len(self.triangulations),"/",len(root["triangulations"]))
 
             #print(len(self.triangulations))
             # self.distance = [] * len(self.triangulations)
@@ -83,7 +83,7 @@ class Data:
 
             # print(f"num of pts: {len(self.pts)}")
             # print(f"num of triangulations: {len(self.triangulations)}")
-            # print(f"Original dist: {self.dist}")
+            print(f"Original dist: {self.dist}")
 
             # pdb.set_trace()
             min_flip_ind = np.argmin([len(x) for x in self.pFlips])
@@ -91,10 +91,11 @@ class Data:
             for flip_seq in self.pFlips[min_flip_ind]:
                 for flp in flip_seq:
                     self.center.flip((flp[0], flp[1]))
-            # self.computeDistanceSum(self.center)
+            self.computeDistanceSum(self.center)
             # print(f"New dist: {self.dist}")
-            # if self.dist<org_dist:
-            #     self.WriteData()
+            if self.dist<org_dist:
+                print(f"{self.instance_uid}: {org_dist} -> {self.dist}")
+                self.WriteData()
             print("---------------------------------")
             
 
@@ -231,10 +232,13 @@ class Data:
         tri = tri1.fast_copy()
         pfp = []
         while True:
+            prev_flip = []
             cand = []
             edges = list(tri.edges)
             for e in edges:
                 if self.flippable(tri, e):
+                    if e in prev_flip:
+                        continue
                     # 전에 뒤집은거 안뒤집게 해야할듯?
                     score = self.flip_score(tri, tri2, e, 0)
                     if score[0] > 0:
@@ -256,7 +260,8 @@ class Data:
                 marked.add(t1)
                 marked.add(t2)
             for e in flips:
-                tri.flip(e)
+                e1 = tri.flip(e)
+                prev_flip.append(e1)
             pfp.append(flips)
             # print(len(flips))
         assert(tri.edges == tri2.edges)
@@ -422,39 +427,84 @@ class Data:
         return mtriangulations[0]
                     
     def findCenterGlobal2(self):
+        """
+        Weighted center finding:
+        - If input json contains 'coreset_weights', use them as weights for each triangulation.
+        - Otherwise fallback to uniform weights.
+        """
+        # ---- load weights (coreset format) ----
+        num = len(self.triangulations)
+        weights = None
+
+        if hasattr(self, "coreset_weights"):
+            try:
+                weights = list(self.coreset_weights)
+            except Exception:
+                weights = None
+
+        if weights is None:
+            try:
+                with open(self.input, "r", encoding="utf-8") as f:
+                    root = json.load(f)
+                if "coreset_weights" in root:
+                    weights = [float(x) for x in root["coreset_weights"]]
+            except Exception:
+                weights = None
+
+        if weights is None:
+            weights = [1.0] * num
+        else:
+            # length fix
+            if len(weights) < num:
+                weights = weights + [1.0] * (num - len(weights))
+            elif len(weights) > num:
+                weights = weights[:num]
+
         start = time.time()
         mtriangulations = [copy.deepcopy(t) for t in self.triangulations]
-        num = len(mtriangulations)
-        pfps =[[] for _ in range(num)]
+
+        pfps = [[] for _ in range(num)]
         scores = [dict() for _ in range(num)]
         tl = 0
+
+        # scores[i][e] = sum_{j != i} w[j] * flip_score(i -> j, e)
         for i in range(num):
             tri = mtriangulations[i]
             edges = list(tri.edges)
             for e in edges:
-                if not self.flippable(tri, e): continue
-                escore = 0
+                if not self.flippable(tri, e):
+                    continue
+                escore = 0.0
                 for j in range(num):
-                    if i==j: continue
+                    if i == j:
+                        continue
                     score, _ = self.flip_score(tri, mtriangulations[j], e, 1)
-                    escore += score
+                    escore += weights[j] * score
                 scores[i][e] = escore
+
             print(i, "/", num)
             end = time.time()
-            print('time:', f"{end - start:.5f} sec")
+            print("time:", f"{end - start:.5f} sec")
+
         while True:
-            mscore = 0
+            mscore = 0.0
+            mi = -1
+            mflips = []
+
             for i in range(num):
                 tri = mtriangulations[i]
                 ncand = []
                 nflips = []
-                nscore = 0
+                nscore = 0.0
+
                 for e in scores[i]:
                     if scores[i][e] > 0:
                         ncand.append((e, scores[i][e]))
-                ncand.sort(key=lambda x:x[1], reverse=True)
+
+                ncand.sort(key=lambda x: x[1], reverse=True)
+
                 marked = set()
-                for (p1, p2), score in ncand:
+                for (p1, p2), sc in ncand:
                     t1 = tri.find_triangle(p1, p2)
                     t2 = tri.find_triangle(p2, p1)
                     if t1 in marked or t2 in marked:
@@ -462,49 +512,60 @@ class Data:
                     nflips.append((p1, p2))
                     marked.add(t1)
                     marked.add(t2)
-                    nscore += score    
+                    nscore += sc
+
                 if nscore > mscore:
                     mscore = nscore
                     mi = i
                     mflips = nflips
-            if mscore == 0:
+
+            if mscore == 0 or mi == -1:
                 break
-            tl+=1
+
+            tl += 1
             print(tl)
             print(mscore)
             end = time.time()
-            print('time:', f"{end - start:.5f} sec")
+            print("time:", f"{end - start:.5f} sec")
+
             pfps[mi].append(mflips)
             for e in mflips:
                 mtriangulations[mi].flip(e)
+
+            # update scores
             for i in range(num):
                 if i == mi:
                     scores[i].clear()
                     tri = mtriangulations[i]
                     edges = list(tri.edges)
                     for e in edges:
-                        if not self.flippable(tri, e): continue
-                        escore = 0
+                        if not self.flippable(tri, e):
+                            continue
+                        escore = 0.0
                         for j in range(num):
-                            if i==j: continue
+                            if i == j:
+                                continue
                             score, _ = self.flip_score(tri, mtriangulations[j], e, 1)
-                            escore += score
+                            escore += weights[j] * score
                         scores[i][e] = escore
                 else:
                     tri = mtriangulations[i]
                     edges = list(tri.edges)
                     for e in edges:
-                        if not self.flippable(tri, e): continue
+                        if not self.flippable(tri, e):
+                            continue
                         score, _ = self.flip_score(tri, mtriangulations[mi], e, 1)
-                        scores[i][e] += score
+                        scores[i][e] = scores[i].get(e, 0.0) + weights[mi] * score
+
         self.pFlips = []
         for i in range(num):
-            if i < num-1:
-                assert(mtriangulations[i].edges == mtriangulations[i+1].edges)
+            if i < num - 1:
+                assert (mtriangulations[i].edges == mtriangulations[i + 1].edges)
             self.pFlips.append(pfps[i])
-        
-        print("total length:",tl)
+
+        print("total length:", tl)
         return mtriangulations[0]
+
 
     def WriteData(self):
 
@@ -517,7 +578,7 @@ class Data:
         inst["meta"] = {"dist": self.dist, "input": self.input, "center": self.center.return_edge()}
         
         folder = "solutions"
-        with open(folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+        with open(folder+"/"+self.instance_name+".solution"+".json", "w", encoding="utf-8") as f:
             json.dump(inst, f, indent='\t')
 
         opt_folder = "opt"
@@ -525,7 +586,7 @@ class Data:
         already_exist = False
 
         for sol in opt_list:
-            if self.instance_uid+".solution.json" in sol:
+            if self.instance_name+".solution.json" in sol:
                 already_exist = True
 
                 with open(opt_folder+"/"+sol, "r", encoding="utf-8") as ff:
@@ -538,87 +599,79 @@ class Data:
 
                 if old_score>sum([len(pFlip) for pFlip in self.pFlips]): # self.dist:
                     os.remove(opt_folder+"/"+sol)
-                    with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+                    with open(opt_folder+"/"+self.instance_name+".solution"+".json", "w", encoding="utf-8") as f:
                         json.dump(inst, f, indent='\t')
 
         if not already_exist:
-            with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+            with open(opt_folder+"/"+self.instance_name+".solution"+".json", "w", encoding="utf-8") as f:
                 json.dump(inst, f, indent='\t')
 
         fname = "result.csv"
         if not os.path.exists(fname):
             df_dict = dict()
             df_dict["date"] = datetime.date.today()
-            df_dict[self.instance_uid] = [self.dist]
+            df_dict[self.instance_name] = [self.dist]
             df = pd.DataFrame(df_dict)
             df.to_csv("result.csv")
 
         else:
             df = pd.read_csv(fname, index_col = 0)
             col = df.columns
-            if self.instance_uid not in col:
-                df[self.instance_uid] = float("INF")
+            if self.instance_name not in col:
+                df[self.instance_name] = float("INF")
             today = datetime.date.today().isoformat()
             # pdb.set_trace()
             if df["date"].iloc[-1]!=today:
                 df.loc[len(df)] = list(df.iloc[-1])
                 df.loc[len(df.index)-1, "date"] = today
 
-            df.loc[len(df.index)-1, self.instance_uid] = min(df.loc[len(df.index)-1, self.instance_uid], sum([len(pFlip) for pFlip in self.pFlips]))
+            df.loc[len(df.index)-1, self.instance_name] = min(df.loc[len(df.index)-1, self.instance_name], sum([len(pFlip) for pFlip in self.pFlips]))
             df.to_csv("result.csv")
             pass
 
     def computeDistanceSum(self, centerT):
 
-        # start = time.time()
-
-        # print(self.pFlips)
-        # print(len(self.pFlips))
-        # print(len(self.triangulations))
         tot_dist = 0
+
+        # pFlips가 없거나 길이가 이상하면 안전하게 맞춰줌
+        if (not hasattr(self, "pFlips")) or self.pFlips is None or len(self.pFlips) != len(self.triangulations):
+            self.pFlips = [None] * len(self.triangulations)
+
         for i in range(len(self.triangulations)):
-            
-            # list[list[list[int, int]]]
+            # ---- 이전 pFlips가 None일 수 있음 (초기 상태) ----
+            prev_raw = self.pFlips[i]
+            if prev_raw is None:
+                prev_pFlips_i = None
+                prev_len = float("inf")  # 이전 해가 없으니 무조건 새로 계산하게
+            else:
+                prev_pFlips_i = prev_raw[:]
+                prev_len = len(prev_pFlips_i)
+
+            # 새로 계산할 pFlips
             self.pFlips[i] = []
 
-            # list[list[list[tuple(int, int), tuple(int, int)]]]
-            pFlips_paired = self.parallel_flip_path(self.triangulations[i], centerT)
+            pFlips_paired1 = self.parallel_flip_path(self.triangulations[i], centerT)
+            pFlips_paired2 = self.parallel_flip_path2(self.triangulations[i], centerT)
+            print(len(pFlips_paired1), len(pFlips_paired2))
 
-            for round in pFlips_paired:
+            if len(pFlips_paired1) < len(pFlips_paired2):
+                pFlips_paired = pFlips_paired1
+            else:
+                pFlips_paired = pFlips_paired2
 
-                round_temp = []
+            # 이전 해가 더 짧으면 유지 (단, prev가 실제로 있을 때만)
+            if prev_pFlips_i is not None and prev_len < len(pFlips_paired):
+                self.pFlips[i] = prev_pFlips_i[:]
+                tot_dist += prev_len
+            else:
+                for round in pFlips_paired:
+                    round_temp = []
+                    for oneFlip in round:
+                        (p1, p2) = oneFlip
+                        round_temp.append([p1, p2])
+                    self.pFlips[i].append(round_temp)
+                tot_dist += len(pFlips_paired)
 
-                for oneFlip in round:
-                    
-                    # (p1, p2), (p3, p4) = fs[i]
-                    (p1, p2) = oneFlip
-                
-                    oneFlip_temp = [p1, p2]
-
-                    round_temp.append(oneFlip_temp)
-
-                self.pFlips[i].append(round_temp)
-            tot_dist+=len(pFlips_paired)
-        
-
-
-            '''
-            pfp = self.parallel_flip_path(self.triangulations[i], centerT)
-            self.pFlips[i] = []
-
-            # (a, b), (c, d) 를 (a, b)로 바꿔야 함
-            for round in pfp:
-                roundFlips = []
-                for singleFlip in round:
-                    roundFlips.append(singleFlip[0])
-                self.pFlips[i].append(roundFlips)
-            self.pFlips[i].reverse()
-            '''
-
-            # print('parallel flip distance from the center to T', i, ':', len(self.pFlips[i]))
-            
-            # end = time.time()
-            # print('time:', f"{end - start:.5f} sec")
         self.dist = tot_dist
         print(f"New dist: {tot_dist}")
 
@@ -658,11 +711,58 @@ class Data:
         return pF, tot_dist
 
     def random_move(self):
-        prev_len = self.dist
-        total_best = prev_len
+        """
+        Weighted random move for coreset:
+        - Objective: sum_i w[i] * PFD(T_i -> center)
+        - If no 'coreset_weights' in input json, defaults to uniform weights.
+        """
+        # ---- load weights (coreset format) ----
+        num = len(self.triangulations)
+        weights = None
+
+        if hasattr(self, "coreset_weights"):
+            try:
+                weights = list(self.coreset_weights)
+            except Exception:
+                weights = None
+
+        if weights is None:
+            try:
+                with open(self.input, "r", encoding="utf-8") as f:
+                    root = json.load(f)
+                if "coreset_weights" in root:
+                    weights = [float(x) for x in root["coreset_weights"]]
+            except Exception:
+                weights = None
+
+        if weights is None:
+            weights = [1.0] * num
+        else:
+            if len(weights) < num:
+                weights = weights + [1.0] * (num - len(weights))
+            elif len(weights) > num:
+                weights = weights[:num]
+
+        def weighted_len_from_pF(pF):
+            # pF[i] is list of parallel rounds; PFD_i = len(pF[i])
+            return float(sum(weights[i] * len(pF[i]) for i in range(len(pF))))
+
+        # start center
+        if not hasattr(self, "center") or self.center is None:
+            self.center = self.triangulations[0].fast_copy()
+
         T = self.center.fast_copy()
 
-        print(f"Start with {prev_len}")
+        # baseline evaluation (robust even if self.dist not set)
+        base_pF, _ = self.computePFDOnly(T)
+        prev_len = weighted_len_from_pF(base_pF)
+        total_best = prev_len
+
+        # keep consistent state
+        self.pFlips = base_pF
+        self.dist = prev_len
+
+        print(f"Start with weighted objective = {prev_len}")
 
         step = 0
         total_step = 0
@@ -676,8 +776,10 @@ class Data:
             total_step += 1
             do_random = random.random() > 0.999 ** step
 
+            # -------------------------
+            # random parallel shake step
+            # -------------------------
             if do_random or starting_edge_ind == len(edges):
-                # print(f"{total_step}/{end_step} Shuffle")
                 cand = []
                 edges = list(T.edges)
                 for e in edges:
@@ -685,20 +787,22 @@ class Data:
                         cand.append(e)
                 if not cand:
                     break
+
                 random.shuffle(cand)
                 random_choice = [random.random() for _ in range(len(cand))]
                 e_list = [e for i, e in enumerate(cand) if random_choice[i] > 0.5]
+
                 flips = []
                 marked = set()
-                for (p1, p2)in e_list:
+                for (p1, p2) in e_list:
                     t1 = T.find_triangle(p1, p2)
                     t2 = T.find_triangle(p2, p1)
                     if t1 in marked or t2 in marked:
                         continue
-                    # print(p1, p2)
                     flips.append((p1, p2))
                     marked.add(t1)
                     marked.add(t2)
+
                 for e in flips:
                     T.flip((e[0], e[1]))
 
@@ -706,44 +810,52 @@ class Data:
                 random.shuffle(edges)
                 starting_edge_ind = 0
 
-                # quick length-only evaluation
-                newpF, new_len = self.computePFDOnly(T)
-                if total_best>new_len:
-                    self.dist = new_len
+                # quick eval (weighted)
+                newpF, _ = self.computePFDOnly(T)
+                new_len = weighted_len_from_pF(newpF)
+
+                if total_best > new_len:
+                    self.center = T.fast_copy()
                     self.pFlips = newpF
+                    self.dist = new_len
                     self.WriteData()
+
                 total_best = min(total_best, new_len)
                 prev_len = new_len
                 step = 0
                 continue
 
-            # single flip try
-            T1 = T.fast_copy()
+            # -------------------------
+            # single flip local try
+            # -------------------------
             e = edges[starting_edge_ind]
-            if not self.flippable(T1, e):
+            if not self.flippable(T, e):
                 starting_edge_ind += 1
                 continue
 
+            T1 = T.fast_copy()
             T1.flip(e)
 
-            pF, new_len = self.computePFDOnly(T)
+            pF, _ = self.computePFDOnly(T1)  # ✅ evaluate the flipped center
+            new_len = weighted_len_from_pF(pF)
+
             if new_len <= prev_len:
-                # print(f"[{self.instance_uid} {total_step}/{end_step}] {total_best}->{new_len}")
                 step = 0
                 T = T1
                 edges = list(T.edges)
                 random.shuffle(edges)
 
                 if new_len < prev_len:
-                    # only now compute full flip list
-                    self.center = T.fast_copy()
-                    self.dist = new_len
-                    self.flip = pF
+                    # accept improvement & record best
                     if new_len < total_best:
                         print(f"[{self.instance_uid} {total_step}/{end_step}] {total_best}->{new_len}")
                         total_best = new_len
+                        self.center = T.fast_copy()
+                        self.pFlips = pF
+                        self.dist = new_len
                         self.WriteData()
-                    prev_len = min(prev_len, new_len)
+
+                    prev_len = new_len
 
                 starting_edge_ind = 0
             else:
@@ -751,6 +863,7 @@ class Data:
                 starting_edge_ind += 1
 
         return self.center
+
     # def computeDistanceSum(self, centerT):
 
     #     start = time.time()

@@ -1,0 +1,188 @@
+
+========== random_move_coreset run @ 2025-12-29 12:09:00 ==========
+coreset=.\data\coreset_instance-251219
+full=
+benchmark_dir=.\data\benchmark_instances
+result_csv=.\result.csv
+opt_dir=.\opt
+
+-------------------------------------------------------
+time                    = 2025-12-29 12:09:01
+instance_uid            = random_instance_110_15_3
+coreset_file            = random_instance_110_15_3_coreset.json
+full_file               = random_instance_110_15_3.json
+old_opt_best            = 7.0
+old_result_csv_best     = 7.0
+new_cost_full           = 7
+improve_vs_old_opt      = 0.000000
+improve_vs_csv_best     = 0.000000
+ratio_new/old_opt       = 1.000000
+ratio_new/csv_best      = 1.000000
+full_eval_time_sec      = 0.001
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
+-------------------------------------------------------
+time                    = 2025-12-29 12:09:01
+instance_uid            = random_instance_111_15_2
+coreset_file            = random_instance_111_15_2_coreset.json
+full_file               = random_instance_111_15_2.json
+old_opt_best            = 5.0
+old_result_csv_best     = 5.0
+new_cost_full           = 5
+improve_vs_old_opt      = 0.000000
+improve_vs_csv_best     = 0.000000
+ratio_new/old_opt       = 1.000000
+ratio_new/csv_best      = 1.000000
+full_eval_time_sec      = 0.001
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
+-------------------------------------------------------
+time                    = 2025-12-29 12:09:01
+instance_uid            = random_instance_130_15_5
+coreset_file            = random_instance_130_15_5_coreset.json
+full_file               = random_instance_130_15_5.json
+old_opt_best            = 9.0
+old_result_csv_best     = 9.0
+new_cost_full           = 11
+improve_vs_old_opt      = -2.000000
+improve_vs_csv_best     = -2.000000
+ratio_new/old_opt       = 1.222222
+ratio_new/csv_best      = 1.222222
+full_eval_time_sec      = 0.003
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
+-------------------------------------------------------
+time                    = 2025-12-29 12:09:14
+instance_uid            = random_instance_132_80_20
+coreset_file            = random_instance_132_80_20_coreset.json
+full_file               = random_instance_132_80_20.json
+old_opt_best            = 91.0
+old_result_csv_best     = 87.0
+new_cost_full           = 104
+improve_vs_old_opt      = -13.000000
+improve_vs_csv_best     = -17.000000
+ratio_new/old_opt       = 1.142857
+ratio_new/csv_best      = 1.195402
+full_eval_time_sec      = 0.121
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
+-------------------------------------------------------
+time                    = 2025-12-29 12:09:40
+instance_uid            = random_instance_136_320_2
+coreset_file            = random_instance_136_320_2_coreset.json
+full_file               = random_instance_136_320_2.json
+old_opt_best            = 6.0
+old_result_csv_best     = 6.0
+new_cost_full           = 6
+improve_vs_old_opt      = 0.000000
+improve_vs_csv_best     = 0.000000
+ratio_new/old_opt       = 1.000000
+ratio_new/csv_best      = 1.000000
+full_eval_time_sec      = 0.060
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
+-------------------------------------------------------
+time                    = 2025-12-29 12:09:43
+instance_uid            = random_instance_137_40_10
+coreset_file            = random_instance_137_40_10_coreset.json
+full_file               = random_instance_137_40_10.json
+old_opt_best            = 35.0
+old_result_csv_best     = 34.0
+new_cost_full           = 39
+improve_vs_old_opt      = -4.000000
+improve_vs_csv_best     = -5.000000
+ratio_new/old_opt       = 1.114286
+ratio_new/csv_best      = 1.147059
+full_eval_time_sec      = 0.023
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
+-------------------------------------------------------
+time                    = 2025-12-29 12:10:41
+instance_uid            = random_instance_160_320_20
+coreset_file            = random_instance_160_320_20_coreset.json
+full_file               = random_instance_160_320_20.json
+old_opt_best            = 89.0
+old_result_csv_best     = 80.0
+new_cost_full           = 102
+improve_vs_old_opt      = -13.000000
+improve_vs_csv_best     = -22.000000
+ratio_new/old_opt       = 1.146067
+ratio_new/csv_best      = 1.275000
+full_eval_time_sec      = 0.480
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
+-------------------------------------------------------
+time                    = 2025-12-29 12:10:42
+instance_uid            = random_instance_168_15_2
+coreset_file            = random_instance_168_15_2_coreset.json
+full_file               = random_instance_168_15_2.json
+old_opt_best            = 1.0
+old_result_csv_best     = 1.0
+new_cost_full           = 1
+improve_vs_old_opt      = 0.000000
+improve_vs_csv_best     = 0.000000
+ratio_new/old_opt       = 1.000000
+ratio_new/csv_best      = 1.000000
+full_eval_time_sec      = 0.001
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
+-------------------------------------------------------
+time                    = 2025-12-29 12:10:48
+instance_uid            = random_instance_168_80_5
+coreset_file            = random_instance_168_80_5_coreset.json
+full_file               = random_instance_168_80_5.json
+old_opt_best            = 21.0
+old_result_csv_best     = 19.0
+new_cost_full           = 25
+improve_vs_old_opt      = -4.000000
+improve_vs_csv_best     = -6.000000
+ratio_new/old_opt       = 1.190476
+ratio_new/csv_best      = 1.315789
+full_eval_time_sec      = 0.028
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
+-------------------------------------------------------
+time                    = 2025-12-29 12:10:48
+instance_uid            = random_instance_16_15_2
+coreset_file            = random_instance_16_15_2_coreset.json
+full_file               = random_instance_16_15_2.json
+old_opt_best            = 3.0
+old_result_csv_best     = 3.0
+new_cost_full           = 3
+improve_vs_old_opt      = 0.000000
+improve_vs_csv_best     = 0.000000
+ratio_new/old_opt       = 1.000000
+ratio_new/csv_best      = 1.000000
+full_eval_time_sec      = 0.001
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
+-------------------------------------------------------
+time                    = 2025-12-29 12:10:50
+instance_uid            = random_instance_188_40_10
+coreset_file            = random_instance_188_40_10_coreset.json
+full_file               = random_instance_188_40_10.json
+old_opt_best            = 40.0
+old_result_csv_best     = 40.0
+new_cost_full           = 44
+improve_vs_old_opt      = -4.000000
+improve_vs_csv_best     = -4.000000
+ratio_new/old_opt       = 1.100000
+ratio_new/csv_best      = 1.100000
+full_eval_time_sec      = 0.021
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
+-------------------------------------------------------
+time                    = 2025-12-29 12:10:50
+instance_uid            = random_instance_192_15_2
+coreset_file            = random_instance_192_15_2_coreset.json
+full_file               = random_instance_192_15_2.json
+old_opt_best            = 3.0
+old_result_csv_best     = 3.0
+new_cost_full           = 3
+improve_vs_old_opt      = 0.000000
+improve_vs_csv_best     = 0.000000
+ratio_new/old_opt       = 1.000000
+ratio_new/csv_best      = 1.000000
+full_eval_time_sec      = 0.001
+status                  = WORSE_THAN_OPT
+-------------------------------------------------------
