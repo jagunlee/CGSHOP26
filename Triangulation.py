@@ -26,6 +26,38 @@ class Triangulation:
     def __del__(self):
         for t in self.triangles:
             del t
+    def fast_copy(self):
+        new = Triangulation()
+
+        # 1) Triangle 복사 + 매핑
+        tri_map = {}  # old Triangle -> new Triangle
+        for t in self.triangles:
+            nt = Triangle(t.pts[0], t.pts[1], t.pts[2])
+            tri_map[t] = nt
+            new.triangles.add(nt)
+
+        # 2) neis 포인터 복원 (old -> new 로 연결)
+        for t in self.triangles:
+            nt = tri_map[t]
+            for i in range(3):
+                nei_t = t.neis[i]
+                nt.neis[i] = tri_map[nei_t] if nei_t is not None else None
+
+        # 3) edges 그대로 복사
+        new.edges = set(self.edges)
+
+        # 4) dict 재구성 (방향 있는 edge -> Triangle)
+        new.dict = {}
+        for nt in new.triangles:
+            for i in range(3):
+                a = nt.pt(i)
+                b = nt.pt(i + 1)
+                new.dict[(a, b)] = nt
+
+        # 5) adj 리스트 얕은 복사
+        new.adj = list(self.adj)
+
+        return new
 
     def find_triangle(self, q1: int, q2: int):
         if (q1, q2) in self.dict:
@@ -71,3 +103,6 @@ class Triangulation:
         assert(self.find_triangle(p2, p3))
         self.edges.add((min(p3, p4), max(p3, p4)))
         self.edges.remove((min(e), max(e)))
+
+    def return_edge(self):
+        return [list(e) for e in self.edges]

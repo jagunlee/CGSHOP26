@@ -1,60 +1,102 @@
 import sys
 import os
-from data2 import *
+from data import *
 import time
-from multiprocessing import Process, Pool
+import csv
 
-def find_dt_center(inp):
-    dt = Data(os.path.join(inp))
-    sol_list = os.listdir("opt")
-    for sol in sol_list:
-        if dt.instance_uid in sol:
-            print(f"{dt.instance_uid} already done!")
-            return
-    res = dt.find_center_np()
-    if res[0]!=-1:
-        dt.WriteData()
-
-if __name__=="__main__":
-    argument = sys.argv
-    if len(argument)>=2:
-        inp = argument[1]
+def mySort(s : str): 
+    if 'woc' in s: 
+        return int(s.split('-')[1]) * 5
+    elif 'random' in s:
+        print(s.split('_'))
+        return int(s.split('_')[4]) * int(s.split('_')[5].split('.')[0])
+    elif 'rirs' in s:
+        return int(s.split('-')[1]) * int(s.split('-')[2])
     else:
-        # inp = "data/examples/example_ps_20_nt2_pfd5_random.json"
-        inp = "data/benchmark_instances/random_instance_440_160_20.json"
-    if "json" in inp:
-        start = time.time()
-        dt = Data(inp)
-        dt.find_center_np()
-        end = time.time()
-        print(f"total time: {end-start}s")
-        dt.WriteData()
-        # dt.random_move()
-    else:
-        json_list = os.listdir(inp)
-        sol_list = os.listdir("opt")
-        rirs_list = []
-        for inp1 in json_list:
-            if "json" not in inp1:
-                continue
-            if "rirs" not in inp1:
-                continue
-            # if "-20-" in inp1:
-            #     continue
-            # rirs_list.append(os.path.join(inp,inp1))
-            done = False
-            for sol in sol_list:
-                if dt.instance_uid in sol:
-                    print(f"{dt.instance_uid} already done!")
-                    done = True
-                    break
-            if done: continue
-            start = time.time()
-            dt = Data(os.path.join(inp,inp1))
-            dt.find_center_np()
-            dt.WriteData()
-            end = time.time()
-            print(f"{dt.instance_uid} done! total time: {end-start}s")
+        raise Exception('instance name invalid')
         
-        # pool = Pool(processes=2)
-        # pool.map(find_dt_center, rirs_list)
+if __name__=="__main__":
+    
+    argument = sys.argv 
+
+    start = time.time()
+
+    instances = []
+
+    userInput = False
+
+    if len(argument)==2:
+        instances = ['data/benchmark_instances/' + argument[1]]
+
+    else:
+        for file in os.listdir(os.path.dirname(__file__) + '/data/benchmark_instances'):
+            if 'pdf' == file[len(file)-3:]:
+                pass
+            else:
+                instances.append('data/benchmark_instances/'+file)
+
+        instances.sort(key = mySort)
+        if len(argument)==3:
+            instances=instances[int(argument[1]):int(argument[2])+1]
+        elif len(argument)==1:
+            pass
+        else:
+            raise Exception('input arguments invalid')
+    # print('time:', f"{end - start:.5f} sec")
+
+    # debug
+
+    # print(instances)
+    # (key=lambda x : int(x.split('_')[-2]) * int(x.split('_')[-1].split('.')[0]))
+
+    # sys.exit()
+
+    # list of (instance_name, radius)
+    result = []
+
+    for instance in instances:
+
+        D = Data(instance)
+
+        print('instance', instance, 'read')
+
+        end = time.time()
+        print('total time:', f"{end - start:.5f} sec")
+
+        '''
+        # pairwise distance 비교
+        for i in range(len(D.triangulations)):
+            for j in range(i+1, len(D.triangulations)):
+
+                pfp = D.parallel_flip_path(D.triangulations[i], D.triangulations[j])
+                print('parallel flip distance from T', i, 'to T', j, ':', len(pfp)) # , 'pfp:', pfp)
+                
+                end = time.time()
+                print('time:', f"{end - start:.5f} sec")
+
+                # print('distance from T', i, 'to T', j, ':', len(D.flip_sequence(D.triangulations[i], D.triangulations[j])[0]))
+        
+        end = time.time()
+
+        print()
+        '''
+        
+        centerT = D.findCenter()
+        D.computeDistanceSum(centerT)
+    
+        D.WriteData()
+
+        # D.verify()
+
+        end = time.time()
+        print('total time:', f"{end - start:.5f} sec")
+
+    '''
+    # 결과 작성
+    f = open("result.csv", "a")
+    # for instance in instances:
+    wr = csv.writer(f)
+    for instanceResult in result:
+        wr.writerow(instanceResult)
+    f.close()
+    '''

@@ -15,7 +15,7 @@ if __name__=="__main__":
         inp = argument[1]
     else:
         # inp = "data/examples/example_ps_20_nt2_pfd5_random.json"
-        inp = "data/benchmark_instances/random_instance_4_40_2.json"
+        inp = "opt/random_instance_4_40_2.solution.json"
     if "json" in inp:
         start = time.time()
         dt = Data(inp)
@@ -26,7 +26,6 @@ if __name__=="__main__":
         dt.random_move()
     else:
         json_list = os.listdir(inp)
-        # json_list.reverse()
         for i in range(len(json_list)):
             json_list[i] = os.path.join(inp, json_list[i])
         pool = Pool()
@@ -37,4 +36,3 @@ if __name__=="__main__":
         #     dt = Data(os.path.join(inp,inp1))
         #     dt.random_move()
         #     dt.WriteData()
-
