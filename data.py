@@ -66,7 +66,10 @@ class Data:
             self.pFlips = root["flips"]
             self.dist = sum([len(x) for x in self.pFlips])
             org_dist = self.dist
-            org_input = root["meta"]["input"]
+            try:
+                org_input = root["meta"]["input"]
+            except:
+                org_input = "data/benchmark_instances/"+self.instance_uid+".json"
 
             # self.input = Path(org_input)
             self.input =  org_input.replace("\\", "/")
@@ -79,11 +82,11 @@ class Data:
                 self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
             for t in root["triangulations"]:
                 self.triangulations.append(self.make_triangulation(t))
-                print(len(self.triangulations),"/",len(root["triangulations"]))
+                # print(len(self.triangulations),"/",len(root["triangulations"]))
 
             # print(f"num of pts: {len(self.pts)}")
             # print(f"num of triangulations: {len(self.triangulations)}")
-            print(f"Original dist: {self.dist}")
+            # print(f"Original dist: {self.dist}")
 
             # pdb.set_trace()
             min_flip_ind = np.argmin([len(x) for x in self.pFlips])
@@ -231,8 +234,10 @@ class Data:
         # tri = self.make_triangulation(tri1.return_edge())
         tri = tri1.fast_copy()
         pfp = []
+        prev_flip = set()
+        step = 0
         while True:
-            prev_flip = []
+            step+=1
             cand = []
             edges = list(tri.edges)
             for e in edges:
@@ -244,9 +249,15 @@ class Data:
                     if score[0] > 0:
                         cand.append((e, score))
             if not cand:
-                break
+                if prev_flip:
+                    prev_flip = []
+                    continue
+                else:
+                    break
             cand.sort(key=lambda x: x[1],reverse=True)
-            # print(cand)
+            if step>100:
+                print(cand)
+                print(prev_flip)
             # print(len(cand))
             flips = []
             marked = set()
@@ -259,10 +270,13 @@ class Data:
                 flips.append((p1, p2))
                 marked.add(t1)
                 marked.add(t2)
+            prev_flip = []
             for e in flips:
                 e1 = tri.flip(e)
                 prev_flip.append(e1)
+            prev_flip = set(prev_flip)
             pfp.append(flips)
+            # print("flips: ", flips)
             # print(len(flips))
         assert(tri.edges == tri2.edges)
         return pfp
@@ -589,7 +603,7 @@ class Data:
             # list[list[list[tuple(int, int), tuple(int, int)]]]
             pFlips_paired1 = self.parallel_flip_path(self.triangulations[i], centerT)
             pFlips_paired2 = self.parallel_flip_path2(self.triangulations[i], centerT)
-            print(len(pFlips_paired1), len(pFlips_paired2))
+            # print(len(pFlips_paired1), len(pFlips_paired2))
 
             if len(pFlips_paired1)<len(pFlips_paired2):
                 pFlips_paired = pFlips_paired1
@@ -636,7 +650,7 @@ class Data:
             # end = time.time()
             # print('time:', f"{end - start:.5f} sec")
         self.dist = tot_dist
-        print(f"New dist: {tot_dist}")
+        # print(f"New dist: {tot_dist}")
 
     def computePFDOnly(self, centerT):
 
@@ -653,7 +667,12 @@ class Data:
             pFi = []
 
             # list[list[list[tuple(int, int), tuple(int, int)]]]
-            pFlips_paired = self.parallel_flip_path(self.triangulations[i], centerT)
+            pFlips_paired1 = self.parallel_flip_path(self.triangulations[i], centerT)
+            pFlips_paired2 = self.parallel_flip_path2(self.triangulations[i], centerT)
+            if len(pFlips_paired1)<len(pFlips_paired2):
+                pFlips_paired = pFlips_paired1
+            else:
+                pFlips_paired = pFlips_paired2
             for round in pFlips_paired:
 
                 round_temp = []
@@ -682,7 +701,8 @@ class Data:
 
         step = 0
         total_step = 0
-        end_step = 3 * len(self.triangulations) * len(self.pts)
+        # end_step = 3 * len(self.triangulations) * len(self.pts)
+        end_step = 10000
 
         edges = list(T.edges)
         starting_edge_ind = 0

@@ -27,6 +27,6 @@ if __name__=="__main__":
             # if "-20-" in inp1:
             #     continue
             # rirs_list.append(os.path.join(inp,inp1))
-            dt = Data(os.path.join(inp,inp1))
-        # pool = Pool(13)
-        # pool.map(read_dt, json_list)
+            # dt = Data(os.path.join(inp,inp1))
+        pool = Pool(60)
+        pool.map(read_dt, json_list)

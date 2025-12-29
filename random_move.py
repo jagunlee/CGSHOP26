@@ -28,7 +28,7 @@ if __name__=="__main__":
         json_list = os.listdir(inp)
         for i in range(len(json_list)):
             json_list[i] = os.path.join(inp, json_list[i])
-        pool = Pool()
+        pool = Pool(60)
         pool.map(make_random_move, json_list)
         # for inp1 in json_list:
         #     if "json" not in inp1:
