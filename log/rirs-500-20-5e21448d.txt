@@ -1,0 +1,19 @@
+Original dist: 211, New dist: 210
+No errors
+dist and pFlips are updated!
+
+_________ rirs-500-20-5e21448d info ___________
+# of points: 500
+# of triangulations: 20
+# of edges in T: 1483
+max pfd T_13: 13
+min pfd T_1: 9
+
+No flipped, dist: 210
+______ pfd distribution ________
+pfd 009 (003):  *** (T:1,5,9,)
+pfd 010 (009):  ********* (T:6,8,10,11,12,15,16,17,18,)
+pfd 011 (004):  **** (T:2,3,4,7,)
+pfd 012 (003):  *** (T:0,14,19,)
+pfd 013 (001):  * (T:13,)
+

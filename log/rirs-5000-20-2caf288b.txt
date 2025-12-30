@@ -1,0 +1,16 @@
+Original dist: 295, New dist: 295
+_________ rirs-5000-20-2caf288b info ___________
+# of points: 5000
+# of triangulations: 20
+# of edges in T: 14977
+max pfd T_12: 17
+min pfd T_4: 13
+
+No flipped, dist: 295
+______ pfd distribution ________
+pfd 013 (001):  * (T:4,)
+pfd 014 (006):  ****** (T:3,6,7,8,9,14,)
+pfd 015 (011):  *********** (T:0,1,2,5,10,13,15,16,17,18,19,)
+pfd 016 (001):  * (T:11,)
+pfd 017 (001):  * (T:12,)
+

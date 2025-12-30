@@ -1,0 +1,14 @@
+Original dist: 283, New dist: 284
+_________ rirs-3500-20-36165067 info ___________
+# of points: 3500
+# of triangulations: 20
+# of edges in T: 10472
+max pfd T_5: 15
+min pfd T_18: 13
+
+No flipped, dist: 283
+______ pfd distribution ________
+pfd 013 (001):  * (T:18,)
+pfd 014 (015):  *************** (T:0,1,2,3,4,8,9,10,11,12,13,14,15,16,17,)
+pfd 015 (004):  **** (T:5,6,7,19,)
+

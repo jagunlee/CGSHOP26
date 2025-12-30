@@ -1,0 +1,18 @@
+Original dist: 279, New dist: 276
+No errors
+dist and pFlips are updated!
+
+_________ rirs-2500-20-70c6d643 info ___________
+# of points: 2500
+# of triangulations: 20
+# of edges in T: 7476
+max pfd T_3: 16
+min pfd T_1: 13
+
+No flipped, dist: 276
+______ pfd distribution ________
+pfd 013 (007):  ******* (T:1,4,8,11,12,17,19,)
+pfd 014 (011):  *********** (T:0,2,5,6,7,10,13,14,15,16,18,)
+pfd 015 (001):  * (T:9,)
+pfd 016 (001):  * (T:3,)
+

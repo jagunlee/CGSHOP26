@@ -1,7 +1,11 @@
-pyutil26
+pyutil26/*
 solutions/*
 opt/*
 checkpoint/*
 data/*
 ignore/*
 same_inst_solutions/*
+huntrix/*
+hy_opt/*
+hy_solutoins/*
+gathering.py

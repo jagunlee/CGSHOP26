@@ -1,0 +1,16 @@
+Original dist: 331, New dist: 332
+_________ rirs-12500-20-dd322248 info ___________
+# of points: 12500
+# of triangulations: 20
+# of edges in T: 37471
+max pfd T_1: 19
+min pfd T_2: 15
+
+No flipped, dist: 331
+______ pfd distribution ________
+pfd 015 (004):  **** (T:2,9,13,14,)
+pfd 016 (006):  ****** (T:3,7,8,10,11,16,)
+pfd 017 (006):  ****** (T:5,6,15,17,18,19,)
+pfd 018 (003):  *** (T:0,4,12,)
+pfd 019 (001):  * (T:1,)
+

@@ -21,11 +21,10 @@ from utils import bool_flag#, initialize_exp
 MAX_OUTPUT_LEN=200
 
 class Database:
-    def __init__(self, objects:dict, rewards:dict, pfd_E:dict, num_pts:int):
+    def __init__(self, objects:dict, rewards:dict, pfd_E:dict):
         self.objects={}
         self.rewards={}
         self.pfd_E={}
-        self.num_pts=num_pts
 
 
 def find_next_available_filename(write_path, base, extension):
@@ -610,12 +609,12 @@ if __name__ == '__main__':
     #inst_file = 'rirs-1500-20-abcb179b'
     logger.info(f"Instance : {inst_file}")
 
-    if '_' in inst_file:
-        num_pts = int(inst_file.split('_')[-1])
-    elif '-' in inst_file:
-        num_pts = int(inst_file.split('-')[2])
+    #if '_' in inst_file:
+    #    num_pts = int(inst_file.split('_')[-1]) #hy: maybe wrong
+    #elif '-' in inst_file:
+    #    num_pts = int(inst_file.split('-')[2])
     ##### Database ####
-    db = Database({},{},{},num_pts)
+    db = Database({},{},{})
     ###################
     i=1
     for i in range(1, args.max_epochs):

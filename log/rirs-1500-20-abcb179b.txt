@@ -1,0 +1,16 @@
+Original dist: 255, New dist: 260
+_________ rirs-1500-20-abcb179b info ___________
+# of points: 1500
+# of triangulations: 20
+# of edges in T: 4480
+max pfd T_4: 15
+min pfd T_8: 11
+
+No flipped, dist: 255
+______ pfd distribution ________
+pfd 011 (001):  * (T:8,)
+pfd 012 (007):  ******* (T:0,5,11,12,15,18,19,)
+pfd 013 (009):  ********* (T:1,3,6,7,10,13,14,16,17,)
+pfd 014 (002):  ** (T:2,9,)
+pfd 015 (001):  * (T:4,)
+

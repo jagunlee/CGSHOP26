@@ -1,0 +1,18 @@
+Original dist: 305, New dist: 302
+No errors
+dist and pFlips are updated!
+
+_________ rirs-6000-20-cc3d0e5d info ___________
+# of points: 6000
+# of triangulations: 20
+# of edges in T: 17974
+max pfd T_0: 17
+min pfd T_2: 14
+
+No flipped, dist: 302
+______ pfd distribution ________
+pfd 014 (005):  ***** (T:2,5,8,11,19,)
+pfd 015 (009):  ********* (T:1,4,6,7,9,13,14,15,17,)
+pfd 016 (005):  ***** (T:3,10,12,16,18,)
+pfd 017 (001):  * (T:0,)
+

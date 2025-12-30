@@ -1,0 +1,18 @@
+Original dist: 325, New dist: 323
+No errors
+dist and pFlips are updated!
+
+_________ rirs-9000-20-41491eba info ___________
+# of points: 9000
+# of triangulations: 20
+# of edges in T: 26974
+max pfd T_8: 18
+min pfd T_1: 15
+
+No flipped, dist: 323
+______ pfd distribution ________
+pfd 015 (005):  ***** (T:1,2,5,9,17,)
+pfd 016 (009):  ********* (T:3,4,7,10,12,13,16,18,19,)
+pfd 017 (004):  **** (T:0,6,11,15,)
+pfd 018 (002):  ** (T:8,14,)
+

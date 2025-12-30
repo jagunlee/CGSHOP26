@@ -1,0 +1,18 @@
+Original dist: 268, New dist: 266
+No errors
+dist and pFlips are updated!
+
+_________ rirs-2000-20-fc840c19 info ___________
+# of points: 2000
+# of triangulations: 20
+# of edges in T: 5975
+max pfd T_5: 15
+min pfd T_3: 12
+
+No flipped, dist: 266
+______ pfd distribution ________
+pfd 012 (003):  *** (T:3,7,14,)
+pfd 013 (010):  ********** (T:0,1,2,4,6,9,12,13,15,19,)
+pfd 014 (005):  ***** (T:8,10,16,17,18,)
+pfd 015 (002):  ** (T:5,11,)
+

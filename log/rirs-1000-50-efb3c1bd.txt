@@ -1,0 +1,18 @@
+Original dist: 607, New dist: 600
+No errors
+dist and pFlips are updated!
+
+_________ rirs-1000-50-efb3c1bd info ___________
+# of points: 1000
+# of triangulations: 50
+# of edges in T: 2981
+max pfd T_26: 14
+min pfd T_2: 11
+
+No flipped, dist: 600
+______ pfd distribution ________
+pfd 011 (016):  **************** (T:2,4,6,10,13,15,18,19,24,30,37,39,40,41,44,46,)
+pfd 012 (019):  ******************* (T:3,5,7,9,11,12,16,17,21,22,25,27,34,35,38,42,43,47,49,)
+pfd 013 (014):  ************** (T:0,1,8,14,20,23,28,29,31,32,33,36,45,48,)
+pfd 014 (001):  * (T:26,)
+
