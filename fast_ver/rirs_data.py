@@ -1,8 +1,8 @@
 import json
 import sys
 import random
-from th2_Point import Point
-from th2_Triangulation import Triangle, Triangulation
+from rirs_Point import Point
+from rirs_Triangulation import Triangle, Triangulation
 import copy
 # import cv2
 import time
@@ -12,8 +12,6 @@ import datetime
 import numpy as np
 from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
 from cgshop2026_pyutils.verify import check_for_errors
-# from cgshop2026_pyutils.geometry import FlippableTriangulation
-# import cgshop2026_pyutils
 
 sys.setrecursionlimit(1000000)
 SEARCH_DEPTH = 1
@@ -28,13 +26,9 @@ class Data:
         self.triangulations = []
         self.ReadData()
         self.instance_uid = (inp.split('/')[-1]).split('.')[0]
-        #print('self.instance_uid:', self.instance_uid)
-        # self.distance = []
-        # self.pFlips = []
 
     def ReadData(self):
         if "solution" not in self.input:
-        # print("--------------------ReadData--------------------")
             f = open(self.input, "r", encoding="utf-8")
             root = json.load(f)
             # print(root)
@@ -57,8 +51,7 @@ class Data:
             self.instance_name = root["instance_uid"]
             self.pFlips = root["flips"]
             self.dist = sum([len(x) for x in self.pFlips])
-            #org_input = root["meta"]["input"]
-            org_input = 'data/benchmark_instances/'+self.instance_name+'.json'
+            org_input = '/Users/hyeyun/Experiment/PFD/hyeyun_git/data/benchmark_instances/'+self.instance_name+'.json'
 
             self.input = org_input
             f = open(self.input, "r", encoding="utf-8")
@@ -68,8 +61,10 @@ class Data:
             self.pts = []
             for i in range(len(self.pts_y)):
                 self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
-            for i, t in enumerate(root["triangulations"]):
+            for t in root["triangulations"]:
                 self.triangulations.append(self.make_triangulation(t))
+            print(f"num_edges = {len(root["triangulations"][0])}")
+
             min_flip_ind = np.argmin([len(x) for x in self.pFlips])
             self.center = copy.deepcopy(self.triangulations[min_flip_ind])
             for flip_seq in self.pFlips[min_flip_ind]:
@@ -78,9 +73,6 @@ class Data:
             new_dist = 0
             new_pfp =[None]*len(self.triangulations)
             for i in range(len(self.triangulations)):
-                #new_pfp[i]=self.parallel_flip_path(self.triangulations[i], self.center)
-                #new_pfp[i]=self.parallel_flip_path2(self.triangulations[i], self.center)
-                #hy
                 new_pfp1=self.parallel_flip_path2(self.triangulations[i], self.center)
                 new_pfp2=self.parallel_flip_path_rev2(self.center, self.triangulations[i])
                 if len(new_pfp1) < len(new_pfp2):
@@ -124,7 +116,7 @@ class Data:
         print()
 
 
-    def make_triangulation(self, t: Triangulation):
+    def make_triangulation(self, t: Triangulation):# t is not Triangulation...
         tri = Triangulation()
         tri.adj = [-1] * len(self.pts)
         graph = [[] for _ in range(len(self.pts))]
@@ -134,6 +126,7 @@ class Data:
             tri.adj[u] = v
             tri.adj[v] = u
             tri.edges.add((min(u, v), max(u, v)))
+
         for i in range(len(self.pts)):
             for j in range(len(graph[i])):
                 v1 = graph[i][j]
@@ -148,6 +141,7 @@ class Data:
                             t = Triangle(i, v1, v2)
                         else:
                             t = Triangle(i, v2, v1)
+
                         flag = False
                         for l in range(len(graph[i])):
                             if l == j or l == k:
@@ -162,6 +156,7 @@ class Data:
                         if flag:
                             del t
                             continue
+
                         for l in range(3):
                             tri.dict[t.pt(l), t.pt(l + 1)] = t
                             tt = tri.find_triangle(t.pt(l + 1), t.pt(l))
@@ -223,15 +218,12 @@ class Data:
             edges = list(tri.edges)
             for e in edges:
                 if self.flippable(tri, e):
-                    # 전에 뒤집은거 안뒤집게 해야할듯?
                     score = self.flip_score(tri, tri2, e, SEARCH_DEPTH)
                     if score[0] > 0:
                         cand.append((e, score))
             if not cand:
                 break
             cand.sort(key=lambda x: x[1],reverse=True)
-            # print(cand)
-            # print(len(cand))
             flips = []
             marked = set()
             for (p1, p2), _ in cand:
@@ -239,20 +231,17 @@ class Data:
                 t2 = tri.find_triangle(p2, p1)
                 if t1 in marked or t2 in marked:
                     continue
-                # print(p1, p2)
                 flips.append((p1, p2))
                 marked.add(t1)
                 marked.add(t2)
             for e in flips:
                 tri.flip(e)
             pfp.append(flips)
-            # print(len(flips))
         assert(tri.edges == tri2.edges)
         return pfp
 
     #jg
     def parallel_flip_path2(self, tri1:Triangulation, tri2:Triangulation):
-        # tri = self.make_triangulation(tri1.return_edge())
         tri = tri1.fast_copy()
         pfp = []
         while True:
@@ -263,15 +252,12 @@ class Data:
                 if self.flippable(tri, e):
                     if e in prev_flip:
                         continue
-                    # 전에 뒤집은거 안뒤집게 해야할듯?
                     score = self.flip_score(tri, tri2, e, 1)#hy 0-> 1
                     if score[0] > 0:
                         cand.append((e, score))
             if not cand:
                 break
             cand.sort(key=lambda x: x[1],reverse=True)
-            # print(cand)
-            # print(len(cand))
             flips = []
             marked = set()
             for (p1, p2), _ in cand:
@@ -279,7 +265,6 @@ class Data:
                 t2 = tri.find_triangle(p2, p1)
                 if t1 in marked or t2 in marked:
                     continue
-                # print(p1, p2)
                 flips.append((p1, p2))
                 marked.add(t1)
                 marked.add(t2)
@@ -287,13 +272,11 @@ class Data:
                 e1 = tri.flip(e)
                 prev_flip.append(e1)
             pfp.append(flips)
-            # print(len(flips))
         assert(tri.edges == tri2.edges)
         return pfp
 
     #hy
     def parallel_flip_path_rev2(self, tri1:Triangulation, tri2:Triangulation):
-        # tri = self.make_triangulation(tri1.return_edge())
         tri = tri1.fast_copy()
         rev_pfp=[]
         pfp=[]
@@ -305,7 +288,6 @@ class Data:
                 if e in prev_flip:
                     continue
                 if self.flippable(tri, e):
-                    # 전에 뒤집은거 안뒤집게 해야할듯?
                     score = self.flip_score(tri, tri2, e, 1)#hy 0-> 1
                     if score[0] > 0:
                         cand.append((e, score))
@@ -346,11 +328,8 @@ class Data:
 
     def flip_score(self, tri:Triangulation, tri_dest:Triangulation, e:tuple, depth:int):
         p1, p3 = e
-        # print(depth, e)
         t1 = tri.find_triangle(p1, p3)
         t2 = tri.find_triangle(p3, p1)
-        #self.print_triangle(t1)
-        #self.print_triangle(t2)
         i = t1.get_ind(p3)
         p4 = t1.pt(i + 1)
         j = t2.get_ind(p1)
@@ -359,19 +338,11 @@ class Data:
         new_cross = self.count_cross(tri_dest, (p2, p4))
         n_cross = ori_cross - new_cross
         m_score = (n_cross, depth)
-        # return m_score
         if depth == 1:
             return m_score
-        # self.print_triangle(t1)
-        # self.print_triangle(t2)
-        #print("try flipping(1)",e)
         tri.flip(e)
-        # self.print_triangle(t1)
-        # self.print_triangle(t2)
         for pe in [(p1, p2), (p2, p3), (p3, p4), (p4, p1)]:
             if self.flippable(tri, pe):
-                # print(pe)
-                #nsc = self.flip_score(tri, tri_dest, pe, depth - 1) #hy: recurssion error
                 nsc = self.flip_score(tri, tri_dest, pe, 1)#hy
                 m_score = max(m_score, (nsc[0] + m_score[0], nsc[1]))
 
@@ -410,8 +381,6 @@ class Data:
     def findCenter(self):
 
         start = time.time()
-
-        # random.shuffle(self.triangulations)
 
         wc = [(t, 1) for t in self.triangulations]
         while len(wc) > 1:
@@ -539,43 +508,13 @@ class Data:
             with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
                 json.dump(inst, f, indent='\t')
 
-        #fname = "result.csv"
-        #if not os.path.exists(fname):
-        #    df_dict = dict()
-        #    df_dict["date"] = datetime.date.today()
-        #    df_dict[self.instance_uid] = [self.dist]
-        #    df = DataFrame(df_dict)
-        #    df.to_csv("result.csv")
-
-        #else:
-        #    df = pd.read_csv(fname, index_col = 0)
-        #    col = df.columns
-        #    if self.instance_uid not in col:
-        #        df[self.instance_uid] = float("INF")
-        #    today = datetime.date.today().isoformat()
-        #    # pdb.set_trace()
-        #    if df["date"].iloc[-1]!=today:
-        #        df.loc[len(df)] = list(df.iloc[-1])
-        #        df.loc[len(df.index)-1, "date"] = today
-
-        #    df.loc[len(df.index)-1, self.instance_uid] = min(df.loc[len(df.index)-1, self.instance_uid], sum([len(pFlip) for pFlip in self.pFlips]))
-        #    df.to_csv("result.csv")
-        #    pass
-
     def computeDistanceSum(self, centerT):
-
-        #print(self.pFlips)
-        #print(len(self.pFlips))
-        #print(len(self.triangulations))
 
         my_all_pFlips=[]
         for i in range(len(self.triangulations)):
 
-            # list[list[list[int, int]]]
-            #self.pFlips[i] = []
             my_pFlips=[]
 
-            # list[list[list[tuple(int, int), tuple(int, int)]]]
             pFlips_paired = self.parallel_flip_path(self.triangulations[i], centerT)
 
             for round_ in pFlips_paired:
@@ -590,55 +529,10 @@ class Data:
 
                     round_temp.append(oneFlip_temp)
 
-                #self.pFlips[i].append(round_temp)
                 my_pFlips.append(round_temp)
             my_all_pFlips.append(my_pFlips)
         return my_all_pFlips
 
-
-
-    def verify(self):
-        pass
-
-        # # Define points (square) and two triangulations that will be flipped to a common form
-        # points_x = [0, 1, 0, 1]
-        # points_y = [0, 0, 1, 1]
-
-        # '''
-        # triangulations = [  # Each triangulation is a list of interior edges
-        #     [(0, 3)],        # diagonal 0-3
-        #     [(1, 2)],        # diagonal 1-2 (the flip partner)
-        # ]
-        # '''
-
-        # instance = CGSHOP2026Instance(
-        #     instance_uid=self.instance_uid,
-        #     points_x=self.pts_x,
-        #     points_y=self.pts_y,
-
-        #     # triangulations=[T.getEdges() for T in self.triangulations],
-        #     triangulations=[T.edges for T in self.triangulations],
-        # )
-
-        # # A solution that flips the diagonal in the first triangulation to match the second.
-        # # flips is: one list per triangulation -> sequence of parallel flip sets -> each set is a list of edges
-        # solution = CGSHOP2026Solution(
-        #     instance_uid=self.instance_uid,
-        #     flips=self.pFlips
-        #     # [ [[(0,3)]] , [] ]  # flip edge (0,3) in triangulation 0; triangulation 1 already in target form
-        # )
-
-        # errors = check_for_errors(instance, solution)
-        # print("Errors:", errors or "None ✔")
-
-# CCW라면 양수 반환, CW라면 음수 반환
-# collinear라면 0 반환
-# https://www.geeksforgeeks.org/dsa/orientation-3-ordered-points/
-
-'''
-def turn(p1: MyPoint, p2: MyPoint, p3: MyPoint):
-    return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)
-'''
 
 def turn(p1: Point, p2: Point, p3: Point):
     return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)
