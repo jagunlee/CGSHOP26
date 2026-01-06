@@ -3,13 +3,188 @@ from fast_Triangulation import *
 import numba
 import time
 import random
+from multiprocessing import Pool, cpu_count
+from functools import partial
 from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
 from cgshop2026_pyutils.verify import check_for_errors
+from itertools import repeat
+
+
+
+# 1. 전역 변수나 별도 공간에 배열을 배치하여 fork 시 복사 비용 최소화
+#def init_worker(pts_coor, tri_f_pts, tri_f_nei, tri_e2f, tri_des_f_pts, tri_des_f_nei, tri_des_e2f, tri_des_adj):
+    #global gb_pts_coor, gb_f_pts, gb_e2f, gb_des_f_pts, gb_des_f_nei, gb_des_e2f, gb_des_adj
+def init_worker(pts_coor, tri_des_f_pts, tri_des_f_nei, tri_des_e2f, tri_des_adj):
+    global gb_pts_coor, gb_des_f_pts, gb_des_f_nei, gb_des_e2f, gb_des_adj
+
+    gb_pts_coor = pts_coor
+
+    #gb_f_pts = tri_f_pts
+    #gb_e2f = tri_e2f
+
+    gb_des_f_pts = tri_des_f_pts
+    gb_des_f_nei = tri_des_f_nei
+    gb_des_e2f = tri_des_e2f
+    gb_des_adj = tri_des_adj
+
+#def check_edge_score_numpy(e, t1, t2):
+def check_edge_score_numpy(e, t1, t2, cur_f_pts):
+    if flippable_fast(e, t1, t2, cur_f_pts):
+        score = flip_score_fast(e, t1, t2, cur_f_pts)
+        if score[0] > 0:
+            return (e, score)
+    return None
+
+#def flippable_fast(e:tuple, t1, t2):
+@numba.njit
+def flippable_fast(e, t1, t2, cur_f_pts):
+    q1, q3 =e
+
+    row1 = cur_f_pts[t1]
+    if row1[0] == q3: i=0
+    elif row1[1] == q3: i=1
+    else: i=2
+    p4 = row1[(i+1)%3]
+
+    row2 = cur_f_pts[t2]
+    if row2[0] == q1: j=0
+    elif row2[1] == q1: j=1
+    else: j=2
+    p2 = row2[(j+1)%3]
+
+    p1, p3 = q1, q3
+    q1, q2, q3, q4 = gb_pts_coor[p1], gb_pts_coor[p2], gb_pts_coor[p3], gb_pts_coor[p4]
+    turn_val1= (q3[0]-q2[0])*(q4[1]-q2[1]) - (q3[1]-q2[1])*(q4[0]-q2[0])
+    if turn_val1<=0: return False
+    turn_val2= (q1[0]-q2[0])*(q4[1]-q2[1]) - (q1[1]-q2[1])*(q4[0]-q2[0])
+    return turn_val2 < 0
+
+
+
+
+def find_t_c_fast(q1, q2):
+    p1, p2 = np.int64(q1), np.int64(q2)
+    if((p1<<32)|p2) in gb_des_e2f or ((p2<<32)|p1) in gb_des_e2f: return None
+
+    p = gb_des_adj[p1]
+    p = np.int64(p)
+
+    t = gb_des_e2f.get((p1<<32)|p)
+    if t is None:
+        t = gb_des_e2f.get((p<<32)| p1)
+    assert(t!=None)
+
+    r1 = gb_pts_coor[q1]
+    r4 = gb_pts_coor[q2]
+
+    return _find_t_c_fast(q1, q2, t, r1, r4)
+
+@numba.njit
+def _find_t_c_fast(q1, q2, t, r1, r4):
+    while True:
+        row = gb_des_f_pts[t]
+        if row[0] == q1: i=0
+        elif row[1] == q1: i=1
+        else: i=2
+        r2 = gb_pts_coor[row[(i+1)%3]]
+        r3 = gb_pts_coor[row[(i+2)%3]]
+
+        turn_val1= (r2[0]-r1[0])*(r4[1]-r1[1]) - (r2[1]-r1[1])*(r4[0]-r1[0])
+        turn_val2= (r3[0]-r1[0])*(r4[1]-r1[1]) - (r3[1]-r1[1])*(r4[0]-r1[0])
+        if turn_val1 < 0:
+            t = gb_des_f_nei[t, i]
+        elif turn_val2 >0:
+            t = gb_des_f_nei[t, (i+2)%3]
+        else:
+            return t
+
+
+@numba.njit
+def numba_count_cross_fast(q1, q2, t):
+    row = gb_des_f_pts[t]
+    if row[0] == q1: i=0
+    elif row[1] == q1: i=1
+    else: i=2
+
+    idx_next = (i+1)%3
+    tt = gb_des_f_nei[t, idx_next]
+    tmp = gb_des_f_pts[t, idx_next]
+    row_tt = gb_des_f_pts[tt]
+    if row_tt[0] == tmp: j=0
+    elif row_tt[1] == tmp: j=1
+    else: j=2
+
+    p_q1 = gb_pts_coor[q1]
+    p_q2 = gb_pts_coor[q2]
+
+    cnt = 1
+    while True:
+        if row_tt[(j+1)%3] == q2: break
+        cnt +=1
+        t, i = tt, j
+        idx_next = (i+1)%3
+
+        tmp = gb_des_f_pts[t, idx_next]
+        p_tmp = gb_pts_coor[tmp]
+        turn_val= (p_q2[0]-p_q1[0])*(p_tmp[1]-p_q1[1]) - (p_q2[1]-p_q1[1])*(p_tmp[0]-p_q1[0])
+        if turn_val <0:
+            tt = gb_des_f_nei[t, idx_next]
+            tmp = gb_des_f_pts[t, idx_next]
+            row_tt = gb_des_f_pts[tt]
+            if row_tt[0] == tmp: j=0
+            elif row_tt[1] == tmp: j=1
+            else: j=2
+        else:
+            tt = gb_des_f_nei[t, i%3]
+            tmp = gb_des_f_pts[t, i%3]
+            row_tt = gb_des_f_pts[tt]
+            if row_tt[0] == tmp: j=0
+            elif row_tt[1] == tmp: j=1
+            else: j=2
+    return cnt
+
+
+def flip_score_fast(e:tuple, t1, t2, cur_f_pts):
+    p1, p3 = e
+
+    row1 = cur_f_pts[t1]
+    if row1[0] == p3: i = 0
+    elif row1[1] == p3: i = 1
+    else: i = 2
+    p4 = row1[(i + 1) % 3]
+
+    row2 = cur_f_pts[t2]
+    if row2[0] == p1: j = 0
+    elif row2[1] == p1: j = 1
+    else: j = 2
+    p2 = row2[(j + 1) % 3]
+
+
+    t1 = find_t_c_fast(p1, p3)
+    t2 = find_t_c_fast(p2, p4)
+
+    ori_cross=0
+    new_cross=0
+
+    if t1 is None:
+        ori_cross=0
+    else:
+        ori_cross = numba_count_cross_fast(p1,p3,t1)
+    if t2 is None:
+        new_cross=0
+    else:
+        new_cross = numba_count_cross_fast(p2,p4,t2)
+    n_cross = ori_cross - new_cross
+    depth=1
+    m_score = (n_cross, depth)
+    return m_score
+
 class FastData:
     def __init__(self, inp):
         self.input = inp
         self.pts = None # np.array([N, 2])
         self.ReadData()
+
 
     def ReadData(self):
         if "solution" not in self.input:
@@ -196,7 +371,6 @@ class FastData:
             t = e2f.get((p<<32)| p1)
         assert(t!=None)
 
-
         return _find_t_c(f_pts, f_nei, pts_coor, q1, q2, t)
 
     def flip_score(self, tri:FastTriangulation, tri_target:FastTriangulation, e:tuple, depth:int):
@@ -260,41 +434,63 @@ class FastData:
         pfp = []
         count=1
         prev_flip =set()
-        while True:
-            cand = []
-            edges = list(tri.edges)
-            #start= time.time()
-            for e in edges:
-                if e in prev_flip: continue
-                if self.flippable(tri, e):
-                    #score = self.flip_score(tri, target_idx, e, 1)
-                    score = self.flip_score(tri, tri_target, e, 1)
-                    if score[0] >0:
-                        cand.append((e, score))
-            if not cand:
-                if prev_flip:
-                    prev_flip=set()
-                    continue
-                else: break
-            cand.sort(key=lambda x: x[1], reverse=True)
-            flips = []
-            marked = set()
-            #print(f"{count}: score takes:{time.time()-start:.2f}s", end=' ', flush=True)
-            #start= time.time()
-            for (p1, p2), _ in cand:
-                t1 = tri.find_face(p1, p2)
-                t2 = tri.find_face(p2, p1)
-                if t1 in marked or t2 in marked: continue
-                flips.append((p1, p2))
-                marked.add(t1)
-                marked.add(t2)
-            for e in flips:
-                p1, p2 = e
-                e1 = tri.flip(p1, p2)
-                prev_flip.add(e1)
-            pfp.append(flips)
-            #print(f"flip takes:{time.time()-start:.2f}s", end='\n')
-            #count+=1
+        e2f = tri.edge_to_face
+        with Pool(processes=4,
+                  initializer=init_worker,
+                  initargs=(self.pts,
+                            tri_target.face_pts, tri_target.face_nei, tri_target.edge_to_face, tri_target.adj)) as pool:
+            while True:
+                cand = []
+                edges = list(tri.edges)
+                #start= time.time()
+                target_edges = [e for e in edges if e not in prev_flip]
+
+                te_t1=[]
+                te_t2=[]
+                new_target_edges=[]
+                for te in target_edges:
+                    q1, q3 = te
+                    key13 = (np.int64(q1)<<32)|np.int64(q3)
+                    key31 = (np.int64(q3)<<32)|np.int64(q1)
+                    t1 = e2f.get(key13)
+                    t2 = e2f.get(key31)
+                    if t1 is not None and t2 is not None:
+                        new_target_edges.append(te)
+                        te_t1.append(t1)
+                        te_t2.append(t2)
+                del target_edges
+
+                if new_target_edges==[]: break
+                c_size = max(1, min(200, int(len(new_target_edges)*0.01)))
+                args_to_process = zip(new_target_edges, te_t1, te_t2, repeat(tri.face_pts))
+
+                #args_to_process = zip(new_target_edges, te_t1, te_t2)
+                results = pool.starmap(check_edge_score_numpy, args_to_process, chunksize=c_size)
+                cand = [r for r in results if r is not None and r[1][0] >0]
+                if not cand:
+                    if prev_flip:
+                        prev_flip=set()
+                        continue
+                    else: break
+                cand.sort(key=lambda x: x[1], reverse=True)
+                flips = []
+                marked = set()
+                #print(f"{count}: score takes:{time.time()-start:.2f}s", end=' ', flush=True)
+                #start= time.time()
+                for (p1, p2), _ in cand:
+                    t1 = tri.find_face(p1, p2)
+                    t2 = tri.find_face(p2, p1)
+                    if t1 in marked or t2 in marked: continue
+                    flips.append((p1, p2))
+                    marked.add(t1)
+                    marked.add(t2)
+                for e in flips:
+                    p1, p2 = e
+                    e1 = tri.flip(p1, p2)
+                    prev_flip.add(e1)
+                pfp.append(flips)
+                #print(f"flip takes:{time.time()-start:.2f}s", end='\n')
+                count+=1
         tri2 = self.triangulations[target_idx]
         assert(tri.edges == tri2.edges)
         return pfp

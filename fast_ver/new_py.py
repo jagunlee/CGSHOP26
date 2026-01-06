@@ -1,5 +1,6 @@
 import json, copy, time, random
 import fast_data as fast
+import parallel_data as para
 import rirs_data as th2
 from multiprocessing import Pool
 import os
@@ -22,9 +23,9 @@ if __name__ == '__main__':
 
     # read initial solution
     input_file = args.data
-    dt = th2.Data(input_file)
+    #dt = th2.Data(input_file)
     #dt = fast.FastData(input_file)
-    #dt.ReadData()
+    dt = para.FastData(input_file)
     #best_dist = dt.dist
     #dt.inst_info()
     #print(f"\nNo flipped, dist: {dt.dist}")

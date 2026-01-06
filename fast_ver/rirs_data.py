@@ -73,8 +73,12 @@ class Data:
             new_dist = 0
             new_pfp =[None]*len(self.triangulations)
             for i in range(len(self.triangulations)):
+                start = time.time()
                 new_pfp1=self.parallel_flip_path2(self.triangulations[i], self.center)
+                print(f"T{i}: {time.time()-start:.2f}s", end=' ', flush=True)
+                start = time.time()
                 new_pfp2=self.parallel_flip_path_rev2(self.center, self.triangulations[i])
+                print(f"rev: {time.time()-start:.2f}s", end='\n')
                 if len(new_pfp1) < len(new_pfp2):
                     new_pfp[i] = new_pfp1
                 else:
@@ -244,22 +248,29 @@ class Data:
     def parallel_flip_path2(self, tri1:Triangulation, tri2:Triangulation):
         tri = tri1.fast_copy()
         pfp = []
+        count=1
+        prev_flip = set()
         while True:
-            prev_flip = []
             cand = []
             edges = list(tri.edges)
+            #start = time.time()
             for e in edges:
+                if e in prev_flip:
+                    continue
                 if self.flippable(tri, e):
-                    if e in prev_flip:
-                        continue
-                    score = self.flip_score(tri, tri2, e, 1)#hy 0-> 1
+                    score = self.flip_score(tri, tri2, e, 0)#hy 0-> 1
                     if score[0] > 0:
                         cand.append((e, score))
             if not cand:
-                break
+                if prev_flip:
+                    prev_flip=set()
+                    continue
+                else: break
             cand.sort(key=lambda x: x[1],reverse=True)
             flips = []
             marked = set()
+            #print(f"{count}: score takes:{time.time()-start:.2f}s", end=' ', flush=True)
+            #start = time.time()
             for (p1, p2), _ in cand:
                 t1 = tri.find_triangle(p1, p2)
                 t2 = tri.find_triangle(p2, p1)
@@ -270,18 +281,21 @@ class Data:
                 marked.add(t2)
             for e in flips:
                 e1 = tri.flip(e)
-                prev_flip.append(e1)
+                prev_flip.add(e1)
             pfp.append(flips)
+            #print(f"flip takes:{time.time()-start:.2f}s")
+            #count+=1
         assert(tri.edges == tri2.edges)
         return pfp
 
     #hy
+
     def parallel_flip_path_rev2(self, tri1:Triangulation, tri2:Triangulation):
         tri = tri1.fast_copy()
         rev_pfp=[]
         pfp=[]
+        prev_flip = set()
         while True:
-            prev_flip = []
             cand = []
             edges = list(tri.edges)
             for e in edges:
@@ -292,7 +306,10 @@ class Data:
                     if score[0] > 0:
                         cand.append((e, score))
             if not cand:
-                break
+                if prev_flip:
+                    prev_flip=set()
+                    continue
+                else: break
             cand.sort(key=lambda x: x[1],reverse=True)
             flips = []
             marked = set()
@@ -306,7 +323,7 @@ class Data:
                 marked.add(t2)
             for e in flips:
                 e1 = tri.flip(e)
-                prev_flip.append(e1)
+                prev_flip.add(e1)
             rev_pfp.append(prev_flip)
             pfp.append(flips)
         assert(tri.edges == tri2.edges)
@@ -445,8 +462,8 @@ class Data:
 
 
 
-    def WriteData(self):
 
+    def WriteData(self):
         inst = dict()
         inst["content_type"] = "CGSHOP2026_Solution"
         #hy??
