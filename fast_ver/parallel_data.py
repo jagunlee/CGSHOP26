@@ -232,11 +232,12 @@ class FastData:
                 print(f"T{i}: {time.time()-start:.2f}s", end=' ', flush=True)
                 start = time.time()
                 new_pfp2 = self.parallel_flip_path_rev2(-1, i)
-                print(f"rev: {time.time()-start:.2f}s", end='\n')
+                print(f"rev: {time.time()-start:.2f}s", end=' ', flush=True)
                 if len(new_pfp1) < len(new_pfp2):
                     new_pfp[i] = new_pfp1
                 else:
                     new_pfp[i] = new_pfp2
+                    print("rev better!")
                 new_dist+=len(new_pfp[i])
             print(f"Original dist: {self.dist}, New dist: {new_dist}")
             if new_dist<self.dist:
@@ -490,7 +491,7 @@ class FastData:
                     prev_flip.add(e1)
                 pfp.append(flips)
                 #print(f"flip takes:{time.time()-start:.2f}s", end='\n')
-                count+=1
+                #count+=1
         tri2 = self.triangulations[target_idx]
         assert(tri.edges == tri2.edges)
         return pfp
@@ -501,37 +502,57 @@ class FastData:
         tri_target = self.triangulations[target_idx].fast_copy()
         rev_pfp=[]
         prev_flip =set()
-        while True:
-            cand = []
-            edges = list(tri.edges)
-            for e in edges:
-                if e in prev_flip:
-                    continue
-                if self.flippable(tri, e):
-                    #score = self.flip_score(tri, target_idx, e, 1)#hy 0-> 1
-                    score = self.flip_score(tri, tri_target, e, 1)
-                    if score[0] > 0:
-                        cand.append((e, score))
-            if not cand:
-                if prev_flip:
-                    prev_flip=set()
-                    continue
-                else: break
-            cand.sort(key=lambda x: x[1],reverse=True)
-            flips = []
-            marked = set()
-            for (p1, p3), _ in cand:
-                t1 = tri.find_face(p1, p3)
-                t2 = tri.find_face(p3, p1)
-                if t1 in marked or t2 in marked: continue
-                flips.append((p1, p3))
-                marked.add(t1)
-                marked.add(t2)
-            for e in flips:
-                p1, p3 = e
-                e1 = tri.flip(p1, p3)
-                prev_flip.add(e1)
-            rev_pfp.append(prev_flip)
+        e2f = tri.edge_to_face
+        with Pool(processes=4,
+                  initializer=init_worker,
+                  initargs=(self.pts,
+                            tri_target.face_pts, tri_target.face_nei, tri_target.edge_to_face, tri_target.adj)) as pool:
+            while True:
+                cand = []
+                edges = list(tri.edges)
+                target_edges = [e for e in edges if e not in prev_flip]
+
+                te_t1=[]
+                te_t2=[]
+                new_target_edges=[]
+                for te in target_edges:
+                    q1, q3 = te
+                    key13 = (np.int64(q1)<<32)|np.int64(q3)
+                    key31 = (np.int64(q3)<<32)|np.int64(q1)
+                    t1 = e2f.get(key13)
+                    t2 = e2f.get(key31)
+                    if t1 is not None and t2 is not None:
+                        new_target_edges.append(te)
+                        te_t1.append(t1)
+                        te_t2.append(t2)
+                del target_edges
+                if new_target_edges==[]: break
+                c_size = max(1, min(200, int(len(new_target_edges)*0.01)))
+                args_to_process = zip(new_target_edges, te_t1, te_t2, repeat(tri.face_pts))
+
+                results = pool.starmap(check_edge_score_numpy, args_to_process, chunksize=c_size)
+                cand = [r for r in results if r is not None and r[1][0] >0]
+
+                if not cand:
+                    if prev_flip:
+                        prev_flip=set()
+                        continue
+                    else: break
+                cand.sort(key=lambda x: x[1],reverse=True)
+                flips = []
+                marked = set()
+                for (p1, p3), _ in cand:
+                    t1 = tri.find_face(p1, p3)
+                    t2 = tri.find_face(p3, p1)
+                    if t1 in marked or t2 in marked: continue
+                    flips.append((p1, p3))
+                    marked.add(t1)
+                    marked.add(t2)
+                for e in flips:
+                    p1, p3 = e
+                    e1 = tri.flip(p1, p3)
+                    prev_flip.add(e1)
+                rev_pfp.append(prev_flip)
         tri2 = self.triangulations[target_idx]
         assert(tri.edges == tri2.edges)
         rev_pfp.reverse()

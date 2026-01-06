@@ -23,12 +23,5 @@ if __name__ == '__main__':
 
     # read initial solution
     input_file = args.data
-    #dt = th2.Data(input_file)
-    #dt = fast.FastData(input_file)
-    dt = para.FastData(input_file)
-    #best_dist = dt.dist
-    #dt.inst_info()
-    #print(f"\nNo flipped, dist: {dt.dist}")
-    #pfd = [len(f) for f in dt.pFlips]
-    #dt.pfd_distribution(pfd)
+    dt = th2.Data(input_file)
 

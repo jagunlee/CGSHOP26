@@ -52,16 +52,19 @@ class FastData:
             new_dist = 0
             new_pfp = [None]*(self.num_tris)
             for i in range(self.num_tris):
-                start = time.time()
+                #start = time.time()
+                print(f"T{i}:")
                 new_pfp1 = self.parallel_flip_path2(i, -1)
-                print(f"T{i}: {time.time()-start:.2f}s", end=' ', flush=True)
+                #print(f"T{i}: {time.time()-start:.2f}s", end=' ', flush=True)
                 start = time.time()
                 new_pfp2 = self.parallel_flip_path_rev2(-1, i)
-                print(f"rev: {time.time()-start:.2f}s", end='\n')
+                print("----------")
+                #print(f"rev: {time.time()-start:.2f}s", end=' ', flush=True)
                 if len(new_pfp1) < len(new_pfp2):
                     new_pfp[i] = new_pfp1
                 else:
                     new_pfp[i] = new_pfp2
+                    #print("rev better!")
                 new_dist+=len(new_pfp[i])
             print(f"Original dist: {self.dist}, New dist: {new_dist}")
             if new_dist<self.dist:
@@ -260,6 +263,12 @@ class FastData:
         pfp = []
         count=1
         prev_flip =set()
+        cand_sum =0
+        flip_sum = 0
+        lowest_score = 1000000
+        highest_score = -1000
+        total_edges = 0
+        total_flippable =0
         while True:
             cand = []
             edges = list(tri.edges)
@@ -267,6 +276,7 @@ class FastData:
             for e in edges:
                 if e in prev_flip: continue
                 if self.flippable(tri, e):
+                    total_flippable +=1
                     #score = self.flip_score(tri, target_idx, e, 1)
                     score = self.flip_score(tri, tri_target, e, 1)
                     if score[0] >0:
@@ -277,10 +287,16 @@ class FastData:
                     continue
                 else: break
             cand.sort(key=lambda x: x[1], reverse=True)
+            _, score1 = cand[0]
+            _, score2 = cand[-1]
+            highest_score = max(score1[0], highest_score)
+            lowest_score = min(score2[0], lowest_score)
+
             flips = []
             marked = set()
             #print(f"{count}: score takes:{time.time()-start:.2f}s", end=' ', flush=True)
             #start= time.time()
+            cand_sum +=len(cand)
             for (p1, p2), _ in cand:
                 t1 = tri.find_face(p1, p2)
                 t2 = tri.find_face(p2, p1)
@@ -288,15 +304,21 @@ class FastData:
                 flips.append((p1, p2))
                 marked.add(t1)
                 marked.add(t2)
+            flip_sum +=len(flips)
             for e in flips:
                 p1, p2 = e
                 e1 = tri.flip(p1, p2)
                 prev_flip.add(e1)
             pfp.append(flips)
             #print(f"flip takes:{time.time()-start:.2f}s", end='\n')
-            #count+=1
+            count+=1
         tri2 = self.triangulations[target_idx]
         assert(tri.edges == tri2.edges)
+        print("path2:")
+        print(f"\t (total flippable)/(edges x {count}) = {total_flippable}/{len(tri.edges)*count} = {total_flippable/(len(tri.edges)*count):.2f}")
+        print(f"\t total candidates = {cand_sum}")
+        print(f"\t total flips = {flip_sum}")
+        print(f"\t lowest~highest score = {lowest_score}~{highest_score}")
         return pfp
 
 
@@ -305,6 +327,12 @@ class FastData:
         tri_target = self.triangulations[target_idx].fast_copy()
         rev_pfp=[]
         prev_flip =set()
+        count=1
+        cand_sum =0
+        flip_sum = 0
+        lowest_score = 1000000
+        highest_score = -1000
+        total_flippable =0
         while True:
             cand = []
             edges = list(tri.edges)
@@ -312,6 +340,7 @@ class FastData:
                 if e in prev_flip:
                     continue
                 if self.flippable(tri, e):
+                    total_flippable +=1
                     #score = self.flip_score(tri, target_idx, e, 1)#hy 0-> 1
                     score = self.flip_score(tri, tri_target, e, 1)
                     if score[0] > 0:
@@ -322,8 +351,13 @@ class FastData:
                     continue
                 else: break
             cand.sort(key=lambda x: x[1],reverse=True)
+            _, score1 = cand[0]
+            _, score2 = cand[-1]
+            highest_score = max(score1[0], highest_score)
+            lowest_score = min(score2[0], lowest_score)
             flips = []
             marked = set()
+            cand_sum +=len(cand)
             for (p1, p3), _ in cand:
                 t1 = tri.find_face(p1, p3)
                 t2 = tri.find_face(p3, p1)
@@ -331,14 +365,21 @@ class FastData:
                 flips.append((p1, p3))
                 marked.add(t1)
                 marked.add(t2)
+            flip_sum +=len(flips)
             for e in flips:
                 p1, p3 = e
                 e1 = tri.flip(p1, p3)
                 prev_flip.add(e1)
             rev_pfp.append(prev_flip)
+            count+=1
         tri2 = self.triangulations[target_idx]
         assert(tri.edges == tri2.edges)
         rev_pfp.reverse()
+        print("rev2:")
+        print(f"\t (total flippable)/(edges x {count}) = {total_flippable}/{len(tri.edges)*count} = {total_flippable/(len(tri.edges)*count):.2f}")
+        print(f"\t total candidates = {cand_sum}")
+        print(f"\t total flips = {flip_sum}")
+        print(f"\t lowest~highest score = {lowest_score}~{highest_score}")
         return rev_pfp
 
     def pfd_distribution(self, pfd):

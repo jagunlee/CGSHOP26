@@ -78,11 +78,12 @@ class Data:
                 print(f"T{i}: {time.time()-start:.2f}s", end=' ', flush=True)
                 start = time.time()
                 new_pfp2=self.parallel_flip_path_rev2(self.center, self.triangulations[i])
-                print(f"rev: {time.time()-start:.2f}s", end='\n')
+                print(f"rev: {time.time()-start:.2f}s", end=' ', flush=True)
                 if len(new_pfp1) < len(new_pfp2):
                     new_pfp[i] = new_pfp1
                 else:
                     new_pfp[i] = new_pfp2
+                    print("rev better!")
                 new_dist+=len(new_pfp[i])
             print(f"Original dist: {self.dist}, New dist: {new_dist}")
             if new_dist<self.dist:
