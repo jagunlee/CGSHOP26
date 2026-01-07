@@ -24,15 +24,19 @@ PAR_CROSS = 1
 
 
 class Data:
-    def __init__(self, inp):
-        self.input = inp
-        # print('self.input:', self.input)
-        self.triangulations = []
-        self.ReadData()
-        self.instance_uid = (inp.split('/')[-1]).split('.')[0]
+    def __init__(self, inp=''):
+        if not inp: 
+            self.triangulations = []
+        else:
+            self.input = inp
+            # print('self.input:', self.input)
+            self.triangulations = []
+            self.ReadData()
+            self.instance_uid = (inp.split('/')[-1]).split('.')[0]
         # print('self.instance_uid:', self.instance_uid)
         # self.distance = []
         # self.pFlips = []
+
 
     def ReadData(self):
         if "solution" not in self.input:
@@ -660,7 +664,7 @@ class Data:
         return centerT
         
     def findCenterGlobal(self):
-        start = time.time()
+        # start = time.time()
         mtriangulations = [copy.deepcopy(t) for t in self.triangulations]
         num = len(mtriangulations)
         pfps =[[] for _ in range(num)]
@@ -700,10 +704,10 @@ class Data:
             if mscore == 0:
                 break
             tl+=1
-            print(tl)
-            print(mscore)
-            end = time.time()
-            print('time:', f"{end - start:.5f} sec")
+            # print(tl)
+            # print(mscore)
+            # end = time.time()
+            # print('time:', f"{end - start:.5f} sec")
             pfps[mi].append(flips[mi])
             for e in flips[mi]:
                 mtriangulations[mi].flip(e)
@@ -713,7 +717,7 @@ class Data:
                 assert(mtriangulations[i].edges == mtriangulations[i+1].edges)
             self.pFlips.append(pfps[i])
         
-        print("total length:",tl)
+        # print("total length:",tl)
         return mtriangulations[0]
                     
     def findCenterGlobal2(self):
@@ -1127,7 +1131,7 @@ class Data:
                 local_T.flip(e)
             while seq_iter < len(seq):
                 # print(tri_num, seq_iter)
-                seq1  = self.computePFS_total(self.triangulations[tri_num], local_T)
+                seq1 = self.computePFS_total(self.triangulations[tri_num], local_T)
                 seq2 = self.computePFS_total(local_T, self.center)
                 if len(seq1) + len(seq2) < len(seq):
                     self.pFlips[tri_num] = seq1 + seq2
@@ -1146,6 +1150,70 @@ class Data:
             self.WriteData()
             print(f"[{self.instance_uid}] Improved: {prev_best} -> {total_dist}")
         return self.center
+
+    def random_compute_fpd_replace(self):
+        prev_len = self.dist
+        prev_best = prev_len   
+        tri_num = 0
+
+        while tri_num < len(self.triangulations):
+            seq = self.pFlips[tri_num]
+            if len(seq) == 0:
+                tri_num += 1
+                continue
+            if len(seq) == 1:
+                tri_num += 1
+                continue
+            seq_iter = 1
+            local_T:Triangulation = self.triangulations[tri_num].fast_copy()
+            for e in seq[0]:
+                local_T.flip(e)
+            while seq_iter < len(seq):
+                # print(tri_num, seq_iter)
+                seq1 = self.computePFS_total(self.triangulations[tri_num], local_T)
+                seq2 = self.computePFS_total(local_T, self.center)
+                if len(seq1) + len(seq2) <= len(seq):
+                    self.pFlips[tri_num] = seq1 + seq2
+                for e in seq[seq_iter]:
+                    local_T.flip(e)
+                seq_iter += 1
+            if seq_iter == len(seq):
+                tri_num += 1
+        return self.center
+
+    def flip_rev(self, tri, e):
+        p, q = e
+        t = self.find_triangle_containing(tri, e)
+        i = t.get_ind(p)
+        tri.flip((t.pt(i+1), t.pt(i+2)))
+
+    def random_new_center(self):
+        param = 1
+        max_dist = max([len(pFlip) for pFlip in self.pFlips])
+        total_dist = sum([len(pFlip) for pFlip in self.pFlips])
+        while param < max_dist * 2:
+            revnum = [min(param, len(pFlip)) for pFlip in self.pFlips]
+            newd = Data()
+            newd.pts = self.pts
+            # print(revnum)
+            for i in range(len(self.triangulations)):
+                newt = self.center.fast_copy()
+                for j in range(revnum[i]):
+                    for e in self.pFlips[i][-j-1]:
+                        self.flip_rev(newt, e)
+                newd.triangulations.append(newt)
+            newc = newd.findCenterGlobal()
+            self.center = newc
+            for i in range(len(self.triangulations)):
+                self.pFlips[i] = self.pFlips[i][:-revnum[i]] + newd.pFlips[i]
+            self.random_compute_fpd_replace()
+            newd = sum([len(pFlip) for pFlip in self.pFlips])
+            # print(total_dist, sum([len(pFlip) for pFlip in self.pFlips]))
+            if total_dist != newd: 
+                self.dist = newd
+                break
+            param *= 2
+
     # def computeDistanceSum(self, centerT):
 
     #     start = time.time()

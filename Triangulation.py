@@ -103,6 +103,7 @@ class Triangulation:
         assert(self.find_triangle(p2, p3))
         self.edges.add((min(p3, p4), max(p3, p4)))
         self.edges.remove((min(e), max(e)))
+        return (min(p3, p4), max(p3, p4))
 
     def return_edge(self):
         return [list(e) for e in self.edges]
