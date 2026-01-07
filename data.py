@@ -10,6 +10,7 @@ import os
 import pandas as pd
 import datetime
 import numpy as np
+import heapq
 # from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
 # from cgshop2026_pyutils.geometry import FlippableTriangulation
 # from cgshop2026_pyutils.verify import check_for_errors
@@ -19,6 +20,7 @@ sys.setrecursionlimit(1000000)
 SEARCH_DEPTH = 1
 PAR_LEN = 2.5
 PAR_CROSS = 1
+
 
 
 class Data:
@@ -58,9 +60,11 @@ class Data:
             self.instance_name = root["instance_uid"]
             self.pFlips = root["flips"]
             self.dist = sum([len(x) for x in self.pFlips])
-            org_input = root["meta"]["input"]
-
-            self.input = org_input
+            try:
+                org_input = root["meta"]["input"]
+                self.input = org_input
+            except:
+                self.input = 'data/benchmark_instances/' + self.instance_name + '.json'
             f = open(self.input, "r", encoding="utf-8")
             root = json.load(f)
             self.pts_x = root["points_x"]
@@ -198,6 +202,7 @@ class Data:
             cand.sort(key=lambda x: x[1],reverse=True)
             # print(cand)
             # print(len(cand))
+            #input()
             flips = []
             marked = set()
             for (p1, p2), _ in cand:
@@ -215,7 +220,343 @@ class Data:
             # print(len(flips))
         assert(tri.edges == tri2.edges)
         return pfp
+
+    def parallel_flip_path2(self, tri1:Triangulation, tri2:Triangulation):
+        start = time.time()
+        tri = copy.deepcopy(tri1)
+        pfp = [[]]
+        when = dict()
+        info = dict()
+        heap = []
+        for t in tri.triangles:
+            when[t] = 0
+        for e in tri2.edges:
+            if e in tri.edges:
+                continue
+            else:
+                # print(e)
+                tris, crossings = self.get_crossed_edges_and_triangles(tri, e)
+                c, flips = self.get_edge_cost(tri, e, when, crossings, len(self.pts))
+                info[e] = (tris, flips)
+                heapq.heappush(heap, (-c, e))
+        i = 0
+        print('initialize done')
+        end = time.time()
+        print('time:', f"{end - start:.5f} sec")
+        while heap:
+            _, e = heapq.heappop(heap)
+            if e not in info: continue
+            else:
+                flips = info[e][1]
+                used = info[e][0]
+                for flip, k in flips:
+                    p0, p1 = flip
+                    t1 = tri.find_triangle(p0, p1)
+                    t2 = tri.find_triangle(p1, p0)
+                    when[t1] = k + 1
+                    when[t2] = k + 1
+                    tri.flip(flip)
+                    if k == len(pfp):
+                        pfp.append([])
+                        print('dist increased to', len(pfp))
+                        print(len(info), 'edges remain')
+                    pfp[k].append(flip)
+                for e in list(info.keys()):
+                    if info[e][0] & used:
+                        tris, crossings = self.get_crossed_edges_and_triangles(tri, e)
+                        c, flips = self.get_edge_cost(tri, e, when, crossings, len(self.pts))
+                        if not flips:
+                            del info[e]
+                            continue
+                        info[e] = (tris, flips)
+                        heapq.heappush(heap, (-c, e))
+            # print(i+1, 'th flip')
+            # print('so far', len(pfp[i]), 'flips')
             
+            #input()
+        return pfp
+
+    def parallel_flip_path3(self, tri1:Triangulation, tri2:Triangulation):
+        start = time.time()
+        tri = copy.deepcopy(tri1)
+        pfp = [[]]
+        when = dict()
+        info = dict()
+        heaps = [[]]
+        for t in tri.triangles:
+            when[t] = 0
+        for e in tri2.edges:
+            if e in tri.edges:
+                continue
+            else:
+                # print(e)
+                tris, crossings = self.get_crossed_edges_and_triangles(tri, e)
+                c, flips = self.get_edge_cost(tri, e, when, crossings, len(self.pts))
+                info[e] = (tris, flips)
+                heapq.heappush(heaps[0], (-c, e))
+        i = 0
+        print('initialize done')
+        end = time.time()
+        print('time:', f"{end - start:.5f} sec")
+        while True:
+            if not heaps[i]:
+                if i == len(heaps) - 1: break
+                print(i+1,'th flip done.')
+                print(len(pfp[i]), 'flips')
+                print(len(info), 'edges remain')
+                end = time.time()
+                print('time:', f"{end - start:.5f} sec")
+                i += 1
+                pfp.append([])
+            _, e = heapq.heappop(heaps[i])
+            if e not in info or info[e][1][0][1] != i: continue
+            else:
+                flips = info[e][1]
+                used = set()
+                for flip, k in flips:
+                    if k != i:
+                        break
+                    p0, p1 = flip
+                    t1 = tri.find_triangle(p0, p1)
+                    t2 = tri.find_triangle(p1, p0)
+                    when[t1] = i + 1
+                    when[t2] = i + 1
+                    used.add(t1)
+                    used.add(t2)
+                    tri.flip(flip)
+                    pfp[i].append(flip)
+                if not used: continue
+                for e in list(info.keys()):
+                    if info[e][0] & used:
+                        tris, crossings = self.get_crossed_edges_and_triangles(tri, e)
+                        c, flips = self.get_edge_cost(tri, e, when, crossings, len(self.pts))
+                        if not flips:
+                            del info[e]
+                            continue
+                        info[e] = (tris, flips)
+                        minc = flips[0][1]
+                        if minc == len(heaps):
+                            heaps.append([])
+                        heapq.heappush(heaps[minc], (-c, e))
+            # print(i+1, 'th flip')
+            # print('so far', len(pfp[i]), 'flips')
+            
+            #input()
+        return pfp
+
+
+    def parallel_flip_path_rand(self, tri1:Triangulation, tri2:Triangulation, lim=10000):
+        tri = copy.deepcopy(tri1)
+        pfp = []
+        when = dict()
+        for t in tri.triangles:
+            when[t] = 0
+        edges = list(tri2.edges)
+        random.shuffle(edges)
+        for e in edges:
+            if e in tri.edges:
+                continue
+            # print("making", e)
+            if random.choice([True, False]): e = e[1], e[0]
+            _, crossings = self.get_crossed_edges_and_triangles(tri, e)
+            _, flips = self.get_edge_cost(tri, e, when, crossings, len(self.pts))
+            for flip, k in flips:
+                if k == lim:
+                    return []
+                if len(pfp) == k:
+                    pfp.append([])
+                pfp[k].append(flip)
+                p0, p1 = flip
+                t1 = tri.find_triangle(p0, p1)
+                t2 = tri.find_triangle(p1, p0)
+                tri.flip(flip)
+                when[t1] = k + 1
+                when[t2] = k + 1
+        return pfp
+            # (1) e와의 cross가 없어지는 flip / (2) e와 cross가 있는 edge를 flippable하게 만들어주는 flip
+            # flippability를 저장하는 boolean list 만들기
+            # False->True, True->False 중 flippable하게 해주는 친구 찾기 << 두단계 건너뛰어서 있을 수도 있네...
+            # (1)과 (2) 중 가장 빨리 flip 할 수 있는거 flip
+
+    def get_crossed_edges_and_triangles(self, tri:Triangulation, e:tuple):
+        if e in tri.edges:
+            return set(), []
+        crossings = []
+        affected = set()
+        t = self.find_triangle_containing(tri, e)
+        i = t.get_ind(e[0])
+        affected.add(t)
+        crossings = [(t.pt(i+1), t.pt(i+2))]
+        t = t.nei(i+1)
+        while True:
+            affected.add(t)
+            p1, p2 = crossings[-1]
+            i = t.get_ind(p1)
+            q = t.pt(i + 1)
+            if q == e[1]: break
+            if turn(self.pts[e[0]], self.pts[e[1]], self.pts[q]) > 0:
+                crossings.append((p1, q))
+                t = t.neis[i]
+            else:
+                crossings.append((q, p2))
+                t = t.nei(i+1)
+        return affected, crossings
+
+    def get_edge_cost(self, tri:Triangulation, e:tuple, when:dict, crossings:list, lim:int):
+        # parallel flip 가장 늦은거, 총 flip하는 수 tuple 형태로
+        # edge에 cost랑 affected 저장
+        # print(crossings)
+        if not crossings:
+            return (0, [])
+        resolver = [False] * len(crossings)
+        flippability = []
+        sameside = []
+        ccs = []
+        for i in range(len(crossings)):
+            c = crossings[i]
+            flippability.append(self.flippable(tri,c))
+            t1 = tri.find_triangle(c[0], c[1])
+            t2 = tri.find_triangle(c[1], c[0])
+            cc = max(when[t1], when[t2])
+            ccs.append(cc)
+            if i == 0: prev = e[0]
+            else:
+                p1, p2 = crossings[i-1]
+                if p1 in c: prev = p2
+                else: prev = p1
+            if i == len(crossings) - 1: nex = e[1]
+            else:
+                p1, p2 = crossings[i+1]
+                if p1 in c: nex = p2
+                else: nex = p1
+            sameside.append(turn(self.pts[e[0]], self.pts[e[1]], self.pts[prev]) * turn(self.pts[e[0]], self.pts[e[1]], self.pts[nex]) >= 0)
+        
+        for i in range(len(crossings)):
+            if not flippability[i]:
+                c = crossings[i]
+                t = tri.find_triangle(c[0], c[1])
+                ind = t.get_ind(c[0])
+                hf, tmf = self.to_make_flippable(tri, t, ind)
+                if i + hf < len(crossings):
+                    if crossings[i + hf] == tmf:
+                        resolver[i + hf] = True
+                t = tri.find_triangle(c[1], c[0])
+                ind = t.get_ind(c[1])
+                hf, tmf = self.to_make_flippable(tri, t, ind)
+                if i - hf >= 0:
+                    if crossings[i - hf] == (tmf[1], tmf[0]):
+                        resolver[i - hf] = True
+        feasible = []
+        mincc = max(ccs) + 1
+        for i in range(len(crossings)):
+            feasible.append(flippability[i] and (sameside[i] or resolver[i]))
+            if feasible[i] and ccs[i] < mincc:
+                mincc = ccs[i]
+                mini = i
+        assert(mincc < max(ccs) + 1)
+        if mincc > lim:
+            return (mincc, [])
+        c = crossings[mini]
+        t1 = tri.find_triangle(c[0], c[1])
+        i = t1.get_ind(c[1])
+        prev = t1.pt(i + 1)
+        t2 = tri.find_triangle(c[1], c[0])
+        j = t2.get_ind(c[0])
+        nex = t2.pt(j + 1)
+        c1 = when[t1]
+        c2 = when[t2]
+        when[t1] = mincc + 1
+        when[t2] = mincc + 1
+        tri.flip(c)
+        rec_crossings = list(crossings)
+        if sameside[mini]:
+            rec_crossings.pop(mini)
+        else:
+            if turn(self.pts[prev], self.pts[nex], self.pts[e[0]]) > 0: rec_crossings[mini] = (prev, nex)
+            else: rec_crossings[mini] = (nex, prev)
+        rec_score = self.get_edge_cost(tri, e, when, rec_crossings, lim)
+        tri.flip((prev, nex))
+        tri.flip(c)
+        tri.flip((prev, nex))
+        t1 = tri.find_triangle(c[0], c[1])
+        t2 = tri.find_triangle(c[1], c[0])
+        when[t1] = c1
+        when[t2] = c2
+        '''
+        if (mini < len(crossings) - 1) and feasible[mini+1] and (mincc == ccs[mini+1]):
+            mini = mini + 1
+            c = crossings[mini]
+            t1 = tri.find_triangle(c[0], c[1])
+            i = t1.get_ind(c[1])
+            prev = t1.pt(i + 1)
+            t2 = tri.find_triangle(c[1], c[0])
+            j = t2.get_ind(c[0])
+            nex = t2.pt(j + 1)
+            c1 = when[t1]
+            c2 = when[t2]
+            when[t1] = mincc + 1
+            when[t2] = mincc + 1
+            tri.flip(c)
+            rec_crossings = list(crossings)
+            if sameside[mini]:
+                rec_crossings.pop(mini)
+            else:
+                if turn(self.pts[prev], self.pts[nex], self.pts[e[0]]) > 0: rec_crossings[mini] = (prev, nex)
+                else: rec_crossings[mini] = (nex, prev)
+            rec_score2 = self.get_edge_cost(tri, e, when, rec_crossings, rec_score[0])
+            flag = False
+            if rec_score2[0] < rec_score[0] or (rec_score2[0] == rec_score[0] and len(rec_score2[1]) < len(rec_score[1])):
+                rec_score = rec_score2
+                flag = True
+            tri.flip((prev, nex))
+            t1 = tri.find_triangle(c[0], c[1])
+            t2 = tri.find_triangle(c[1], c[0])
+            when[t1] = c1
+            when[t2] = c2
+            if not flag: c = crossings[mini - 1]
+        '''
+        # print(crossings)
+        # print([(c, mincc)] + rec_score[1])
+        # print('flip', c, 'at', mincc)
+        # print('whens:', when[t1], when[t2])
+        return (max(mincc, rec_score[0]), [(c, mincc)] + rec_score[1])
+
+
+    
+    def to_make_flippable(self, tri, t, i):
+        p = self.pts[t.pt(i - 1)]
+        pr = self.pts[t.pts[i]]
+        pl = self.pts[t.pt(i + 1)]
+        tt = t.neis[i]
+        j = tt.get_ind(t.pt(i + 1))
+        q = self.pts[tt.pt(j + 2)]
+        num = 0
+        while True:
+            if turn(p, pr, q) <= 0:
+                t = tt
+                i = (j + 2) % 3
+                pr = q
+            elif turn(self.pts[t.pt(i + 2)], self.pts[t.pts[i]], q) <= 0:
+                t = tt
+                i = (j + 2) % 3
+            elif turn(p, pl, q) >= 0:
+                pl = q
+                t = tt
+                i = (j + 1) % 3
+            elif turn(self.pts[t.pt(i + 2)], self.pts[tt.pts[j]], q) >= 0:
+                t = tt
+                i = (j + 1) % 3
+            else:
+                break
+            tt = t.neis[i]
+            if not tt: break
+            j = tt.get_ind(t.pt(i + 1))
+            q = self.pts[tt.pt(j + 2)]
+            num += 1
+        return num, (t.pts[i], t.pt(i + 1))
+
+
+
     def flippable(self, tri:Triangulation, e:tuple):
         p1, p3 = e
         t1 = tri.find_triangle(p1, p3)
@@ -391,7 +732,7 @@ class Data:
                     score, _ = self.flip_score(tri, mtriangulations[j], e, 1)
                     escore += score
                 scores[i][e] = escore
-            print(i, "/", num)
+            print(i+1, "/", num)
             end = time.time()
             print('time:', f"{end - start:.5f} sec")
         while True:
@@ -570,108 +911,6 @@ class Data:
             end = time.time()
             print('time:', f"{end - start:.5f} sec")
 
-    def computeDistanceSum(self, centerT):
-
-        start = time.time()
-
-        print(self.pFlips)
-        print(len(self.pFlips))
-        print(len(self.triangulations))
-
-        for i in range(len(self.triangulations)):
-            
-            # list[list[list[int, int]]]
-            self.pFlips[i] = []
-
-            # list[list[list[tuple(int, int), tuple(int, int)]]]
-            pFlips_paired = self.parallel_flip_path(self.triangulations[i], centerT)
-
-            for round in pFlips_paired:
-
-                round_temp = []
-
-                for oneFlip in round:
-                    
-                    # (p1, p2), (p3, p4) = fs[i]
-                    (p1, p2) = oneFlip
-                
-                    oneFlip_temp = [p1, p2]
-
-                    round_temp.append(oneFlip_temp)
-
-                self.pFlips[i].append(round_temp)
-
-
-            '''
-            pfp = self.parallel_flip_path(self.triangulations[i], centerT)
-            self.pFlips[i] = []
-
-            # (a, b), (c, d) 를 (a, b)로 바꿔야 함
-            for round in pfp:
-                roundFlips = []
-                for singleFlip in round:
-                    roundFlips.append(singleFlip[0])
-                self.pFlips[i].append(roundFlips)
-            self.pFlips[i].reverse()
-            '''
-
-            print('parallel flip distance from the center to T', i, ':', len(self.pFlips[i]))
-            
-            end = time.time()
-            print('time:', f"{end - start:.5f} sec")
-            
-    def computeDistanceSum2(self, centerT):
-
-        start = time.time()
-
-        print(self.pFlips)
-        print(len(self.pFlips))
-        print(len(self.triangulations))
-
-        for i in range(len(self.triangulations)):
-            
-            # list[list[list[int, int]]]
-            self.pFlips[i] = []
-
-            # list[list[list[tuple(int, int), tuple(int, int)]]]
-            pFlips_paired = self.parallel_flip_path2(self.triangulations[i], centerT)
-
-            for round in pFlips_paired:
-
-                round_temp = []
-
-                for oneFlip in round:
-                    
-                    # (p1, p2), (p3, p4) = fs[i]
-                    (p1, p2), (p3, p4) = oneFlip
-                
-                    oneFlip_temp = [p1, p2]
-
-                    round_temp.append(oneFlip_temp)
-
-                self.pFlips[i].append(round_temp)
-
-
-            '''
-            pfp = self.parallel_flip_path(self.triangulations[i], centerT)
-            self.pFlips[i] = []
-
-            # (a, b), (c, d) 를 (a, b)로 바꿔야 함
-            for round in pfp:
-                roundFlips = []
-                for singleFlip in round:
-                    roundFlips.append(singleFlip[0])
-                self.pFlips[i].append(roundFlips)
-            self.pFlips[i].reverse()
-            '''
-
-            print('parallel flip distance from the center to T', i, ':', len(self.pFlips[i]))
-            
-            end = time.time()
-            print('time:', f"{end - start:.5f} sec")
-            
-    def verify(self):
-        pass
 
         # # Define points (square) and two triangulations that will be flipped to a common form
         # points_x = [0, 1, 0, 1]
