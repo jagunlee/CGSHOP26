@@ -5,16 +5,15 @@ import os
 def read_dt(d):
     dt = Data(d)
     prev = dt.dist
-    dt.log = True
+    dt.log = False
     count = 0
-    while dt.dist < prev * 1.1:
+    while count < prev:
         dt.random_new_center()
-        count += 1
         if dt.dist < prev:
             print(f"[{dt.instance_uid}] Improved: {prev} -> {dt.dist}")
             dt.WriteData()
             prev = dt.dist
-        if count == 10: break
+        count += 1
 
 if __name__=="__main__":
     argument = sys.argv

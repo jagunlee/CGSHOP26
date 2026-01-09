@@ -2,9 +2,8 @@
 
 TARGET_DIR="opt"
 
-for file in "$TARGET_DIR"/*; do
-    # 일반 파일만 처리
-    if [ -f "$file" ]; then
+for file in "$TARGET_DIR"/rirs*; do
+    if [ -f "$file" ] ; then
         zip "optzip/${file}.zip" "$file"
     fi
 done
