@@ -88,6 +88,8 @@ class Data:
                 else:
                     new_pfp[i] = new_pfp2
                 new_dist+=len(new_pfp[i])
+                print(len(new_pfp[i]), end=', ', flush=True)
+            print()
             print(f"Original dist: {self.dist}, New dist: {new_dist}")
             if new_dist<self.dist:
                 self.dist = new_dist

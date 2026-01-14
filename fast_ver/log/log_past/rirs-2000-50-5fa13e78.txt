@@ -1,0 +1,263 @@
+_________ rirs-2000-50-5fa13e78 info ___________
+# of points: 2000
+# of triangulations: 50
+# of edges in T: 5980
+# of faces in T: 3981
+max pfd T_18: 15
+min pfd T_42: 11
+T 0
+(total flippable)/(total for-loop): 0.72 --  0.49
+total candidates: 5790 -- 5791
+total flips: 5112 -- 5115
+(lowest~highest) score: (1~70) -- (1~33)
+T 1
+(total flippable)/(total for-loop): 0.71 --  0.49
+total candidates: 6464 -- 6499
+total flips: 5679 -- 5684
+(lowest~highest) score: (1~67) -- (1~50)
+T 2
+(total flippable)/(total for-loop): 0.71 --  0.50
+total candidates: 6087 -- 6099
+total flips: 5353 -- 5337
+(lowest~highest) score: (1~74) -- (1~48)
+T 3
+(total flippable)/(total for-loop): 0.70 --  0.49
+total candidates: 7061 -- 7083
+total flips: 6188 -- 6172
+(lowest~highest) score: (1~101) -- (1~59)
+T 4
+(total flippable)/(total for-loop): 0.71 --  0.51
+total candidates: 6563 -- 6607
+total flips: 5739 -- 5754
+(lowest~highest) score: (1~53) -- (1~38)
+T 5
+(total flippable)/(total for-loop): 0.70 --  0.50
+total candidates: 5851 -- 5826
+total flips: 5124 -- 5134
+(lowest~highest) score: (1~49) -- (1~29)
+T 6
+(total flippable)/(total for-loop): 0.71 --  0.49
+total candidates: 6125 -- 6174
+total flips: 5421 -- 5407
+(lowest~highest) score: (1~68) -- (1~47)
+T 7
+(total flippable)/(total for-loop): 0.71 --  0.49
+total candidates: 6478 -- 6479
+total flips: 5711 -- 5699
+(lowest~highest) score: (1~99) -- (1~64)
+T 8
+(total flippable)/(total for-loop): 0.71 --  0.51
+total candidates: 6078 -- 6045
+total flips: 5327 -- 5337
+(lowest~highest) score: (1~54) -- (1~34)
+T 9
+(total flippable)/(total for-loop): 0.71 --  0.48
+total candidates: 5952 -- 5888
+total flips: 5215 -- 5181
+(lowest~highest) score: (1~78) -- (1~40)
+T 10
+(total flippable)/(total for-loop): 0.70 --  0.50
+total candidates: 6147 -- 6179
+total flips: 5404 -- 5425
+(lowest~highest) score: (1~72) -- (1~49)
+T 11
+(total flippable)/(total for-loop): 0.70 --  0.49
+total candidates: 5942 -- 5895
+total flips: 5202 -- 5190
+(lowest~highest) score: (1~64) -- (1~42)
+T 12
+(total flippable)/(total for-loop): 0.72 --  0.48
+total candidates: 6198 -- 6186
+total flips: 5458 -- 5458
+(lowest~highest) score: (1~63) -- (1~42)
+T 13
+(total flippable)/(total for-loop): 0.70 --  0.49
+total candidates: 6142 -- 6081
+total flips: 5348 -- 5348
+(lowest~highest) score: (1~62) -- (1~39)
+T 14
+(total flippable)/(total for-loop): 0.71 --  0.50
+total candidates: 6061 -- 6000
+total flips: 5320 -- 5289
+(lowest~highest) score: (1~56) -- (1~39)
+T 15
+(total flippable)/(total for-loop): 0.72 --  0.50
+total candidates: 6382 -- 6339
+total flips: 5575 -- 5575
+(lowest~highest) score: (1~74) -- (1~47)
+T 16
+(total flippable)/(total for-loop): 0.72 --  0.49
+total candidates: 6398 -- 6363
+total flips: 5619 -- 5611
+(lowest~highest) score: (1~92) -- (1~47)
+T 17
+(total flippable)/(total for-loop): 0.70 --  0.51
+total candidates: 5875 -- 5844
+total flips: 5132 -- 5137
+(lowest~highest) score: (1~53) -- (1~30)
+T 18
+(total flippable)/(total for-loop): 0.72 --  0.49
+total candidates: 6395 -- 6432
+total flips: 5606 -- 5610
+(lowest~highest) score: (1~85) -- (1~51)
+T 19
+(total flippable)/(total for-loop): 0.71 --  0.48
+total candidates: 5849 -- 5801
+total flips: 5116 -- 5113
+(lowest~highest) score: (1~58) -- (1~31)
+T 20
+(total flippable)/(total for-loop): 0.71 --  0.49
+total candidates: 6066 -- 6050
+total flips: 5309 -- 5335
+(lowest~highest) score: (1~85) -- (1~45)
+T 21
+(total flippable)/(total for-loop): 0.70 --  0.50
+total candidates: 6008 -- 5960
+total flips: 5285 -- 5269
+(lowest~highest) score: (1~62) -- (1~34)
+T 22
+(total flippable)/(total for-loop): 0.71 --  0.50
+total candidates: 6502 -- 6439
+total flips: 5698 -- 5674
+(lowest~highest) score: (1~68) -- (1~45)
+T 23
+(total flippable)/(total for-loop): 0.70 --  0.50
+total candidates: 6310 -- 6270
+total flips: 5499 -- 5510
+(lowest~highest) score: (1~68) -- (1~53)
+T 24
+(total flippable)/(total for-loop): 0.71 --  0.49
+total candidates: 6218 -- 6145
+total flips: 5422 -- 5414
+(lowest~highest) score: (1~63) -- (1~43)
+T 25
+(total flippable)/(total for-loop): 0.71 --  0.50
+total candidates: 6075 -- 6094
+total flips: 5374 -- 5365
+(lowest~highest) score: (1~59) -- (1~37)
+T 26
+(total flippable)/(total for-loop): 0.72 --  0.50
+total candidates: 5982 -- 5970
+total flips: 5260 -- 5249
+(lowest~highest) score: (1~86) -- (1~39)
+T 27
+(total flippable)/(total for-loop): 0.71 --  0.50
+total candidates: 6402 -- 6400
+total flips: 5612 -- 5594
+(lowest~highest) score: (1~64) -- (1~45)
+T 28
+(total flippable)/(total for-loop): 0.71 --  0.51
+total candidates: 6443 -- 6446
+total flips: 5626 -- 5623
+(lowest~highest) score: (1~51) -- (1~39)
+T 29
+(total flippable)/(total for-loop): 0.70 --  0.49
+total candidates: 5948 -- 5889
+total flips: 5209 -- 5188
+(lowest~highest) score: (1~44) -- (1~43)
+T 30
+(total flippable)/(total for-loop): 0.71 --  0.51
+total candidates: 6385 -- 6354
+total flips: 5578 -- 5581
+(lowest~highest) score: (1~92) -- (1~53)
+T 31
+(total flippable)/(total for-loop): 0.71 --  0.50
+total candidates: 6479 -- 6405
+total flips: 5638 -- 5617
+(lowest~highest) score: (1~75) -- (1~47)
+T 32
+(total flippable)/(total for-loop): 0.71 --  0.49
+total candidates: 5815 -- 5798
+total flips: 5119 -- 5125
+(lowest~highest) score: (1~60) -- (1~46)
+T 33
+(total flippable)/(total for-loop): 0.70 --  0.49
+total candidates: 6573 -- 6650
+total flips: 5768 -- 5759
+(lowest~highest) score: (1~66) -- (1~44)
+T 34
+(total flippable)/(total for-loop): 0.71 --  0.49
+total candidates: 5903 -- 5888
+total flips: 5223 -- 5218
+(lowest~highest) score: (1~90) -- (1~46)
+T 35
+(total flippable)/(total for-loop): 0.71 --  0.50
+total candidates: 5891 -- 5886
+total flips: 5181 -- 5202
+(lowest~highest) score: (1~59) -- (1~34)
+T 36
+(total flippable)/(total for-loop): 0.71 --  0.50
+total candidates: 6561 -- 6588
+total flips: 5747 -- 5747
+(lowest~highest) score: (1~65) -- (1~56)
+T 37
+(total flippable)/(total for-loop): 0.71 --  0.50
+total candidates: 6364 -- 6336
+total flips: 5560 -- 5531
+(lowest~highest) score: (1~79) -- (1~41)
+T 38
+(total flippable)/(total for-loop): 0.70 --  0.50
+total candidates: 6306 -- 6276
+total flips: 5495 -- 5482
+(lowest~highest) score: (1~59) -- (1~44)
+T 39
+(total flippable)/(total for-loop): 0.70 --  0.49
+total candidates: 5996 -- 6030
+total flips: 5258 -- 5244
+(lowest~highest) score: (1~46) -- (1~35)
+T 40
+(total flippable)/(total for-loop): 0.70 --  0.51
+total candidates: 5994 -- 6009
+total flips: 5303 -- 5298
+(lowest~highest) score: (1~50) -- (1~37)
+T 41
+(total flippable)/(total for-loop): 0.70 --  0.51
+total candidates: 6680 -- 6641
+total flips: 5851 -- 5822
+(lowest~highest) score: (1~69) -- (1~47)
+T 42
+(total flippable)/(total for-loop): 0.69 --  0.50
+total candidates: 5759 -- 5721
+total flips: 5077 -- 5095
+(lowest~highest) score: (1~48) -- (1~35)
+T 43
+(total flippable)/(total for-loop): 0.71 --  0.48
+total candidates: 5937 -- 5946
+total flips: 5218 -- 5189
+(lowest~highest) score: (1~57) -- (1~41)
+T 44
+(total flippable)/(total for-loop): 0.72 --  0.49
+total candidates: 6230 -- 6169
+total flips: 5451 -- 5406
+(lowest~highest) score: (1~64) -- (1~40)
+T 45
+(total flippable)/(total for-loop): 0.70 --  0.50
+total candidates: 6341 -- 6342
+total flips: 5529 -- 5542
+(lowest~highest) score: (1~60) -- (1~44)
+T 46
+(total flippable)/(total for-loop): 0.71 --  0.48
+total candidates: 5858 -- 5872
+total flips: 5168 -- 5168
+(lowest~highest) score: (1~73) -- (1~34)
+T 47
+(total flippable)/(total for-loop): 0.71 --  0.50
+total candidates: 6117 -- 6116
+total flips: 5356 -- 5360
+(lowest~highest) score: (1~57) -- (1~46)
+T 48
+(total flippable)/(total for-loop): 0.69 --  0.49
+total candidates: 6804 -- 6730
+total flips: 5925 -- 5891
+(lowest~highest) score: (1~74) -- (1~48)
+T 49
+(total flippable)/(total for-loop): 0.71 --  0.50
+total candidates: 6398 -- 6384
+total flips: 5602 -- 5596
+(lowest~highest) score: (1~69) -- (1~50)
+
+(# of rev_better_dist)/(# tris) = 32/50
+(# of rev_lower_flippable)/(# tris) = 50/50
+(# of rev_lower_highest_score)/(# tris) = 50/50
+
+Original dist: 662, New dist: 696

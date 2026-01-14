@@ -1,0 +1,30 @@
+rirs-1000-20-ee506ff1
+(# of rev_better_dist)/(# tris) = 11/20
+(# of rev_lower_flippable)/(# tris) = 20/20
+(# of rev_lower_highest_score)/(# tris) = 19/20
+
+rirs-1000-50-efb3c1bd
+(# of rev_better_dist)/(# tris) = 33/50
+(# of rev_lower_flippable)/(# tris) = 50/50
+(# of rev_lower_highest_score)/(# tris) = 46/50
+
+rirs-1000-75-50e9d715
+(# of rev_better_dist)/(# tris) = 58/75
+(# of rev_lower_flippable)/(# tris) = 75/75
+(# of rev_lower_highest_score)/(# tris) = 73/75
+
+rirs-10000-20-85b95253
+(# of rev_better_dist)/(# tris) = 15/20
+(# of rev_lower_flippable)/(# tris) = 20/20
+(# of rev_lower_highest_score)/(# tris) = 20/20
+
+rirs-10000-50-918ee15c
+(# of rev_better_dist)/(# tris) = 32/50
+(# of rev_lower_flippable)/(# tris) = 50/50
+(# of rev_lower_highest_score)/(# tris) = 50/50
+
+rirs-10000-75-08dd7dc1
+(# of rev_better_dist)/(# tris) = 55/75
+(# of rev_lower_flippable)/(# tris) = 75/75
+(# of rev_lower_highest_score)/(# tris) = 75/75
+

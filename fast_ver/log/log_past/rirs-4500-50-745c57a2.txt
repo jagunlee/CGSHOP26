@@ -1,0 +1,263 @@
+_________ rirs-4500-50-745c57a2 info ___________
+# of points: 4500
+# of triangulations: 50
+# of edges in T: 13477
+# of faces in T: 8978
+max pfd T_12: 17
+min pfd T_6: 13
+T 0
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 12889 -- 12942
+total flips: 11346 -- 11328
+(lowest~highest) score: (1~81) -- (1~43)
+T 1
+(total flippable)/(total for-loop): 0.70 --  0.53
+total candidates: 14609 -- 14727
+total flips: 12849 -- 12840
+(lowest~highest) score: (1~96) -- (1~59)
+T 2
+(total flippable)/(total for-loop): 0.72 --  0.51
+total candidates: 14003 -- 14111
+total flips: 12311 -- 12313
+(lowest~highest) score: (1~105) -- (1~70)
+T 3
+(total flippable)/(total for-loop): 0.72 --  0.53
+total candidates: 13903 -- 14058
+total flips: 12248 -- 12290
+(lowest~highest) score: (1~94) -- (1~47)
+T 4
+(total flippable)/(total for-loop): 0.72 --  0.53
+total candidates: 13544 -- 13595
+total flips: 11920 -- 11927
+(lowest~highest) score: (1~106) -- (1~57)
+T 5
+(total flippable)/(total for-loop): 0.71 --  0.53
+total candidates: 13742 -- 13801
+total flips: 12085 -- 12051
+(lowest~highest) score: (1~78) -- (1~45)
+T 6
+(total flippable)/(total for-loop): 0.70 --  0.53
+total candidates: 13811 -- 13985
+total flips: 12160 -- 12179
+(lowest~highest) score: (1~96) -- (1~44)
+T 7
+(total flippable)/(total for-loop): 0.71 --  0.53
+total candidates: 13164 -- 13235
+total flips: 11605 -- 11597
+(lowest~highest) score: (1~84) -- (1~39)
+T 8
+(total flippable)/(total for-loop): 0.71 --  0.54
+total candidates: 13575 -- 13667
+total flips: 11971 -- 11934
+(lowest~highest) score: (1~110) -- (1~52)
+T 9
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 13099 -- 13283
+total flips: 11588 -- 11581
+(lowest~highest) score: (1~111) -- (1~52)
+T 10
+(total flippable)/(total for-loop): 0.71 --  0.54
+total candidates: 12716 -- 12795
+total flips: 11222 -- 11211
+(lowest~highest) score: (1~81) -- (1~35)
+T 11
+(total flippable)/(total for-loop): 0.71 --  0.52
+total candidates: 14197 -- 14240
+total flips: 12422 -- 12414
+(lowest~highest) score: (1~112) -- (1~82)
+T 12
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 14832 -- 14816
+total flips: 12997 -- 12959
+(lowest~highest) score: (1~145) -- (1~64)
+T 13
+(total flippable)/(total for-loop): 0.71 --  0.54
+total candidates: 13729 -- 13832
+total flips: 12115 -- 12096
+(lowest~highest) score: (1~112) -- (1~43)
+T 14
+(total flippable)/(total for-loop): 0.71 --  0.52
+total candidates: 13997 -- 14141
+total flips: 12340 -- 12299
+(lowest~highest) score: (1~117) -- (1~48)
+T 15
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 12597 -- 12670
+total flips: 11081 -- 11107
+(lowest~highest) score: (1~143) -- (1~45)
+T 16
+(total flippable)/(total for-loop): 0.71 --  0.54
+total candidates: 13823 -- 13831
+total flips: 12103 -- 12089
+(lowest~highest) score: (1~106) -- (1~59)
+T 17
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 13060 -- 13101
+total flips: 11509 -- 11468
+(lowest~highest) score: (1~75) -- (1~42)
+T 18
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 13622 -- 13773
+total flips: 11991 -- 12010
+(lowest~highest) score: (1~103) -- (1~47)
+T 19
+(total flippable)/(total for-loop): 0.71 --  0.52
+total candidates: 13700 -- 13761
+total flips: 12041 -- 11995
+(lowest~highest) score: (1~82) -- (1~44)
+T 20
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 13052 -- 13155
+total flips: 11494 -- 11504
+(lowest~highest) score: (1~141) -- (1~52)
+T 21
+(total flippable)/(total for-loop): 0.71 --  0.54
+total candidates: 14950 -- 15024
+total flips: 13144 -- 13082
+(lowest~highest) score: (1~110) -- (1~68)
+T 22
+(total flippable)/(total for-loop): 0.73 --  0.53
+total candidates: 12997 -- 13095
+total flips: 11469 -- 11438
+(lowest~highest) score: (1~89) -- (1~49)
+T 23
+(total flippable)/(total for-loop): 0.72 --  0.53
+total candidates: 13834 -- 13942
+total flips: 12224 -- 12210
+(lowest~highest) score: (1~138) -- (1~50)
+T 24
+(total flippable)/(total for-loop): 0.71 --  0.53
+total candidates: 13296 -- 13436
+total flips: 11768 -- 11772
+(lowest~highest) score: (1~89) -- (1~44)
+T 25
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 13676 -- 13866
+total flips: 12029 -- 12053
+(lowest~highest) score: (1~95) -- (1~46)
+T 26
+(total flippable)/(total for-loop): 0.71 --  0.53
+total candidates: 13728 -- 13860
+total flips: 12142 -- 12172
+(lowest~highest) score: (1~72) -- (1~56)
+T 27
+(total flippable)/(total for-loop): 0.71 --  0.53
+total candidates: 14205 -- 14252
+total flips: 12474 -- 12456
+(lowest~highest) score: (1~88) -- (1~50)
+T 28
+(total flippable)/(total for-loop): 0.71 --  0.53
+total candidates: 12934 -- 12992
+total flips: 11386 -- 11333
+(lowest~highest) score: (1~77) -- (1~50)
+T 29
+(total flippable)/(total for-loop): 0.71 --  0.54
+total candidates: 13560 -- 13619
+total flips: 11874 -- 11891
+(lowest~highest) score: (1~98) -- (1~50)
+T 30
+(total flippable)/(total for-loop): 0.71 --  0.53
+total candidates: 13983 -- 14042
+total flips: 12341 -- 12263
+(lowest~highest) score: (1~93) -- (1~55)
+T 31
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 13177 -- 13199
+total flips: 11591 -- 11551
+(lowest~highest) score: (1~91) -- (1~43)
+T 32
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 13188 -- 13272
+total flips: 11639 -- 11610
+(lowest~highest) score: (1~88) -- (1~45)
+T 33
+(total flippable)/(total for-loop): 0.71 --  0.53
+total candidates: 14100 -- 14242
+total flips: 12365 -- 12394
+(lowest~highest) score: (1~89) -- (1~43)
+T 34
+(total flippable)/(total for-loop): 0.72 --  0.53
+total candidates: 13767 -- 13902
+total flips: 12119 -- 12112
+(lowest~highest) score: (1~115) -- (1~54)
+T 35
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 13615 -- 13687
+total flips: 11970 -- 11953
+(lowest~highest) score: (1~100) -- (1~57)
+T 36
+(total flippable)/(total for-loop): 0.71 --  0.52
+total candidates: 13845 -- 13912
+total flips: 12211 -- 12158
+(lowest~highest) score: (1~127) -- (1~53)
+T 37
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 13815 -- 13915
+total flips: 12156 -- 12148
+(lowest~highest) score: (1~103) -- (1~52)
+T 38
+(total flippable)/(total for-loop): 0.71 --  0.54
+total candidates: 13019 -- 13133
+total flips: 11487 -- 11489
+(lowest~highest) score: (1~83) -- (1~41)
+T 39
+(total flippable)/(total for-loop): 0.71 --  0.52
+total candidates: 13272 -- 13400
+total flips: 11714 -- 11739
+(lowest~highest) score: (1~78) -- (1~44)
+T 40
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 13660 -- 13739
+total flips: 11990 -- 12002
+(lowest~highest) score: (1~87) -- (1~55)
+T 41
+(total flippable)/(total for-loop): 0.71 --  0.52
+total candidates: 13707 -- 13823
+total flips: 12096 -- 12080
+(lowest~highest) score: (1~86) -- (1~40)
+T 42
+(total flippable)/(total for-loop): 0.71 --  0.52
+total candidates: 14473 -- 14580
+total flips: 12704 -- 12679
+(lowest~highest) score: (1~99) -- (1~50)
+T 43
+(total flippable)/(total for-loop): 0.71 --  0.53
+total candidates: 13531 -- 13683
+total flips: 11911 -- 11897
+(lowest~highest) score: (1~86) -- (1~43)
+T 44
+(total flippable)/(total for-loop): 0.71 --  0.52
+total candidates: 13915 -- 13983
+total flips: 12216 -- 12225
+(lowest~highest) score: (1~107) -- (1~73)
+T 45
+(total flippable)/(total for-loop): 0.72 --  0.53
+total candidates: 14310 -- 14388
+total flips: 12566 -- 12536
+(lowest~highest) score: (1~103) -- (1~64)
+T 46
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 13093 -- 13218
+total flips: 11598 -- 11603
+(lowest~highest) score: (1~95) -- (1~47)
+T 47
+(total flippable)/(total for-loop): 0.71 --  0.51
+total candidates: 13551 -- 13695
+total flips: 11983 -- 11962
+(lowest~highest) score: (1~128) -- (1~59)
+T 48
+(total flippable)/(total for-loop): 0.70 --  0.53
+total candidates: 15416 -- 15518
+total flips: 13518 -- 13522
+(lowest~highest) score: (1~124) -- (1~82)
+T 49
+(total flippable)/(total for-loop): 0.72 --  0.52
+total candidates: 12916 -- 12950
+total flips: 11375 -- 11379
+(lowest~highest) score: (1~87) -- (1~66)
+
+(# of rev_better_dist)/(# tris) = 33/50
+(# of rev_lower_flippable)/(# tris) = 50/50
+(# of rev_lower_highest_score)/(# tris) = 50/50
+
+Original dist: 729, New dist: 770

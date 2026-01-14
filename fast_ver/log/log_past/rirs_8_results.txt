@@ -1,0 +1,15 @@
+rirs-8000-20-8357ef0f
+(# of rev_better_dist)/(# tris) = 12/20
+(# of rev_lower_flippable)/(# tris) = 20/20
+(# of rev_lower_highest_score)/(# tris) = 19/20
+
+rirs-8000-50-b9e2ae77
+(# of rev_better_dist)/(# tris) = 35/50
+(# of rev_lower_flippable)/(# tris) = 50/50
+(# of rev_lower_highest_score)/(# tris) = 50/50
+
+rirs-8000-75-b95969e5
+(# of rev_better_dist)/(# tris) = 50/75
+(# of rev_lower_flippable)/(# tris) = 75/75
+(# of rev_lower_highest_score)/(# tris) = 75/75
+

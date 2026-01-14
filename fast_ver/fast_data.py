@@ -3,6 +3,7 @@ from fast_Triangulation import *
 import numba
 import time
 import random
+import math
 from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
 from cgshop2026_pyutils.verify import check_for_errors
 class FastData:
@@ -36,11 +37,14 @@ class FastData:
 
             self.num_tris = len(root["triangulations"])
             self.triangulations = [None] * (self.num_tris+1)
-            print("make triangulation ...:")
+            #print("make triangulation ...:")
             for i, t_data in enumerate(root["triangulations"]):
                 self.triangulations[i] = self.make_triangulation(t_data)
-                print(f"T{i}", end=' ', flush=True)
-            print(end='\n')
+                #print(f"T{i}", end=' ', flush=True)
+            #print(end='\n')
+
+            self.inst_info()
+
 
             # restore center
             min_flip_ind = np.argmin([len(x) for x in self.pFlips])
@@ -51,21 +55,64 @@ class FastData:
             self.triangulations[-1] = self.center.fast_copy()
             new_dist = 0
             new_pfp = [None]*(self.num_tris)
+            rev_better =0
+            rev_lower_flippable =0
+            rev_lower_highest_score=0
+            rev_lower_total_flip=0
             for i in range(self.num_tris):
-                #start = time.time()
-                print(f"T{i}:")
-                new_pfp1 = self.parallel_flip_path2(i, -1)
-                #print(f"T{i}: {time.time()-start:.2f}s", end=' ', flush=True)
                 start = time.time()
-                new_pfp2 = self.parallel_flip_path_rev2(-1, i)
-                print("----------")
-                #print(f"rev: {time.time()-start:.2f}s", end=' ', flush=True)
+                new_pfp1, results1 = self.parallel_flip_path2(i, -1)
+                print(f"T{i}: {time.time()-start:.2f}s", end=' ', flush=True)
+                start = time.time()
+                new_pfp2, results2 = self.parallel_flip_path_rev2(-1, i)
+                #print("----------")
+                print(f"rev: {time.time()-start:.2f}s", end=' ', flush=True)
+                print(len(new_pfp1), len(new_pfp2), end='\n')
                 if len(new_pfp1) < len(new_pfp2):
                     new_pfp[i] = new_pfp1
                 else:
                     new_pfp[i] = new_pfp2
-                    #print("rev better!")
+                    rev_better +=1
                 new_dist+=len(new_pfp[i])
+                #print("T", i)
+                #print("(path) -- (rev)")
+                #print(f" pfd: {len(new_pfp1)} -- {len(new_pfp2)}")
+                #print(f" (total flippable)/(total for-loop): {results1[0]/results1[1]:.2f} --  {results2[0]/results2[1]:.2f}")
+                #print(f" total candidates: {results1[2]} -- {results2[2]}")
+                #print(f" total flips: {results1[3]} -- {results2[3]}")
+                #print(f" (lowest~highest) score: ({results1[4]}~{results1[5]}) -- ({results2[4]}~{results2[5]})")
+
+                #mean_of_mean_score1 = sum(results1[6])/len(results1[6])
+                #mean_of_mean_score2 = sum(results2[6])/len(results2[6])
+                #mean_of_std_score1 = sum(results1[7])/len(results1[7])
+                #mean_of_std_score2 = sum(results2[7])/len(results2[7])
+                #print(f" mean of E, std path(): {mean_of_mean_score1:.2f}, {mean_of_std_score1:.2f}")
+                #print("  E(std): ", end=' ', flush=True)
+                #for nn in range(len(results1[6])):
+                #    print(f"{results1[6][nn]:.2f}({results1[7][nn]:.0f})", end=', ', flush=True)
+                #print(end='\n')
+                #print(f" mean of E, std rev(): {mean_of_mean_score2:.2f}, {mean_of_std_score2:.2f}")
+                #print("  E(std): ", end=' ', flush=True)
+                #for nn in range(len(results2[6])):
+                #    print(f"{results2[6][nn]:.2f}({results2[7][nn]:.0f})", end=', ', flush=True)
+                #print(end='\n')
+                #print()
+
+                #rev_lower_mean_score = "True" if mean_of_mean_score2 < mean_of_mean_score1 else "False"
+
+                #if (results1[0]/results1[1]) > (results2[0]/results2[1]):
+                #    rev_lower_flippable +=1
+                #if results1[-1] > results2[-1]:
+                #    rev_lower_highest_score+=1
+                #if results1[3] > results2[3]:
+                #    rev_lower_total_flip +=1
+            #print()
+            #print(f"(# of rev_better_dist)/(# tris) = {rev_better}/{self.num_tris}")
+            #print(f"(# of rev_lower_flippable)/(# tris) = {rev_lower_flippable}/{self.num_tris}")
+            #print(f"(# of rev_lower_total_flip)/(# tris) = {rev_lower_total_flip}/{self.num_tris}")
+            #print(f"(# of rev_lower_highest_score)/(# tris) = {rev_lower_highest_score}/{self.num_tris}")
+            #print(f"(rev has smaller mean of (mean_score)) = {rev_lower_mean_score}")
+            #print()
             print(f"Original dist: {self.dist}, New dist: {new_dist}")
             if new_dist<self.dist:
                 self.dist = new_dist
@@ -262,22 +309,25 @@ class FastData:
         tri_target = self.triangulations[target_idx].fast_copy()
         pfp = []
         count=1
-        prev_flip =set()
+        #prev_flip =set()
         cand_sum =0
         flip_sum = 0
         lowest_score = 1000000
         highest_score = -1000
         total_edges = 0
         total_flippable =0
+        mean_score=[]
+        std_score=[]
         while True:
             cand = []
-            edges = list(tri.edges)
+            #edges = list(tri.edges)
+            edges = list(tri.edges - tri_target.edges)
             #start= time.time()
+            prev_flip = set()
             for e in edges:
                 if e in prev_flip: continue
                 if self.flippable(tri, e):
                     total_flippable +=1
-                    #score = self.flip_score(tri, target_idx, e, 1)
                     score = self.flip_score(tri, tri_target, e, 1)
                     if score[0] >0:
                         cand.append((e, score))
@@ -291,6 +341,12 @@ class FastData:
             _, score2 = cand[-1]
             highest_score = max(score1[0], highest_score)
             lowest_score = min(score2[0], lowest_score)
+            cur_score = [s[0] for _, s in cand]
+            cur_mean = sum(cur_score)/len(cand)
+            cur_std = math.sqrt(sum([(cs-cur_mean)**2 for cs in cur_score])/len(cand))
+            mean_score.append(cur_mean)
+            std_score.append(cur_std)
+
 
             flips = []
             marked = set()
@@ -314,34 +370,40 @@ class FastData:
             count+=1
         tri2 = self.triangulations[target_idx]
         assert(tri.edges == tri2.edges)
-        print("path2:")
-        print(f"\t (total flippable)/(edges x {count}) = {total_flippable}/{len(tri.edges)*count} = {total_flippable/(len(tri.edges)*count):.2f}")
-        print(f"\t total candidates = {cand_sum}")
-        print(f"\t total flips = {flip_sum}")
-        print(f"\t lowest~highest score = {lowest_score}~{highest_score}")
-        return pfp
+        for_loop = len(tri.edges)*count
+        #print("path2:")
+        #print(f"\t (total flippable)/(edges x {count}) = {total_flippable}/{for_loop} = {total_flippable/for_loop:.2f}")
+        #print(f"\t total candidates = {cand_sum}")
+        #print(f"\t total flips = {flip_sum}")
+        #print(f"\t lowest~highest score = {lowest_score}~{highest_score}")
+        zip_result = [total_flippable, for_loop, cand_sum, flip_sum, lowest_score, highest_score, mean_score, std_score]
+        return pfp, zip_result
 
 
     def parallel_flip_path_rev2(self, start_idx, target_idx):
         tri = self.triangulations[start_idx].fast_copy()
         tri_target = self.triangulations[target_idx].fast_copy()
         rev_pfp=[]
-        prev_flip =set()
+        #prev_flip =set()
         count=1
         cand_sum =0
         flip_sum = 0
         lowest_score = 1000000
         highest_score = -1000
         total_flippable =0
+        mean_score=[]
+        std_score=[]
         while True:
             cand = []
-            edges = list(tri.edges)
+            #edges = list(tri.edges)
+            edges = list(tri.edges - tri_target.edges)
+            prev_flip2=[]
+            prev_flip =set() # 아.. while 밖에 있는게 맞긴한데... 그러면 pfp가 크게 나온다..
             for e in edges:
                 if e in prev_flip:
                     continue
                 if self.flippable(tri, e):
                     total_flippable +=1
-                    #score = self.flip_score(tri, target_idx, e, 1)#hy 0-> 1
                     score = self.flip_score(tri, tri_target, e, 1)
                     if score[0] > 0:
                         cand.append((e, score))
@@ -355,6 +417,12 @@ class FastData:
             _, score2 = cand[-1]
             highest_score = max(score1[0], highest_score)
             lowest_score = min(score2[0], lowest_score)
+            cur_score = [s[0] for _, s in cand]
+            cur_mean = sum(cur_score)/len(cand)
+            cur_std = math.sqrt(sum([(cs-cur_mean)**2 for cs in cur_score])/len(cand))
+            mean_score.append(cur_mean)
+            std_score.append(cur_std)
+
             flips = []
             marked = set()
             cand_sum +=len(cand)
@@ -370,17 +438,20 @@ class FastData:
                 p1, p3 = e
                 e1 = tri.flip(p1, p3)
                 prev_flip.add(e1)
-            rev_pfp.append(prev_flip)
+                prev_flip2.append(e1)
+            rev_pfp.append(prev_flip2)
             count+=1
         tri2 = self.triangulations[target_idx]
         assert(tri.edges == tri2.edges)
         rev_pfp.reverse()
-        print("rev2:")
-        print(f"\t (total flippable)/(edges x {count}) = {total_flippable}/{len(tri.edges)*count} = {total_flippable/(len(tri.edges)*count):.2f}")
-        print(f"\t total candidates = {cand_sum}")
-        print(f"\t total flips = {flip_sum}")
-        print(f"\t lowest~highest score = {lowest_score}~{highest_score}")
-        return rev_pfp
+        for_loop = len(tri.edges)*count
+        #print("rev2:")
+        #print(f"\t (total flippable)/(edges x {count}) = {total_flippable}/{len(tri.edges)*count} = {total_flippable/(len(tri.edges)*count):.2f}")
+        #print(f"\t total candidates = {cand_sum}")
+        #print(f"\t total flips = {flip_sum}")
+        #print(f"\t lowest~highest score = {lowest_score}~{highest_score}")
+        zip_result = [total_flippable, for_loop, cand_sum, flip_sum, lowest_score, highest_score, mean_score, std_score]
+        return rev_pfp, zip_result
 
     def pfd_distribution(self, pfd):
         pfd_set = sorted(set(pfd))
@@ -435,13 +506,14 @@ class FastData:
         all_pFlips=[]*(self.num_tris)
         for i in range(self.num_tris):
             pFlips=[]
-            pFlips_paired1 = self.parallel_flip_path2(i, -1)
+            #pFlips_paired1 = self.parallel_flip_path2(i, -1)
             pFlips_paired2 = self.parallel_flip_path_rev2(-1, i)
             pFlips_paired=[]
-            if len(pFlips_paired1) < len(pFlips_paired2):
-                pFlips_paired=pFlips_paired1
-            else:
-                pFlips_paired=pFlips_paired2
+            #if len(pFlips_paired1) < len(pFlips_paired2):
+            #    pFlips_paired=pFlips_paired1
+            #else:
+            #    pFlips_paired=pFlips_paired2
+            pFlips_paired=pFlips_paired2
             for round_ in pFlips_paired:
                 round_temp = [np.array(oneFlip).tolist() for oneFlip in round_]
                 pFlips.append(round_temp)
@@ -459,7 +531,7 @@ class FastData:
 
 
         inst["flips"] = self.pFlips
-        inst["meta"] = {"dist": sum([len(pFlip) for pFlip in self.pFlips])} # , "input": self.input}
+        inst["meta"] = {"dist": sum([len(self.pFlip) for pFlip in self.pFlips])} # , "input": self.input}
 
         path = '/Users/hyeyun/Experiment/PFD/hyeyun_git/'
         folder = "hy_solutions"
@@ -505,8 +577,8 @@ class FastData:
                         old_score = len([len(x) for x in old_flips])
 
                 if old_score>sum([len(pFlip) for pFlip in self.pFlips]): # self.dist:
-                    os.remove(opt_folder+"/"+sol)
-                    with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+                    os.remove(path+opt_folder+"/"+sol)
+                    with open(path+opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
                         json.dump(inst, f, indent='\t')
 
         if not already_exist:

@@ -434,7 +434,7 @@ class FastData:
         tri_target = self.triangulations[target_idx].fast_copy()
         pfp = []
         count=1
-        prev_flip =set()
+        #prev_flip =set()
         e2f = tri.edge_to_face
         with Pool(processes=4,
                   initializer=init_worker,
@@ -443,6 +443,7 @@ class FastData:
             while True:
                 cand = []
                 edges = list(tri.edges)
+                prev_flip =set()
                 #start= time.time()
                 target_edges = [e for e in edges if e not in prev_flip]
 
@@ -501,7 +502,7 @@ class FastData:
         tri = self.triangulations[start_idx].fast_copy()
         tri_target = self.triangulations[target_idx].fast_copy()
         rev_pfp=[]
-        prev_flip =set()
+        #prev_flip =set()
         e2f = tri.edge_to_face
         with Pool(processes=4,
                   initializer=init_worker,
@@ -510,6 +511,8 @@ class FastData:
             while True:
                 cand = []
                 edges = list(tri.edges)
+                prev_flip2=[]
+                prev_flip =set()
                 target_edges = [e for e in edges if e not in prev_flip]
 
                 te_t1=[]
@@ -552,7 +555,8 @@ class FastData:
                     p1, p3 = e
                     e1 = tri.flip(p1, p3)
                     prev_flip.add(e1)
-                rev_pfp.append(prev_flip)
+                    prev_flip2.append(e1)
+                rev_pfp.append(prev_flip2)
         tri2 = self.triangulations[target_idx]
         assert(tri.edges == tri2.edges)
         rev_pfp.reverse()

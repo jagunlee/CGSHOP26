@@ -1,7 +1,5 @@
 import json, copy, time, random
 import fast_data as fast
-import parallel_data as para
-import rirs_data as th2
 from multiprocessing import Pool
 import os
 import argparse

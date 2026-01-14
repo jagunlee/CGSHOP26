@@ -1,0 +1,10 @@
+rirs-7000-20-37c47d14
+(# of rev_better_dist)/(# tris) = 15/20
+(# of rev_lower_flippable)/(# tris) = 20/20
+(# of rev_lower_highest_score)/(# tris) = 20/20
+
+rirs-7000-75-98ec3d45
+(# of rev_better_dist)/(# tris) = 45/75
+(# of rev_lower_flippable)/(# tris) = 75/75
+(# of rev_lower_highest_score)/(# tris) = 75/75
+

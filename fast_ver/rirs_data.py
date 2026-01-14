@@ -38,7 +38,10 @@ class Data:
             self.pts = []
             for i in range(len(self.pts_y)):
                 self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
-            print(len(root["triangulations"]), ": ", end = " ")
+            self.num_pts = len(root["points_x"])
+            self.num_tris = len(root["triangulations"])
+            self.num_edges = len(root["triangulations"][0])
+            self.num_faces = self.num_edges - self.num_pts +1 # F = E-V+1
             for t in root["triangulations"]:
                 self.triangulations.append(self.make_triangulation(t))
                 print(len(self.triangulations), end=", ")
@@ -63,7 +66,12 @@ class Data:
                 self.pts.append(Point(self.pts_x[i], self.pts_y[i]))
             for t in root["triangulations"]:
                 self.triangulations.append(self.make_triangulation(t))
-            print(f"num_edges = {len(root["triangulations"][0])}")
+            self.num_pts = len(root["points_x"])
+            self.num_tris = len(root["triangulations"])
+            self.num_edges = len(root["triangulations"][0])
+            self.num_faces = self.num_edges - self.num_pts +1 # F = E-V+1
+
+            self.inst_info()
 
             min_flip_ind = np.argmin([len(x) for x in self.pFlips])
             self.center = copy.deepcopy(self.triangulations[min_flip_ind])
@@ -75,16 +83,19 @@ class Data:
             for i in range(len(self.triangulations)):
                 start = time.time()
                 new_pfp1=self.parallel_flip_path2(self.triangulations[i], self.center)
-                print(f"T{i}: {time.time()-start:.2f}s", end=' ', flush=True)
-                start = time.time()
+                #print(f"T{i}: {time.time()-start:.2f}s", end=' ', flush=True)
+                #start = time.time()
                 new_pfp2=self.parallel_flip_path_rev2(self.center, self.triangulations[i])
-                print(f"rev: {time.time()-start:.2f}s", end=' ', flush=True)
+                #print(f"rev: {time.time()-start:.2f}s", end=' ', flush=True)
                 if len(new_pfp1) < len(new_pfp2):
                     new_pfp[i] = new_pfp1
                 else:
                     new_pfp[i] = new_pfp2
-                    print("rev better!")
+                #    print("rev better!")
+                #new_pfp[i] = new_pfp2
                 new_dist+=len(new_pfp[i])
+                print(len(new_pfp[i]), end=', ', flush=True)
+            print()
             print(f"Original dist: {self.dist}, New dist: {new_dist}")
             if new_dist<self.dist:
                 self.dist = new_dist
@@ -250,16 +261,17 @@ class Data:
         tri = tri1.fast_copy()
         pfp = []
         count=1
-        prev_flip = set()
+        #prev_flip = set()
         while True:
             cand = []
             edges = list(tri.edges)
             #start = time.time()
+            prev_flip = set()
             for e in edges:
                 if e in prev_flip:
                     continue
                 if self.flippable(tri, e):
-                    score = self.flip_score(tri, tri2, e, 0)#hy 0-> 1
+                    score = self.flip_score(tri, tri2, e, 1)#hy 0-> 1
                     if score[0] > 0:
                         cand.append((e, score))
             if not cand:
@@ -295,10 +307,12 @@ class Data:
         tri = tri1.fast_copy()
         rev_pfp=[]
         pfp=[]
-        prev_flip = set()
+        #prev_flip = set()
         while True:
             cand = []
             edges = list(tri.edges)
+            prev_flip2=[]
+            prev_flip = set()
             for e in edges:
                 if e in prev_flip:
                     continue
@@ -325,11 +339,83 @@ class Data:
             for e in flips:
                 e1 = tri.flip(e)
                 prev_flip.add(e1)
-            rev_pfp.append(prev_flip)
+                prev_flip2.append(e1)
+            rev_pfp.append(prev_flip2)
             pfp.append(flips)
         assert(tri.edges == tri2.edges)
         rev_pfp.reverse()
         return rev_pfp
+
+
+    def pfd_distribution(self, pfd):
+        pfd_set = sorted(set(pfd))
+        print("______ pfd distribution ________")
+        for i, dist in enumerate(pfd_set):
+            print(f"pfd {dist:03d} ({pfd.count(dist):03d}): ", end=' ')
+            for _ in range(pfd.count(dist)):
+                print("*", end='')
+            all_indexs =[j for j in range(len(pfd)) if dist==pfd[j]]
+            print(" (T:", end='')
+            for idx in all_indexs:
+                  print(idx, end=',')
+            print(end=')\n')
+        print()
+
+    def inst_info(self):
+        print(f"_________ {self.instance_name} info ___________")
+        print(f"# of points: {len(self.pts_x)}")
+        print(f"# of triangulations: {self.num_tris}")
+        print(f"# of edges in T: {self.num_edges}")
+        print(f"# of faces in T: {self.num_faces}")
+        pfd = [len(x) for x in self.pFlips]
+        max_pfd = max(pfd)
+        max_pfd_tid = pfd.index(max_pfd)
+        min_pfd = min(pfd)
+        min_pfd_tid = pfd.index(min_pfd)
+        print(f"max pfd T_{max_pfd_tid}: {max_pfd}")
+        print(f"min pfd T_{min_pfd_tid}: {min_pfd}")
+
+
+
+
+    # Do randomly flip edges with (flip_value) weight value
+    def perturb_center3(self, flip_value, C_edges, best_dist):
+        initial_center = self.center.fast_copy()
+        flipped=0
+        edge_list=[]
+        for e in C_edges.keys():
+            if C_edges[e]==flip_value:
+                edge_list.append(e)
+            if C_edges[e]>flip_value: break
+        random.shuffle(edge_list)
+
+        for e in edge_list:
+            if self.flippable(initial_center, e):
+                initial_center.flip(e)
+                flipped+=1
+
+        if flipped==0: return flipped, [], []
+        # compute pfd sum
+        all_pFlips=[]*(self.num_tris)
+        for T in self.triangulations:
+            pFlips=[]
+            #pFlips_paired1 = self.parallel_flip_path2(i, -1)
+            pFlips_paired2 = self.parallel_flip_path_rev2(initial_center, T)
+            pFlips_paired=[]
+            #if len(pFlips_paired1) < len(pFlips_paired2):
+            #    pFlips_paired=pFlips_paired1
+            #else:
+            #    pFlips_paired=pFlips_paired2
+            pFlips_paired=pFlips_paired2
+            for round_ in pFlips_paired:
+                round_temp = [np.array(oneFlip).tolist() for oneFlip in round_]
+                pFlips.append(round_temp)
+            all_pFlips.append(pFlips)
+        pfd = [len(f) for f in all_pFlips]
+        if sum(pfd) <= best_dist:
+            return flipped, pfd, all_pFlips
+        return flipped, pfd, []
+
 
 
     def flippable(self, tri:Triangulation, e:tuple):
@@ -475,14 +561,15 @@ class Data:
         inst["flips"] = self.pFlips
         inst["meta"] = {"dist": sum([len(pFlip) for pFlip in self.pFlips])} # , "input": self.input}
 
+        path = '/Users/hyeyun/Experiment/PFD/hyeyun_git/'
         folder = "hy_solutions"
-        with open(folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+        with open(path+folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
             json.dump(inst, f, indent='\t')
 
         #verify
-        f = open(self.input, "r", encoding="utf-8")
-        root = json.load(f)
-        f.close()
+        org_input = '/Users/hyeyun/Experiment/PFD/hyeyun_git/data/benchmark_instances/'+self.instance_name+'.json'
+        with open(org_input, "r", encoding="utf-8") as f:
+            root=json.load(f)
 
         instance = CGSHOP2026Instance(
             instance_uid=self.instance_uid,
@@ -509,7 +596,7 @@ class Data:
             if self.instance_uid+".solution.json" in sol:
                 already_exist = True
 
-                with open(opt_folder+"/"+sol, "r", encoding="utf-8") as ff:
+                with open(path+opt_folder+"/"+sol, "r", encoding="utf-8") as ff:
                     root = json.load(ff)
                     try:
                         old_score = root["meta"]["dist"]
@@ -518,12 +605,12 @@ class Data:
                         old_score = len([len(x) for x in old_flips])
 
                 if old_score>sum([len(pFlip) for pFlip in self.pFlips]): # self.dist:
-                    os.remove(opt_folder+"/"+sol)
-                    with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+                    os.remove(path+opt_folder+"/"+sol)
+                    with open(path+opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
                         json.dump(inst, f, indent='\t')
 
         if not already_exist:
-            with open(opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+            with open(path+opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
                 json.dump(inst, f, indent='\t')
 
     def computeDistanceSum(self, centerT):

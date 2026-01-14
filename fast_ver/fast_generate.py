@@ -13,7 +13,7 @@ def get_parser():
 def Edge_weight1(dt):
     C_edges = dict.fromkeys(dt.center.edges,0)
     for E in C_edges.keys():
-        for T in dt.triangulations:
+        for T in dt.triangulations[:-1]:
             if E in T.edges: C_edges[E]+=1
     # ascending order
     C_edges = dict(sorted(C_edges.items(), key=lambda item: item[1]))
@@ -24,6 +24,19 @@ def Edge_weight2(dt):
     list_E = list(dt.center.edges)
     random.shuffle(list_E)
     C_edges = dict.fromkeys(list_E,0)
+    return C_edges
+
+def Edge_weight3(dt): # crossing 수
+    C_edges = dict.fromkeys(dt.center.edges,0)
+    center = dt.triangulations[-1].fast_copy()
+    for E in C_edges.keys():
+        if dt.flippable(center, E):
+            for T in dt.triangulations[:-1]:
+                score = dt.flip_score(center, T, E, 1)
+                if score[0]>0:
+                    C_edges[E] += score[0]
+
+    C_edges = dict(sorted(C_edges.items(), key=lambda item: item[1]))
     return C_edges
 
 
@@ -45,12 +58,14 @@ if __name__ == '__main__':
 
 
     # C edges weight
-    C_edges = Edge_weight1(dt)
-    #C_edges = Edge_weight2(dt)
+    C_edges = Edge_weight3(dt)
 
     best_flips = dt.pFlips
     past = pfd
-    for value in range(len(dt.triangulations)):
+    #for value in range(len(dt.triangulations)-1):
+    values = set(C_edges.values())
+    for value in values:
+        print(value)
         flipped, pfd, pFlips = dt.perturb_center3(value, C_edges, best_dist)
         if flipped==0: continue
         new_dist = sum(pfd)
