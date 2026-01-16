@@ -1368,6 +1368,8 @@ class FastData:
         self.pFlips=[]
         for i in range(num):
             if i< num-1:
+                if mtriangulations[i].edges != mtriangulations[i+1].edges:
+                    print("!!!!!", i, i+1)
                 assert(mtriangulations[i].edges == mtriangulations[i+1].edges)
             self.pFlips.append(pfps[i])
         return mtriangulations[0]
@@ -1453,8 +1455,7 @@ class FastData:
         len_flips = [len(pFlip) for pFlip in self.pFlips]
         max_dist = max(len_flips)
         total_dist = sum(len_flips)
-        print("max_dist*2 = ", max_dist*2)
-        print("-----param: ",end = ' ', flush=True)
+        print("param: ",end = ' ', flush=True)
         while param < max_dist *2:
             print(param, end=' ', flush=True)
             revnum = [min(param, len(pFlip)) for pFlip in self.pFlips]
@@ -1491,9 +1492,8 @@ class FastData:
             new_dist = sum(new_pfp)
             if total_dist != new_dist:
                 print()
-                print("new_dist = ", new_pfp)
                 self.dist = new_dist
-                print("------------dist update, newly count:", total_dist, new_dist)
+                print("-----dist update, newly count:", total_dist, new_dist)
                 print()
                 break
             param +=1
