@@ -1,12 +1,600 @@
 import json, os
+#from multiprocessing import Process, Pool
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import functools
 from fast_Triangulation import *
 import numba
+from numba.typed import Dict, List
+from numba import types as typ
 import time
 import random
 import math
 from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
 from cgshop2026_pyutils.verify import check_for_errors
 import copy
+
+def init_worker(tri_data, center_data, pfp, pts):
+    global gb_tris, gb_center, gb_pFlips, gb_pts_coor
+    gb_tris = tri_data
+    gb_center = center_data
+    gb_pFlips = pfp
+    gb_pts_coor = pts
+
+
+def process_(tri_num):
+    tri_obj = gb_tris[tri_num]
+    local_T = gb_tris[tri_num].fast_copy()
+    center = gb_center.fast_copy()
+
+    seq = gb_pFlips[tri_num]
+    for e in seq[0]:
+        local_T.flip(e[0], e[1])
+    updated_pFlips=seq
+    for seq_iter in range(1, len(seq)):
+        seq1 = _computePFS_total(tri_obj, local_T)
+        seq2 = _computePFS_total(local_T, center)
+        if (len(seq1) + len(seq2)) <= len(updated_pFlips):
+            updated_pFlips = seq1 + seq2
+        for e in seq[seq_iter]:
+            local_T.flip(e[0], e[1])
+    return tri_num, updated_pFlips
+
+def _computePFS_total(T1, T2):
+    pts = gb_pts_coor
+
+    t1 = T1.fast_copy()
+    t2 = T2.fast_copy()
+    e2f=  process_typed_dict(t1.edge_to_face)
+    tg_e2f = process_typed_dict(t2.edge_to_face)
+    reverse=False
+    pFlips_paired1 = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
+                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
+
+
+    t1 = T1.fast_copy()
+    t2 = T2.fast_copy()
+    e2f=  process_typed_dict(t1.edge_to_face)
+    tg_e2f = process_typed_dict(t2.edge_to_face)
+    reverse=False
+    pFlips_paired2 = _parallel_flip_path2(t1.face_pts, t1.face_nei, e2f, t1.adj,
+                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 0, reverse)
+
+
+    t1 = T1.fast_copy()
+    t2 = T2.fast_copy()
+    e2f=  process_typed_dict(t1.edge_to_face)
+    tg_e2f = process_typed_dict(t2.edge_to_face)
+    reverse=False
+    pFlips_paired3 = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
+                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
+
+    #reverse
+    t1 = T2.fast_copy()
+    t2 = T1.fast_copy()
+    e2f=  process_typed_dict(t1.edge_to_face)
+    tg_e2f = process_typed_dict(t2.edge_to_face)
+    reverse=True
+    tmp = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
+                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
+    pFlips_paired11 = tmp[::-1]
+
+    #reverse
+    t1 = T2.fast_copy()
+    t2 = T1.fast_copy()
+    e2f=  process_typed_dict(t1.edge_to_face)
+    tg_e2f = process_typed_dict(t2.edge_to_face)
+    reverse=True
+    tmp = _parallel_flip_path2(t1.face_pts, t1.face_nei, e2f, t1.adj,
+                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 0, reverse)
+    pFlips_paired21 = tmp[::-1]
+
+    #reverse
+    t1 = T2.fast_copy()
+    t2 = T1.fast_copy()
+    e2f=  process_typed_dict(t1.edge_to_face)
+    tg_e2f = process_typed_dict(t2.edge_to_face)
+    reverse=True
+    tmp = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
+                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
+    pFlips_paired31 = tmp[::-1]
+
+
+    path_list = [pFlips_paired1, pFlips_paired2, pFlips_paired3,pFlips_paired11,pFlips_paired21, pFlips_paired31]
+
+    opt_ind = np.argmin([len(x) for x in path_list])
+    pFlips_paired = path_list[opt_ind]
+    prev_pFlips_i=[]
+    for round_ in pFlips_paired:
+        round_temp=[]
+        for oneFlip in round_:
+            round_temp.append(list(oneFlip))
+        prev_pFlips_i.append(round_temp)
+    return prev_pFlips_i
+
+def process_typed_dict(data):
+    result_dict = Dict.empty(typ.int64, typ.int64)
+    for key, value in data.items():
+        result_dict[key] = value
+    return result_dict
+
+@numba.njit
+def _flip(p1, p2, f_pts, f_nei, e2f, adj):
+    # flip (p1,p2) -> new edge (p3, p4)
+    key12 = (p1 << 32) | (p2)
+    key21 = (p2 << 32) | (p1)
+    t1 = e2f[key12]
+    t2 = e2f[key21]
+
+    row1 = f_pts[t1]
+    if row1[0] == p2: i=0
+    elif row1[1] == p2: i=1
+    else: i=2
+    p3 = int(row1[(i+1)%3])
+
+    row2 = f_pts[t2]
+    if row2[0] == p1: j=0
+    elif row2[1] == p1: j=1
+    else: j=2
+    p4 = int(row2[(j+1)%3])
+
+    # t1 측 이웃들
+    n_p2p3 = f_nei[t1, i] # == tt2
+    n_p3p1 = f_nei[t1, (i+1)%3]
+
+    # t2측 이웃들
+    m_p1p4 = f_nei[t2, j] # == tt1
+    m_p4p2 = f_nei[t2, (j+1)%3]
+
+
+    # 삼각형 정점 정보 업데이트 (새로운 간선 p3-p4 기준 CCW 정렬)
+    f_pts[t1,i] = np.int32(p4)
+    f_pts[t2,j] = np.int32(p3)
+
+    # 삼각형 이웃 정보 업데이트
+    f_nei[t1, i] = np.int32(t2)
+    f_nei[t1, (i+2)%3] = m_p1p4
+    f_nei[t2, j] = np.int32(t1)
+    f_nei[t2, (j+2)%3] = n_p2p3
+
+
+    if m_p1p4 != -1:
+        row = f_pts[m_p1p4]
+        if row[0]==p4: ii=0
+        elif row[1]==p4: ii=1
+        else: ii=2
+        f_nei[m_p1p4, ii] = np.int32(t1)
+
+    if n_p2p3 != -1:
+        row = f_pts[n_p2p3]
+        if row[0]==p3: jj=0
+        elif row[1]==p3: jj=1
+        else: jj=2
+        f_nei[n_p2p3, jj] = np.int32(t2)
+
+    before = len(e2f)
+    del e2f[key12]
+    del e2f[key21]
+
+    e2f[(p1 << 32) | p4] = t1
+    e2f[(p4 << 32) | p3] = t1
+    e2f[(p2 << 32) | p3] = t2
+    e2f[(p3 << 32) | p4] = t2
+
+    e1 = (min(p3, p4), max(p3, p4))
+    #edges.add(e1)
+    #if (min(p1, p2), max(p1, p2)) in edges:
+    #    edges.discard((min(p1, p2), max(p1, p2)))
+    adj[p1] = np.int32(p3)
+    adj[p2] = np.int32(p3)
+
+    #assert(before == len(e2f))
+    return e1
+
+
+@numba.njit
+def _flippable_fast(e, p2, p4, pts_coor):
+    p1, p3 = e
+
+    q1, q2, q3, q4 = pts_coor[p1], pts_coor[p2], pts_coor[p3], pts_coor[p4]
+    turn_val1= (q3[0]-q2[0])*(q4[1]-q2[1]) - (q3[1]-q2[1])*(q4[0]-q2[0])
+    if turn_val1<=0: return False
+    turn_val2= (q1[0]-q2[0])*(q4[1]-q2[1]) - (q1[1]-q2[1])*(q4[0]-q2[0])
+    return turn_val2 < 0
+
+
+
+@numba.njit
+def _numba_count_cross_fast(f_pts, f_nei, q1, q2, t, pts_coor):
+    row = f_pts[t]
+    i=0
+    if row[0] == q1: i=0
+    elif row[1] == q1: i=1
+    else: i=2
+
+    idx_next = (i+1)%3
+    tt = f_nei[t, idx_next]
+    tmp = f_pts[t, idx_next] # == t.pt(i+1)
+    row_tt = f_pts[tt]
+    j=0
+    if row_tt[0] == tmp: j=0
+    elif row_tt[1] == tmp: j=1
+    else: j=2
+
+    p_q1 = pts_coor[q1]
+    p_q2 = pts_coor[q2]
+
+    cnt = 1
+    A = p_q2[0]-p_q1[0]
+    B = p_q2[1]-p_q1[1]
+    while True:
+        if row_tt[(j+1)%3] == q2:break
+        cnt +=1
+        t, i = tt, j
+        idx_next = (i+1)%3
+
+        tmp = f_pts[t, idx_next]
+        p_tmp = pts_coor[tmp]
+        turn_val= A*(p_tmp[1]-p_q1[1]) - B*(p_tmp[0]-p_q1[0])
+        if turn_val <0:
+            tt = f_nei[t, idx_next]
+            row_tt = f_pts[tt]
+            j=0
+            if row_tt[0] == tmp: j=0
+            elif row_tt[1] == tmp: j=1
+            else: j=2
+        else:
+            tt = f_nei[t, i%3]
+            tmp = f_pts[t, i]
+            row_tt = f_pts[tt]
+            j=0
+            if row_tt[0] == tmp: j=0
+            elif row_tt[1] == tmp: j=1
+            else: j=2
+    return cnt
+
+
+@numba.njit
+def _find_t_c_fast(f_pts, f_nei, t, con, pts_coor):
+    q1, q2 = con
+
+    r1 = pts_coor[q1]
+    r4 = pts_coor[q2]
+    A = (r4[1]-r1[1])
+    B = (r4[0]-r1[0])
+    while True:
+        row = f_pts[t]
+        i=0
+        if row[0] == q1: i=0
+        elif row[1] == q1: i=1
+        else: i=2
+        r2 = pts_coor[row[(i+1)%3]]
+        r3 = pts_coor[row[(i+2)%3]]
+
+        turn_val1= (r2[0]-r1[0])*A - (r2[1]-r1[1])*B
+        turn_val2= (r3[0]-r1[0])*A - (r3[1]-r1[1])*B
+        if turn_val1 < 0:
+            t = f_nei[t, i]
+        elif turn_val2 >0:
+            t = f_nei[t, (i+2)%3]
+        else:
+            return t #face_idx
+
+#def _flip_score_fast(e, p2, p4, tri_target, depth):
+@numba.njit
+def _flip_score_fast(e, p2, p4, tg_f_pts, tg_f_nei, tg_e2f, tg_adj, depth, pts_coor):
+    p1, p3 = e
+
+    ### find_triangle_containing() ###
+    e2f = tg_e2f
+    f_pts = tg_f_pts
+    f_nei = tg_f_nei
+    adj = tg_adj
+
+    key13 = (p1 << 32) | p3
+    key31 = (p3 << 32) | p1
+
+    if key13 in e2f or key31 in e2f:
+        t1=-1
+    else:
+        p = int(adj[p1])
+        key_a = (p1 << 32) | p
+        key_b = (p << 32) | p1
+
+        if key_a in e2f:
+            t = e2f[key_a]
+            t1 = _find_t_c_fast(f_pts, f_nei, t, (p1, p3), pts_coor)
+        elif key_b in e2f:
+            t = e2f[key_b]
+            t1 = _find_t_c_fast(f_pts, f_nei, t, (p1, p3), pts_coor)
+        else:
+            t1 = -1
+    #################################
+
+    ori_cross=0
+    new_cross=0
+
+    #if t1 is None:
+    if t1 == -1:
+        ori_cross=0
+    else:
+        ori_cross = _numba_count_cross_fast(f_pts, f_nei, p1,p3,t1, pts_coor)
+    if depth==0: return (ori_cross, 0)
+
+
+    key24 = (p2 << 32) | p4
+    key42 = (p4 << 32) | p2
+    if key24 in e2f or key42 in e2f:
+        t2=-1
+    else:
+        p = int(adj[p2])
+        key_a = (p2 << 32) | p
+        key_b = (p << 32) | p2
+
+        if key_a in e2f:
+            t = e2f[key_a]
+            t2 = _find_t_c_fast(f_pts, f_nei, t, (p2, p4), pts_coor)
+        elif key_b in e2f:
+            t = e2f[key_b]
+            t2 = _find_t_c_fast(f_pts, f_nei, t, (p2, p4), pts_coor)
+        else:
+            t2 = -1
+
+    #if t2 is None:
+    if t2 == -1:
+        new_cross=0
+    else:
+        new_cross = _numba_count_cross_fast(f_pts, f_nei, p2,p4,t2, pts_coor)
+    n_cross = ori_cross - new_cross
+    m_score = (n_cross, depth)
+    if depth==1:
+        return m_score
+
+
+#@numba.njit
+def _error_parallel_flip_path(f_pts, f_nei, e2f, adj, tg_f_pts, tg_f_nei, tg_e2f, tg_adj, pts_coor, depth, reverse):
+    pfp = List()
+    pfp.append(List([(1,2)]))
+    pfp.pop(0)
+    num_pts = len(pts_coor)
+    all_keys = np.array(list(e2f.keys()), dtype=np.int64)
+    all_keys.sort()
+    visited = np.zeros(len(all_keys), dtype=np.bool_)
+    while True:
+        cand = List()
+        cand.append((1.0,(1,2)))
+        cand.pop(0)
+        for E_key in e2f.keys():
+            q1, q3 = int(E_key>>32), int(E_key & 0xFFFFFFFF)
+            e = (min(q1, q3), max(q1, q3))
+            key13 = (q1<<32)|q3
+            key31 = (q3<<32)|q1
+            if key13 not in e2f or key31 not in e2f: continue
+
+            idx = np.searchsorted(all_keys, key13)
+            if idx < len(all_keys) and all_keys[idx]==key13:
+                if visited[idx]: continue
+            idx = np.searchsorted(all_keys, key31)
+            if idx < len(all_keys) and all_keys[idx]==key31:
+                if visited[idx]: continue
+                else: visited[idx]=True
+
+
+            t1 = e2f[key13]
+            t2 = e2f[key31]
+
+            row1 = f_pts[t1]
+            if row1[0] == q3: i=0
+            elif row1[1] == q3: i=1
+            else: i=2
+            row2 = f_pts[t2]
+            if row2[0] == q1: j=0
+            elif row2[1] == q1: j=1
+            else: j=2
+            p4 = int(row1[(i+1)%3])
+            p2 = int(row2[(j+1)%3])
+            if _flippable_fast(e, p2, p4, pts_coor):
+                score, _ = _flip_score_fast(e, p2, p4, tg_f_pts, tg_f_nei, tg_e2f, tg_adj, depth, pts_coor)
+                if score >0:
+                    cand.append((score, e))
+                    idx = np.searchsorted(all_keys, key13)
+                    if idx < len(all_keys) and all_keys[idx]==key13:
+                        visited[idx] = True
+                    idx = np.searchsorted(all_keys, key31)
+                    if idx < len(all_keys) and all_keys[idx]==key13:
+                        visited[idx] = True
+        if len(cand)==0:
+            break
+        cand.sort()
+        flips = List()
+        flips.append((1,2))
+        flips.pop(0)
+        marked = set()
+        for ci in range(len(cand)-1, -1, -1):
+            _, E = cand[ci]
+            p1, p2 = E
+            #find_face
+            key12 = (p1<<32)|p2
+            key21 = (p2<<32)|p1
+            t1 = e2f[key12]
+            t2 = e2f[key21]
+            if t1 in marked or t2 in marked: continue
+            flips.append((p1, p2))
+            marked.add(t1)
+            marked.add(t2)
+
+        flips_reverse = List()
+        flips_reverse.append((1,2))
+        flips_reverse.pop(0)
+        for e in flips:
+            p1, p2 = e
+            e1 = _flip(p1, p2, f_pts, f_nei, e2f, adj)
+            if reverse:
+                flips_reverse.append(e1)
+        all_keys = np.array(list(e2f.keys()), dtype=np.int64)
+        all_keys.sort()
+        visited = np.zeros(len(all_keys), dtype=np.bool_)
+        if reverse:
+            pfp.append(flips_reverse)
+        else:
+            pfp.append(flips)
+    return pfp
+
+
+@numba.njit
+def _parallel_flip_path(f_pts, f_nei, e2f, adj, tg_f_pts, tg_f_nei, tg_e2f, tg_adj, pts_coor, depth, reverse):
+    pfp = List()
+    pfp.append(List([(1,2)]))
+    pfp.pop(0)
+    while True:
+        cand = List()
+        cand.append((1.0,(1,2)))
+        cand.pop(0)
+        for E_key, _ in e2f.items():
+            q1, q3 = E_key>>32, E_key & 0xFFFFFFFF
+            e = (q1, q3)
+            key13 = (q1<<32)|q3
+            key31 = (q3<<32)|q1
+            if key13 not in e2f or key31 not in e2f: continue
+            t1 = e2f[key13]
+            t2 = e2f[key31]
+
+            row1 = f_pts[t1]
+            if row1[0] == q3: i=0
+            elif row1[1] == q3: i=1
+            else: i=2
+            row2 = f_pts[t2]
+            if row2[0] == q1: j=0
+            elif row2[1] == q1: j=1
+            else: j=2
+            p4 = int(row1[(i+1)%3])
+            p2 = int(row2[(j+1)%3])
+            if _flippable_fast(e, p2, p4, pts_coor):
+                score, _ = _flip_score_fast(e, p2, p4, tg_f_pts, tg_f_nei, tg_e2f, tg_adj, depth, pts_coor)
+                if score >0:
+                    cand.append((score, e))
+        if len(cand)==0:
+            break
+        cand.sort()
+        flips = List()
+        flips.append((1,2))
+        flips.pop(0)
+        marked = set()
+        for ci in range(len(cand)-1, -1, -1):
+            _, E = cand[ci]
+            p1, p2 = E
+            #find_face
+            key12 = (p1<<32)|p2
+            key21 = (p2<<32)|p1
+            t1 = e2f[key12]
+            t2 = e2f[key21]
+            if t1 in marked or t2 in marked: continue
+            flips.append((p1, p2))
+            marked.add(t1)
+            marked.add(t2)
+        flips_reverse = List()
+        flips_reverse.append((1,2))
+        flips_reverse.pop(0)
+        for e in flips:
+            p1, p2 = e
+            e1 = _flip(p1, p2, f_pts, f_nei, e2f, adj)
+            if reverse:
+                flips_reverse.append(e1)
+        if reverse:
+            pfp.append(flips_reverse)
+        else:
+            pfp.append(flips)
+    return pfp
+
+
+@numba.njit
+def _parallel_flip_path2(f_pts, f_nei, e2f, adj, tg_f_pts, tg_f_nei, tg_e2f, tg_adj, pts_coor, depth, reverse):
+    pfp = List()
+    pfp.append(List([(1,2)]))
+    pfp.pop(0)
+
+    prev_flip = List()
+    prev_flip.append((1,2))
+    prev_flip.pop(0)
+
+    while True:
+        cand = List()
+        cand.append((1.0,(1,2)))
+        cand.pop(0)
+        for E_key, _ in e2f.items():
+            q1, q3 = E_key>>32, E_key & 0xFFFFFFFF
+            e = (q1, q3)
+            if e in prev_flip: continue
+            q1, q3 = e
+            key13 = (q1<<32)|q3
+            key31 = (q3<<32)|q1
+            if key13 not in e2f or key31 not in e2f: continue
+            t1 = e2f[key13]
+            t2 = e2f[key31]
+
+            row1 = f_pts[t1]
+            if row1[0] == q3: i=0
+            elif row1[1] == q3: i=1
+            else: i=2
+            row2 = f_pts[t2]
+            if row2[0] == q1: j=0
+            elif row2[1] == q1: j=1
+            else: j=2
+            p4 = int(row1[(i+1)%3])
+            p2 = int(row2[(j+1)%3])
+            if _flippable_fast(e, p2, p4, pts_coor):
+                score, _ = _flip_score_fast(e, p2, p4, tg_f_pts, tg_f_nei, tg_e2f, tg_adj, depth, pts_coor)
+                if score >0:
+                    cand.append((score, e))
+        if len(cand)==0:
+            if len(prev_flip)!=0:
+                prev_flip=List()
+                prev_flip.append((1,2))
+                prev_flip.pop(0)
+                continue
+            else:
+                break
+        cand.sort()
+        flips = List()
+        flips.append((1,2))
+        flips.pop(0)
+        marked = set()
+        for ci in range(len(cand)-1, -1, -1):
+            _, E = cand[ci]
+            p1, p2 = E
+            #find_face
+            key12 = (p1<<32)|p2
+            key21 = (p2<<32)|p1
+            t1 = e2f[key12]
+            t2 = e2f[key21]
+            if t1 in marked or t2 in marked: continue
+            flips.append((p1, p2))
+            marked.add(t1)
+            marked.add(t2)
+        flips_reverse = List()
+        flips_reverse.append((1,2))
+        flips_reverse.pop(0)
+        for e in flips:
+            p1, p2 = e
+            e1 = _flip(p1, p2, f_pts, f_nei, e2f, adj)
+            prev_flip.append(e1)
+            if reverse:
+                flips_reverse.append(e1)
+        if reverse:
+            pfp.append(flips_reverse)
+        else:
+            pfp.append(flips)
+    return pfp
+
+
+def pool_computePFS_total(self, tri1, tri2):
+    T1 = tri1.fast_copy()
+    T2 = tri2.fast_copy()
+    pool = Pool(processes=2)
+    t1t2=(T1,T2)
+    pFlips_paired1 = pool.apply_async(self.parallel_flip_path, t1t2)
+    pFlips_paired11 = pool.apply_async(self.parallel_flip_path_reverse, t1t2)
+
+
 class FastData:
     def __init__(self, inp=''):
         if not inp:
@@ -44,15 +632,21 @@ class FastData:
             for i, t_data in enumerate(root["triangulations"]):
                 self.triangulations[i] = self.make_triangulation(t_data)
 
-            self.inst_info()
 
             # restore center
             min_flip_ind = np.argmin([len(x) for x in self.pFlips])
-            #self.center = self.triangulations[min_flip_ind].fast_copy()
-            self.center = self.make_triangulation(root["triangulations"][min_flip_ind])
-            for flip_seq in self.pFlips[min_flip_ind]:
-                for flp in flip_seq:
-                    self.center.flip(flp[0], flp[1])
+            #self.center = self.make_triangulation(root["triangulations"][min_flip_ind])
+            #for flip_seq in self.pFlips[min_flip_ind]:
+            #    for flp in flip_seq:
+            #        self.center.flip(flp[0], flp[1])
+            print("center just from one of the T!!!!!")
+            max_flip_ind = np.argmax([len(x) for x in self.pFlips])
+            self.center = self.triangulations[min_flip_ind].fast_copy()
+            for i in range(len(self.triangulations)):
+                self.pFlips[i] = self.parallel_flip_path(self.triangulations[i], self.center)
+            self.dist = sum([len(x) for x in self.pFlips])
+            self.inst_info()
+
 
     def make_triangulation(self, t_data):
         num_pts = self.num_pts
@@ -105,13 +699,13 @@ class FastData:
                         f_pts[face_idx] = pts
                         face_pts = pts
                         for l in range(3):
-                            p1 = face_pts[l]
-                            p2 = face_pts[(l+1)%3]
-                            key12 = (np.int64(p1)<<32)|np.int64(p2)
+                            p1 = int(face_pts[l])
+                            p2 = int(face_pts[(l+1)%3])
+                            key12 = ((p1)<<32)|(p2)
                             # save edge_to_face
                             e2f[key12] = face_idx
 
-                            key21 = (np.int64(p2)<<32)|np.int64(p1)
+                            key21 = ((p2)<<32)|(p1)
                             share_face_idx = e2f.get(key21)
                             if share_face_idx is not None:
                                 tpt = f_pts[face_idx][(l+1)%3]
@@ -241,67 +835,16 @@ class FastData:
         tri.flip(p2, p4)
         return m_score
 
-    def faster_parallel_flip_path(self, tri1, tri2):
-        tri = tri1.fast_copy()
-        tri_target = tri2.fast_copy()
-        pfp = []
-        #test
-        candidate = dict()
-        update_edge = tri.edges
-        while True:
-            for e in update_edge:
-                if self.flippable(tri, e):
-                    score, _ = self.flip_score(tri, tri_target, e, 1)
-                    if score>0:
-                        candidate[e] = score
-            if len(candidate)==0:
-                break
-            cand = sorted(candidate.items(), key=lambda item:item[1])
-            flips = []
-            marked = set()
-            update_edge = set()
-            #for (p1, p2), _ in cand:
-            for ci in range(len(cand)-1, -1, -1):
-                (p1, p2), _ = cand[ci]
-                t1 = tri.find_face(p1, p2)
-                t2 = tri.find_face(p2, p1)
-                if t1 in marked or t2 in marked: continue
-                flips.append((p1, p2))
-                marked.add(t1)
-                marked.add(t2)
-                triangle = tri.face_pts[t1]
-                for l in range(3):
-                    l1, l2 = int(triangle[l%3]), int(triangle[(l+1)%3])
-                    te = (min(l1, l2), max(l1,l2))
-                    update_edge.add(te)
-                triangle = tri.face_pts[t2]
-                for l in range(3):
-                    l1, l2 = int(triangle[l%3]), int(triangle[(l+1)%3])
-                    if l1==p1 and l2==p2:continue
-                    if l1==p2 and l2==p1:continue
-                    te = (min(l1, l2), max(l1,l2))
-                    update_edge.add(te)
-            for e in flips:
-                p1, p2 = e
-                e1 = tri.flip(p1, p2)
-                update_edge.add(e1)
-            #print("need update score edge/total edge = ", len(update_edge), "/", len(tri.edges))
-
-            # flip edge 정보로 cand, candidate 수정하기
-            for e in flips:
-                del candidate[e]
-            # update cand
-            cand = [(k, v) for k, v in candidate.items()]
-            pfp.append(flips)
-        assert(tri.edges == tri_target.edges)
-        return pfp
 
     def parallel_flip_path(self, tri1, tri2):
         tri = tri1.fast_copy()
         tri_target = tri2.fast_copy()
         pfp = []
+
         while True:
             cand = []
+            #edges = list(tri.edges)
+            prev_flip = set()
             for e in tri.edges:
                 if self.flippable(tri, e):
                     score = self.flip_score(tri, tri_target, e, 1)
@@ -322,6 +865,7 @@ class FastData:
             for e in flips:
                 p1, p2 = e
                 tri.flip(p1, p2)
+
             pfp.append(flips)
         assert(tri.edges == tri_target.edges)
         return pfp
@@ -337,7 +881,8 @@ class FastData:
                     score = self.flip_score(tri, tri1, e, 1)
                     if score[0] > 0:
                         cand.append((e, score))
-            if not cand: break
+            if not cand:
+                break
             cand.sort(key=lambda x: x[1],reverse=True)
             flips = []
             marked = set()
@@ -377,7 +922,8 @@ class FastData:
                 if prev_flip:
                     prev_flip=set()
                     continue
-                else: break
+                else:
+                    break
             cand.sort(key=lambda x: x[1], reverse=True)
             if step>100:
                 print(cand)
@@ -401,8 +947,6 @@ class FastData:
 
 
     def parallel_flip_path2_reverse(self, tri1, tri2):
-        #tri = tri1.fast_copy()
-        #tri_target = tri2.fast_copy()
         tri = tri2.fast_copy()
         pfp=[]
         step=0
@@ -414,7 +958,6 @@ class FastData:
             for e in tri.edges:
                 if e in prev_flip: continue
                 if self.flippable(tri, e):
-                    #score = self.flip_score(tri, tri_target, e, 0)
                     score = self.flip_score(tri, tri1, e, 0)
                     if score[0] > 0:
                         cand.append((e, score))
@@ -422,7 +965,8 @@ class FastData:
                 if prev_flip:
                     prev_flip=[]
                     continue
-                else: break
+                else:
+                    break
             cand.sort(key=lambda x: x[1],reverse=True)
             if step>100:
                 print("in rev2:", cand)
@@ -464,7 +1008,8 @@ class FastData:
                     score = self.flip_score(tri, tri_target, e, 1)
                     if score[0] >0:
                         cand.append((e, score))
-            if not cand:break
+            if not cand:
+                break
             cand.sort(key=lambda x: x[1], reverse=True)
             flips = []
             marked = set()
@@ -483,8 +1028,6 @@ class FastData:
         return pfp
 
     def parallel_flip_path3_reverse(self, tri1, tri2):
-        #tri = tri1.fast_copy()
-        #tri_target = tri2.fast_copy()
         tri = tri2.fast_copy()
         pfp = []
         step=0
@@ -499,7 +1042,8 @@ class FastData:
                     score = self.flip_score(tri, tri1, e, 1)
                     if score[0] >0:
                         cand.append((e, score))
-            if not cand:break
+            if not cand:
+                break
             cand.sort(key=lambda x: x[1], reverse=True)
             flips = []
             marked = set()
@@ -520,38 +1064,24 @@ class FastData:
         assert(tri.edges == tri1.edges)
         return pfp[::-1]
 
-
-    def computePFS_total(self, tri1, tri2, tri_num):
+    def pool_computePFS_total(self, tri1, tri2):
         T1 = tri1.fast_copy()
         T2 = tri2.fast_copy()
+        pool = Pool(processes=2)
+        t1t2=(T1,T2)
+        pFlips_paired1 = pool.apply_async(self.parallel_flip_path, t1t2)
+        pFlips_paired11 = pool.apply_async(self.parallel_flip_path_reverse, t1t2)
 
-        start=time.time()
-        pFlips_paired1 = self.parallel_flip_path(T1, T2)
-        #print(f"1 takes {time.time()-start:.2f}s")
-        start=time.time()
-        pFlips_paired11 = self.parallel_flip_path_reverse(T1, T2)
-        #print(f"2 takes {time.time()-start:.2f}s")
-        start=time.time()
+        pFlips_paired2 = pool.apply_async(self.parallel_flip_path2, t1t2)
+        pFlips_paired21 = pool.apply_async(self.parallel_flip_path2_reverse, t1t2)
 
-        pFlips_paired2 = self.parallel_flip_path2(T1, T2)
-        #print(f"3 takes {time.time()-start:.2f}s")
-        start=time.time()
-        pFlips_paired21 = self.parallel_flip_path2_reverse(T1, T2)
-        #print(f"4 takes {time.time()-start:.2f}s")
-        start=time.time()
+        pFlips_paired3 = pool.apply_async(self.parallel_flip_path3, t1t2)
+        pFlips_paired31 = pool.apply_async(self.parallel_flip_path3_reverse, t1t2)
 
-        pFlips_paired3 = self.parallel_flip_path3(T1, T2)
-        #print(f"5 takes {time.time()-start:.2f}s")
-        start=time.time()
-        pFlips_paired31 = self.parallel_flip_path3_reverse(T1, T2)
-        #print(f"6 takes {time.time()-start:.2f}s")
-        start=time.time()
-
-
-        path_list = [pFlips_paired1,pFlips_paired2,pFlips_paired3,pFlips_paired11,pFlips_paired21,pFlips_paired31]
+        path_list = [pFlips_paired1.get(),pFlips_paired2.get(),pFlips_paired3.get(),
+                     pFlips_paired11.get(),pFlips_paired21.get(),pFlips_paired31.get()]
         opt_ind = np.argmin([len(x) for x in path_list])
         pFlips_paired = path_list[opt_ind]
-
 
         prev_pFlips_i=[]
         for round_ in pFlips_paired:
@@ -562,7 +1092,35 @@ class FastData:
         return prev_pFlips_i
 
 
-    def random_compute_fpd_replace(self):
+    def computePFS_total(self, tri1, tri2):
+        T1 = tri1.fast_copy()
+        T2 = tri2.fast_copy()
+
+        start=time.time()
+
+        pFlips_paired1 = self.parallel_flip_path(T1, T2)
+        #pFlips_paired11 = self.parallel_flip_path_reverse(T1, T2)
+
+        pFlips_paired2 = self.parallel_flip_path2(T1, T2)
+        #pFlips_paired21 = self.parallel_flip_path2_reverse(T1, T2)
+
+        #pFlips_paired3 = self.parallel_flip_path3(T1, T2)
+        #pFlips_paired31 = self.parallel_flip_path3_reverse(T1, T2)
+
+        #path_list = [pFlips_paired1,pFlips_paired2,pFlips_paired3,pFlips_paired11,pFlips_paired21,pFlips_paired31]
+        path_list = [pFlips_paired1,pFlips_paired2]
+        opt_ind = np.argmin([len(x) for x in path_list])
+        pFlips_paired = path_list[opt_ind]
+
+        prev_pFlips_i=[]
+        for round_ in pFlips_paired:
+            round_temp=[]
+            for oneFlip in round_:
+                round_temp.append(list(oneFlip))
+            prev_pFlips_i.append(round_temp)
+        return prev_pFlips_i
+
+    def old_random_compute_fpd_replace(self):
         prev_len = self.dist
         prev_best = prev_len
         tri_num=0
@@ -580,16 +1138,10 @@ class FastData:
             while seq_iter < len(seq):
                 print(seq_iter, end = ' ', flush =True)
                 start=time.time()
-                seq1 = self.computePFS_total(self.triangulations[tri_num], local_T, tri_num)
-                seq2 = self.computePFS_total(local_T, self.center, tri_num)
+                seq1 = self.computePFS_total(self.triangulations[tri_num], local_T)
+                seq2 = self.computePFS_total(local_T, self.center)
                 print(f"{time.time()-start:.2f}s", end=' ', flush=True)
                 if (len(seq1) + len(seq2)) <= len(seq):
-                    #if tri_num==7:
-                    #    print("pFlips[", tri_num, "] updated!: ", len(self.pFlips[tri_num]), "->", len(seq1)+len(seq2))
-                    #    print(self.pFlips[tri_num])
-                    #    print()
-                    #    print(seq1+seq2)
-                    #    print("_____________________")
                     self.pFlips[tri_num] = seq1 + seq2
                 for e in seq[seq_iter]:
                     local_T.flip(e[0], e[1])
@@ -597,8 +1149,91 @@ class FastData:
             print()
             if seq_iter == len(seq):
                 tri_num +=1
-        #return self.center
 
+
+    def random_compute_fpd_replace(self):
+        TN = [tri_num for tri_num in range(self.num_tris) if len(self.pFlips[tri_num])>1]
+
+        #for tn in TN:
+        #    process_(tn, self.pts, self.triangulations, self.center, self.pFlips)
+        with ProcessPoolExecutor(
+                initializer=init_worker,
+                initargs=(self.triangulations, self.center, self.pFlips, self.pts),
+                #max_workers=1
+                ) as exe:
+            futures=[]
+
+            for tn in TN:
+                f = exe.submit(process_, tn)
+                futures.append(f)
+            #print("completed job..:", end=' ', flush=True)
+            for f in as_completed(futures):
+                try:
+                    tri_num, updated_seq = f.result()
+                    #print("T", tri_num, end=' ', flush=True)
+                    self.pFlips[tri_num] = updated_seq
+                except Exception as e:
+                    print(e)
+            #print()
+
+
+    def for_random_compute_fpd_replace(self):
+        prev_len = self.dist
+        prev_best = prev_len
+
+        TN = [tri_num for tri_num in range(self.num_tris) if len(self.pFlips[tri_num])>1]
+        for tri_num in TN:
+            print("tri_num = ", tri_num)
+            seq = self.pFlips[tri_num]
+            seq_iter =1
+            local_T = self.triangulations[tri_num].fast_copy()
+            for e in seq[0]:
+                local_T.flip(e[0], e[1])
+            for seq_iter in range(1, len(seq)):
+                start=time.time()
+                seq1 = self.computePFS_total(self.triangulations[tri_num], local_T)
+                seq2 = self.computePFS_total(local_T, self.center)
+                print(f"{seq_iter}: {time.time()-start:.2f}s", end=' ', flush=True)
+                if (len(seq1) + len(seq2)) <= len(seq):
+                    self.pFlips[tri_num] = seq1 + seq2
+                for e in seq[seq_iter]:
+                    local_T.flip(e[0], e[1])
+            print()
+
+    def slower_random_compute_fpd_replace(self):
+        prev_len = self.dist
+        prev_best = prev_len
+        tri_num=0
+
+        with Pool(processes=2) as pool:
+            while tri_num < self.num_tris:
+                print("tri_num = ", tri_num)
+                seq = self.pFlips[tri_num]
+                if len(seq) == 0 or len(seq) == 1:
+                    tri_num +=1
+                    continue
+                seq_iter =1
+                local_T = self.triangulations[tri_num].fast_copy()
+                for e in seq[0]:
+                    local_T.flip(e[0], e[1])
+                while seq_iter < len(seq):
+                    print(seq_iter, end = ' ', flush =True)
+                    start=time.time()
+                    #seq1 = self.computePFS_total(self.triangulations[tri_num], local_T)
+                    #seq2 = self.computePFS_total(local_T, self.center)
+                    inputs = [(self.triangulations[tri_num], local_T), (local_T, self.center)]
+                    two_seqs = pool.starmap(self.computePFS_total, inputs)
+                    seq1 = inputs[0]
+                    seq2 = inputs[1]
+                    print(f"{time.time()-start:.2f}s", end=' ', flush=True)
+                    if (len(seq1) + len(seq2)) <= len(seq):
+                        self.pFlips[tri_num] = seq1 + seq2
+                    for e in seq[seq_iter]:
+                        local_T.flip(e[0], e[1])
+                    seq_iter +=1
+                print()
+                if seq_iter == len(seq):
+                    tri_num +=1
 
     def findCenterGlobal(self):
         mtriangulations = [t.fast_copy() for t in self.triangulations]
@@ -631,6 +1266,7 @@ class FastData:
                 if escore >0:
                     ncand.append((e, escore))
             ncand.sort(key = lambda x:x[1], reverse=True)
+            #print("T", i," ncand = ",  ncand)
             NCAND.append(ncand)
             marked = set()
             flp =[]
@@ -647,9 +1283,6 @@ class FastData:
                 mscore = nscore
                 mi = i
         if mscore ==0:
-            ##test
-            #for i in range(num):
-            #    if len(pfps[i])==0: print("!!!!!!!")
             self.pFlips=[]
             for i in range(num):
                 if i< num-1:
@@ -668,6 +1301,8 @@ class FastData:
             if self.flippable(tri, ee):
                 fe.append(ee)
         F_E[mi] = fe
+        #print("count, mscore = ", 0, mscore)
+        #print()
 
         #count=1
         while True:
@@ -732,9 +1367,6 @@ class FastData:
             #count+=1
         self.pFlips=[]
         for i in range(num):
-            ##test
-            #for i in range(num):
-            #    if len(pfps[i])==0: print("!!!!!!!")
             if i< num-1:
                 assert(mtriangulations[i].edges == mtriangulations[i+1].edges)
             self.pFlips.append(pfps[i])
@@ -821,13 +1453,16 @@ class FastData:
         len_flips = [len(pFlip) for pFlip in self.pFlips]
         max_dist = max(len_flips)
         total_dist = sum(len_flips)
+        print("max_dist*2 = ", max_dist*2)
+        print("-----param: ",end = ' ', flush=True)
         while param < max_dist *2:
-            print("-----param ", param)
+            print(param, end=' ', flush=True)
             revnum = [min(param, len(pFlip)) for pFlip in self.pFlips]
+            stop=True
             newD = FastData()
             newD.pts = self.pts
             for i in range(self.num_tris):
-                print("newT", i)
+                #print("newT", i)
                 newT = self.center.fast_copy()
                 for j in range(revnum[i]):
                     for e in self.pFlips[i][-j-1]:
@@ -842,21 +1477,26 @@ class FastData:
                         p2 = int(row[(pi+2)%3])
                         newT.flip(p1, p2)
                 newD.triangulations.append(newT)
-            start=time.time()
-            print("findCenterGlobal() takes ... ", end=' ', flush=True)
+            #start=time.time()
+            #print("findCenterGlobal() takes ... ", end=' ', flush=True)
             self.center = newD.findCenterGlobal()
-            print(f"{time.time()-start:.2f}s")
+            #print(f"{time.time()-start:.2f}s")
             for i in range(self.num_tris):
                 self.pFlips[i] = self.pFlips[i][:-revnum[i]] + newD.pFlips[i]
-            start=time.time()
-            print("random_compute_pfd_replace()... ")
+            #start=time.time()
+            #print("random_compute_pfd_replace()... ")
             self.random_compute_fpd_replace() # pFlip update
-            print(f"it takes {time.time()-start:.2f}s", end='\n')
-            new_dist = sum([len(pFlip) for pFlip in self.pFlips])
+            #print(f"it takes {time.time()-start:.2f}s", end='\n')
+            new_pfp = [len(pFlip) for pFlip in self.pFlips]
+            new_dist = sum(new_pfp)
             if total_dist != new_dist:
+                print()
+                print("new_dist = ", new_pfp)
                 self.dist = new_dist
+                print("------------dist update, newly count:", total_dist, new_dist)
+                print()
                 break
-            param *=2
+            param +=1
 
 
     def pfd_distribution(self, pfd):
@@ -899,7 +1539,7 @@ class FastData:
 
 
         inst["flips"] = self.pFlips
-        inst["meta"] = {"dist": sum([len(self.pFlip) for pFlip in self.pFlips])} # , "input": self.input}
+        inst["meta"] = {"dist": sum([len(pFlip) for pFlip in self.pFlips])} # , "input": self.input}
 
         path = '/Users/hyeyun/Experiment/PFD/hyeyun_git/'
         folder = "hy_solutions"
@@ -943,7 +1583,6 @@ class FastData:
                     except:
                         old_flips = root["flips"]
                         old_score = len([len(x) for x in old_flips])
-
                 if old_score>sum([len(pFlip) for pFlip in self.pFlips]): # self.dist:
                     os.remove(path+opt_folder+"/"+sol)
                     with open(path+opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
@@ -1014,6 +1653,8 @@ def _numba_count_cross(f_pts, f_nei, pts_coor, q1, q2, t):
 def _find_t_c(f_pts, f_nei, pts_coor, q1, q2, t):
     r1 = pts_coor[q1]
     r4 = pts_coor[q2]
+    A = (r4[1]-r1[1])
+    B = (r4[0]-r1[0])
     while True:
         row = f_pts[t]
         if row[0] == q1: i=0
@@ -1022,8 +1663,8 @@ def _find_t_c(f_pts, f_nei, pts_coor, q1, q2, t):
         r2 = pts_coor[row[(i+1)%3]]
         r3 = pts_coor[row[(i+2)%3]]
 
-        turn_val1= (r2[0]-r1[0])*(r4[1]-r1[1]) - (r2[1]-r1[1])*(r4[0]-r1[0])
-        turn_val2= (r3[0]-r1[0])*(r4[1]-r1[1]) - (r3[1]-r1[1])*(r4[0]-r1[0])
+        turn_val1= (r2[0]-r1[0])*A - (r2[1]-r1[1])*B
+        turn_val2= (r3[0]-r1[0])*A - (r3[1]-r1[1])*B
         if turn_val1 < 0:
             t = f_nei[t, i]
         elif turn_val2 >0:

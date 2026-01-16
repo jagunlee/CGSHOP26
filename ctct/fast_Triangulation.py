@@ -43,8 +43,8 @@ class FastTriangulation:
         e2f = self.edge_to_face
 
 
-        key12 = (np.int64(p1) << 32) | np.int64(p2)
-        key21 = (np.int64(p2) << 32) | np.int64(p1)
+        key12 = (p1 << 32) | (p2)
+        key21 = (p2 << 32) | (p1)
         t1 = e2f[key12]
         t2 = e2f[key21]
         assert(t1!=None)
@@ -54,13 +54,13 @@ class FastTriangulation:
         if row1[0] == p2: i=0
         elif row1[1] == p2: i=1
         else: i=2
-        p3 = row1[(i+1)%3]
+        p3 = int(row1[(i+1)%3])
 
         row2 = f_pts[t2]
         if row2[0] == p1: j=0
         elif row2[1] == p1: j=1
         else: j=2
-        p4 = row2[(j+1)%3]
+        p4 = int(row2[(j+1)%3])
 
         # t1 측 이웃들
         n_p2p3 = f_nei[t1, i] # == tt2
@@ -101,10 +101,10 @@ class FastTriangulation:
         del e2f[key12]
         del e2f[key21]
 
-        e2f[(np.int64(p1) << 32) | np.int64(p4)] = t1
-        e2f[(np.int64(p4) << 32) | np.int64(p3)] = t1
-        e2f[(np.int64(p2) << 32) | np.int64(p3)] = t2
-        e2f[(np.int64(p3) << 32) | np.int64(p4)] = t2
+        e2f[(p1 << 32) | p4] = t1
+        e2f[(p4 << 32) | p3] = t1
+        e2f[(p2 << 32) | p3] = t2
+        e2f[(p3 << 32) | p4] = t2
 
         u_old, v_old = (p1, p2) if p1<p2 else (p2, p1)
         u_new, v_new = (p3, p4) if p3<p4 else (p4, p3)
@@ -113,8 +113,8 @@ class FastTriangulation:
         self.edges.remove((int(u_old), int(v_old)))
 
 
-        self.adj[p1] = p3
-        self.adj[p2] = p3
+        self.adj[p1] = np.int32(p3)
+        self.adj[p2] = np.int32(p3)
         #hy: 모두 p3으로 바꾸지 않고, adj[p1]==p2 , adj[p2]==p1 인 경우에만 p3으로 바꾸는게 좋지 않을까?
         # -> count_cross() 에서 무한 룹이 된다...
         #if self.adj[p1] == p2: self.adj[p1]=p4

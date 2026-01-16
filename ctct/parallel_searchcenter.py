@@ -1,21 +1,22 @@
-import working2_p_data as parallel
+import working2_opt_p_data as parallel
 import os
 import argparse
 
 def read_dt(d):
     dt = parallel.FastData(d)
     prev = dt.dist
-    print("dist = ", prev)
+    print("initial dist = ", prev)
     count = 0
-    while dt.dist < prev * 1.1:
-        print("read_dt: count", count)
+    while dt.dist < prev * 1.5:
+        print("prev*1.5 = ", prev*1.5)
+        print("~~~~~~~~read_dt: count", count)
         dt.random_new_center()
         count += 1
         if dt.dist < prev:
             print(f"[{dt.instance_uid}] Improved: {prev} -> {dt.dist}")
             dt.WriteData()
             prev = dt.dist
-        #if count == 1: break
+        print("-------------------------")
     print("Done")
 
 
