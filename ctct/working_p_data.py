@@ -678,7 +678,7 @@ class FastData:
         tri_num=0
 
         while tri_num < self.num_tris:
-            print("tri_num = ", tri_num)
+            #print("tri_num = ", tri_num)
             seq = self.pFlips[tri_num]
             if len(seq) == 0 or len(seq) == 1:
                 tri_num +=1
@@ -688,7 +688,7 @@ class FastData:
             for e in seq[0]:
                 local_T.flip(e[0], e[1])
             while seq_iter < len(seq):
-                print(seq_iter, end = ' ', flush =True)
+                #print(seq_iter, end = ' ', flush =True)
                 seq1 = self.computePFS_total(self.triangulations[tri_num], local_T)
                 seq2 = self.computePFS_total(local_T, self.center)
                 #inputs = [(self.triangulations[tri_num], local_T), (local_T, self.center)]
@@ -701,7 +701,7 @@ class FastData:
                 for e in seq[seq_iter]:
                     local_T.flip(e[0], e[1])
                 seq_iter +=1
-            print()
+            #print()
             if seq_iter == len(seq):
                 tri_num +=1
         #return self.center
@@ -936,7 +936,7 @@ class FastData:
             newD = FastData()
             newD.pts = self.pts
             for i in range(self.num_tris):
-                print("newT", i)
+                #print("newT", i)
                 newT = self.center.fast_copy()
                 for j in range(revnum[i]):
                     for e in self.pFlips[i][-j-1]:
@@ -947,16 +947,16 @@ class FastData:
                         if row[0] == p: pi=0
                         elif row[1] == p: pi=1
                         else: pi=2
-                        p1 = row[(pi+1)%3]
-                        p2 = row[(pi+2)%3]
+                        p1 = int(row[(pi+1)%3])
+                        p2 = int(row[(pi+2)%3])
                         newT.flip(p1, p2)
                 newD.triangulations.append(newT)
-            #start=time.time()
-            #print("findCenterGlobal() takes ... ", end=' ', flush=True)
-            #self.center = newD.findCenterGlobal()
-            #print(f"{time.time()-start:.2f}s")
-            #for i in range(self.num_tris):
-            #    self.pFlips[i] = self.pFlips[i][:-revnum[i]] + newD.pFlips[i]
+            start=time.time()
+            print("findCenterGlobal() takes ... ", end=' ', flush=True)
+            self.center = newD.findCenterGlobal()
+            print(f"{time.time()-start:.2f}s")
+            for i in range(self.num_tris):
+                self.pFlips[i] = self.pFlips[i][:-revnum[i]] + newD.pFlips[i]
             start=time.time()
             print("random_compute_pfd_replace()... ")
             self.random_compute_fpd_replace() # pFlip update
@@ -965,7 +965,7 @@ class FastData:
             if total_dist != new_dist:
                 self.dist = new_dist
                 break
-            param *=2
+            param +=1
 
 
     def pfd_distribution(self, pfd):

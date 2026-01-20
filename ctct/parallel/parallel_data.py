@@ -521,15 +521,15 @@ class FastData:
             # restore center
             min_flip_ind = np.argmin([len(x) for x in self.pFlips])
             max_flip_ind = np.argmax([len(x) for x in self.pFlips])
-            #self.center = self.make_triangulation(root["triangulations"][min_flip_ind])
-            #for flip_seq in self.pFlips[min_flip_ind]:
-            #    for flp in flip_seq:
-            #        self.center.flip(flp[0], flp[1])
-            print("!!!center just from one of the T!!!!!   in ReadData()")
-            self.center = self.triangulations[min_flip_ind].fast_copy()
-            for i in range(len(self.triangulations)):
-                self.pFlips[i] = self.parallel_flip_path(self.triangulations[i], self.center)
-            self.dist = sum([len(x) for x in self.pFlips])
+            self.center = self.make_triangulation(root["triangulations"][min_flip_ind])
+            for flip_seq in self.pFlips[min_flip_ind]:
+                for flp in flip_seq:
+                    self.center.flip(flp[0], flp[1])
+            #print("!!!center just from one of the T!!!!!   in ReadData()")
+            #self.center = self.triangulations[min_flip_ind].fast_copy()
+            #for i in range(len(self.triangulations)):
+            #    self.pFlips[i] = self.parallel_flip_path(self.triangulations[i], self.center)
+            #self.dist = sum([len(x) for x in self.pFlips])
 
             self.inst_info()
 
@@ -958,6 +958,34 @@ class FastData:
                     self.pFlips[tri_num] = updated_seq
                 except Exception as e:
                     print(e)
+
+    def computePFS_total(self, tri1, tri2):
+        T1 = tri1.fast_copy()
+        T2 = tri2.fast_copy()
+
+        start=time.time()
+
+        pFlips_paired1 = self.parallel_flip_path(T1, T2)
+        #pFlips_paired11 = self.parallel_flip_path_reverse(T1, T2)
+
+        pFlips_paired2 = self.parallel_flip_path2(T1, T2)
+        #pFlips_paired21 = self.parallel_flip_path2_reverse(T1, T2)
+
+        #pFlips_paired3 = self.parallel_flip_path3(T1, T2)
+        #pFlips_paired31 = self.parallel_flip_path3_reverse(T1, T2)
+
+        #path_list = [pFlips_paired1,pFlips_paired2,pFlips_paired3,pFlips_paired11,pFlips_paired21,pFlips_paired31]
+        path_list = [pFlips_paired1,pFlips_paired2]
+        opt_ind = np.argmin([len(x) for x in path_list])
+        pFlips_paired = path_list[opt_ind]
+
+        prev_pFlips_i=[]
+        for round_ in pFlips_paired:
+            round_temp=[]
+            for oneFlip in round_:
+                round_temp.append(list(oneFlip))
+            prev_pFlips_i.append(round_temp)
+        return prev_pFlips_i
 
     def findCenterGlobal(self):
         mtriangulations = [t.fast_copy() for t in self.triangulations]

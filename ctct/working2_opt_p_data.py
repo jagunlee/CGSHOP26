@@ -24,7 +24,8 @@ def init_worker(tri_data, center_data, pfp, pts):
 def process_(tri_num):
     tri_obj = gb_tris[tri_num]
     local_T = gb_tris[tri_num].fast_copy()
-    center = gb_center.fast_copy()
+    #center = gb_center.fast_copy()
+    center = gb_center
 
     seq = gb_pFlips[tri_num]
     for e in seq[0]:
@@ -60,13 +61,13 @@ def _computePFS_total(T1, T2):
                                          t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 0, reverse)
 
 
-    t1 = T1.fast_copy()
-    t2 = T2.fast_copy()
-    e2f=  process_typed_dict(t1.edge_to_face)
-    tg_e2f = process_typed_dict(t2.edge_to_face)
-    reverse=False
-    pFlips_paired3 = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
-                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
+    #t1 = T1.fast_copy()
+    #t2 = T2.fast_copy()
+    #e2f=  process_typed_dict(t1.edge_to_face)
+    #tg_e2f = process_typed_dict(t2.edge_to_face)
+    #reverse=False
+    #pFlips_paired3 = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
+    #                                     t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
 
     #reverse
     t1 = T2.fast_copy()
@@ -89,17 +90,18 @@ def _computePFS_total(T1, T2):
     pFlips_paired21 = tmp[::-1]
 
     #reverse
-    t1 = T2.fast_copy()
-    t2 = T1.fast_copy()
-    e2f=  process_typed_dict(t1.edge_to_face)
-    tg_e2f = process_typed_dict(t2.edge_to_face)
-    reverse=True
-    tmp = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
-                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
-    pFlips_paired31 = tmp[::-1]
+    #t1 = T2.fast_copy()
+    #t2 = T1.fast_copy()
+    #e2f=  process_typed_dict(t1.edge_to_face)
+    #tg_e2f = process_typed_dict(t2.edge_to_face)
+    #reverse=True
+    #tmp = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
+    #                                     t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
+    #pFlips_paired31 = tmp[::-1]
 
 
-    path_list = [pFlips_paired1, pFlips_paired2, pFlips_paired3,pFlips_paired11,pFlips_paired21, pFlips_paired31]
+    #path_list = [pFlips_paired1, pFlips_paired2, pFlips_paired3,pFlips_paired11,pFlips_paired21, pFlips_paired31]
+    path_list = [pFlips_paired1, pFlips_paired2,pFlips_paired11,pFlips_paired21]
 
     opt_ind = np.argmin([len(x) for x in path_list])
     pFlips_paired = path_list[opt_ind]
@@ -318,7 +320,10 @@ def _flip_score_fast(e, p2, p4, tg_f_pts, tg_f_nei, tg_e2f, tg_adj, depth, pts_c
         ori_cross=0
     else:
         ori_cross = _numba_count_cross_fast(f_pts, f_nei, p1,p3,t1, pts_coor)
-    if depth==0: return (ori_cross, 0)
+    if depth==0:
+        #if e==(60, 68):
+        #    print(e, t1, ori_cross, " in score_fast")
+        return (ori_cross, 0)
 
 
     key24 = (p2 << 32) | p4
@@ -347,6 +352,8 @@ def _flip_score_fast(e, p2, p4, tg_f_pts, tg_f_nei, tg_e2f, tg_adj, depth, pts_c
     n_cross = ori_cross - new_cross
     m_score = (n_cross, depth)
     if depth==1:
+        #if e==(60, 68):
+        #    print(e, n_cross, " = ", ori_cross, " - ", new_cross, " in score_fast")
         return m_score
 
 
@@ -635,16 +642,16 @@ class FastData:
 
             # restore center
             min_flip_ind = np.argmin([len(x) for x in self.pFlips])
-            #self.center = self.make_triangulation(root["triangulations"][min_flip_ind])
-            #for flip_seq in self.pFlips[min_flip_ind]:
-            #    for flp in flip_seq:
-            #        self.center.flip(flp[0], flp[1])
-            print("center just from one of the T!!!!!")
-            max_flip_ind = np.argmax([len(x) for x in self.pFlips])
-            self.center = self.triangulations[min_flip_ind].fast_copy()
-            for i in range(len(self.triangulations)):
-                self.pFlips[i] = self.parallel_flip_path(self.triangulations[i], self.center)
-            self.dist = sum([len(x) for x in self.pFlips])
+            self.center = self.make_triangulation(root["triangulations"][min_flip_ind])
+            for flip_seq in self.pFlips[min_flip_ind]:
+                for flp in flip_seq:
+                    self.center.flip(flp[0], flp[1])
+            #print("center just from one of the T!!!!!")
+            #max_flip_ind = np.argmax([len(x) for x in self.pFlips])
+            #self.center = self.triangulations[min_flip_ind].fast_copy()
+            #for i in range(len(self.triangulations)):
+            #    self.pFlips[i] = self.parallel_flip_path(self.triangulations[i], self.center)
+            #self.dist = sum([len(x) for x in self.pFlips])
             self.inst_info()
 
 
@@ -790,12 +797,14 @@ class FastData:
 
         f_pts = tri.face_pts
         row1 = f_pts[t1]
+        i=0
         if row1[0] == p3: i = 0
         elif row1[1] == p3: i = 1
         else: i = 2
         p4 = row1[(i + 1) % 3]
 
         row2 = f_pts[t2]
+        j=0
         if row2[0] == p1: j = 0
         elif row2[1] == p1: j = 1
         else: j = 2
@@ -814,7 +823,10 @@ class FastData:
         else:
             ori_cross = _numba_count_cross(f_pts,f_nei,pts_coor,p1,p3,ftc)
 
-        if depth == 0: return (ori_cross, 0)
+        if depth == 0:
+            #if e==(60, 68):
+            #    print(e, ftc, ori_cross, "in flip_score")
+            return (ori_cross, 0)
 
         ftc = self.find_triangle_containing(tri_target, (p2, p4))
         if ftc is None:
@@ -825,6 +837,8 @@ class FastData:
         n_cross = ori_cross - new_cross
         m_score = (n_cross, depth)
         if depth == 1:
+            #if e==(60, 68):
+            #    print(e, ftc, n_cross, " = ", ori_cross, " - ", new_cross, "in flip_score")
             return m_score
 
         tri.flip(p1, p3)
@@ -837,6 +851,7 @@ class FastData:
 
 
     def parallel_flip_path(self, tri1, tri2):
+        #print("-------pfp---------")
         tri = tri1.fast_copy()
         tri_target = tri2.fast_copy()
         pfp = []
@@ -871,6 +886,7 @@ class FastData:
         return pfp
 
     def parallel_flip_path_reverse(self, tri1, tri2):
+        #print("-------pfpr---------")
         tri = tri2.fast_copy()
         pfp=[]
         while True:
@@ -903,11 +919,14 @@ class FastData:
         return pfp[::-1]
 
     def parallel_flip_path2(self, tri1, tri2):
+        #print("-------pfp2---------")
         tri = tri1.fast_copy()
         tri_target = tri2.fast_copy()
         pfp = []
         prev_flip = set()
         step=0
+        test=0
+        #temp=[]
         while True:
             step+=1
             cand = []
@@ -915,6 +934,8 @@ class FastData:
             for e in tri.edges:
                 if e in prev_flip: continue
                 if self.flippable(tri, e):
+                    #test+=1
+                    #temp.append(e)
                     score = self.flip_score(tri, tri_target, e, 0)
                     if score[0] >0:
                         cand.append((e, score))
@@ -943,14 +964,18 @@ class FastData:
                 prev_flip.add(e1)
             pfp.append(flips)
         assert(tri.edges == tri_target.edges)
+        #print("pfp2 test edge num = ", test)
+        #print(temp)
         return pfp
 
 
     def parallel_flip_path2_reverse(self, tri1, tri2):
+        #print("-------pfp2r---------")
         tri = tri2.fast_copy()
         pfp=[]
         step=0
         prev_flip = set()
+        count=0
         while True:
             step+=1
             cand = []
@@ -968,6 +993,7 @@ class FastData:
                 else:
                     break
             cand.sort(key=lambda x: x[1],reverse=True)
+
             if step>100:
                 print("in rev2:", cand)
                 print(prev_flip)
@@ -986,14 +1012,17 @@ class FastData:
                 p1, p3 = e
                 e1 = tri.flip(p1, p3)
                 prev_flip.append((int(e1[0]), int(e1[1])))
+
             pfp.append(prev_flip)
             prev_flip = set(prev_flip)
         #assert(tri.edges == tri_target.edges)
         assert(tri.edges == tri1.edges)
+        #print("pfp2 rev test edge num = ", test)
         return pfp[::-1]
 
 
     def parallel_flip_path3(self, tri1, tri2):
+        #print("-------pfp3---------")
         tri = tri1.fast_copy()
         tri_target = tri2.fast_copy()
         pfp = []
@@ -1028,6 +1057,7 @@ class FastData:
         return pfp
 
     def parallel_flip_path3_reverse(self, tri1, tri2):
+        #print("-------pfp3r---------")
         tri = tri2.fast_copy()
         pfp = []
         step=0
@@ -1099,17 +1129,19 @@ class FastData:
         start=time.time()
 
         pFlips_paired1 = self.parallel_flip_path(T1, T2)
-        #pFlips_paired11 = self.parallel_flip_path_reverse(T1, T2)
-
         pFlips_paired2 = self.parallel_flip_path2(T1, T2)
-        #pFlips_paired21 = self.parallel_flip_path2_reverse(T1, T2)
+
+        pFlips_paired11 = self.parallel_flip_path_reverse(T1, T2)
+        pFlips_paired21 = self.parallel_flip_path2_reverse(T1, T2)
 
         #pFlips_paired3 = self.parallel_flip_path3(T1, T2)
         #pFlips_paired31 = self.parallel_flip_path3_reverse(T1, T2)
 
         #path_list = [pFlips_paired1,pFlips_paired2,pFlips_paired3,pFlips_paired11,pFlips_paired21,pFlips_paired31]
-        path_list = [pFlips_paired1,pFlips_paired2]
+        path_list = [pFlips_paired1,pFlips_paired2,pFlips_paired11,pFlips_paired21]
         opt_ind = np.argmin([len(x) for x in path_list])
+        #print("opt_ind = ", opt_ind, "len = ", len(path_list[opt_ind]), [len(x) for x in path_list])
+        #print()
         pFlips_paired = path_list[opt_ind]
 
         prev_pFlips_i=[]
@@ -1159,7 +1191,7 @@ class FastData:
         with ProcessPoolExecutor(
                 initializer=init_worker,
                 initargs=(self.triangulations, self.center, self.pFlips, self.pts),
-                #max_workers=1
+                max_workers=4
                 ) as exe:
             futures=[]
 
@@ -1177,28 +1209,28 @@ class FastData:
             #print()
 
 
-    def for_random_compute_fpd_replace(self):
+    def small_random_compute_fpd_replace(self):
         prev_len = self.dist
         prev_best = prev_len
 
         TN = [tri_num for tri_num in range(self.num_tris) if len(self.pFlips[tri_num])>1]
         for tri_num in TN:
-            print("tri_num = ", tri_num)
+            #print("tri_num = ", tri_num)
             seq = self.pFlips[tri_num]
             seq_iter =1
             local_T = self.triangulations[tri_num].fast_copy()
             for e in seq[0]:
                 local_T.flip(e[0], e[1])
             for seq_iter in range(1, len(seq)):
-                start=time.time()
+                #start=time.time()
                 seq1 = self.computePFS_total(self.triangulations[tri_num], local_T)
                 seq2 = self.computePFS_total(local_T, self.center)
-                print(f"{seq_iter}: {time.time()-start:.2f}s", end=' ', flush=True)
+                #print(f"{seq_iter}: {time.time()-start:.2f}s", end=' ', flush=True)
                 if (len(seq1) + len(seq2)) <= len(seq):
                     self.pFlips[tri_num] = seq1 + seq2
                 for e in seq[seq_iter]:
                     local_T.flip(e[0], e[1])
-            print()
+            #print()
 
     def slower_random_compute_fpd_replace(self):
         prev_len = self.dist
@@ -1253,6 +1285,7 @@ class FastData:
         flips =[]
         NCAND=[]
         mi=0
+        print()
         for i in range(num):
             ncand =[]
             nscore = 0
@@ -1266,7 +1299,7 @@ class FastData:
                 if escore >0:
                     ncand.append((e, escore))
             ncand.sort(key = lambda x:x[1], reverse=True)
-            #print("T", i," ncand = ",  ncand)
+            #print("T", i,": ncand = ",  ncand)
             NCAND.append(ncand)
             marked = set()
             flp =[]
@@ -1301,10 +1334,10 @@ class FastData:
             if self.flippable(tri, ee):
                 fe.append(ee)
         F_E[mi] = fe
-        #print("count, mscore = ", 0, mscore)
+        print("count, mscore = ", 0, mscore)
         #print()
 
-        #count=1
+        count=1
         while True:
             mscore=0
             flips =[]
@@ -1323,6 +1356,7 @@ class FastData:
                             if cc[0] == e:
                                 new_cc = cc[1] - prev_e_score + current_e_score
                                 escore += new_cc
+                                break
                         if escore >0:
                             ncand.append((e, escore))
                 else:#i==current_mi
@@ -1349,11 +1383,16 @@ class FastData:
                     marked.add(t2)
                     nscore += escore
                 flips.append(flp)
+                print("count ",count, ": T", i,": nscore= ",  nscore)
                 if nscore > mscore:
                     mscore = nscore
                     mi = i
             if mscore ==0: break
-
+            #print("count, current_mi, mi, mscore = ", count, current_mi, mi, mscore)
+            #print()
+            count+=1
+            #if count==3:
+            #    exit(0)
             pfps[mi].append(flips[mi])
             prev_mtri = mtriangulations[mi].fast_copy()
             for e in flips[mi]:
@@ -1387,7 +1426,7 @@ class FastData:
                 if self.flippable(tri, e):
                     fe.append(e)
             F_E.append(fe)
-
+        count=0
         while True:
             mscore = 0
             #flips = [ [] for _ in range(num)]
@@ -1405,6 +1444,7 @@ class FastData:
                     if escore >0:
                         ncand.append((e, escore))
                 ncand.sort(key = lambda x:x[1], reverse=True)
+                #print("T", i," ncand = ",  ncand)
                 marked = set()
                 flp =[]
                 for (p1, p2), escore in ncand:
@@ -1421,6 +1461,8 @@ class FastData:
                     mscore = nscore
                     mi = i
             if mscore ==0: break
+            print("count, mscore = ", count, mscore)
+            count+=1
             pfps[mi].append(flips[mi])
             for e in flips[mi]:
                 mtriangulations[mi].flip(e[0], e[1])
@@ -1455,9 +1497,9 @@ class FastData:
         len_flips = [len(pFlip) for pFlip in self.pFlips]
         max_dist = max(len_flips)
         total_dist = sum(len_flips)
-        print("param: ",end = ' ', flush=True)
+        #print("param: ",end = ' ', flush=True)
         while param < max_dist *2:
-            print(param, end=' ', flush=True)
+            print(param, ":")#, end=' ', flush=True)
             revnum = [min(param, len(pFlip)) for pFlip in self.pFlips]
             stop=True
             newD = FastData()
@@ -1478,24 +1520,29 @@ class FastData:
                         p2 = int(row[(pi+2)%3])
                         newT.flip(p1, p2)
                 newD.triangulations.append(newT)
-            #start=time.time()
-            #print("findCenterGlobal() takes ... ", end=' ', flush=True)
+            start=time.time()
+            print("\tfindCenterGlobal() takes ... ", end=' ', flush=True)
             self.center = newD.findCenterGlobal()
-            #print(f"{time.time()-start:.2f}s")
+            #self.center = newD.old_findCenterGlobal()
+            print(f"{time.time()-start:.2f}s")
             for i in range(self.num_tris):
                 self.pFlips[i] = self.pFlips[i][:-revnum[i]] + newD.pFlips[i]
-            #start=time.time()
-            #print("random_compute_pfd_replace()... ")
-            self.random_compute_fpd_replace() # pFlip update
-            #print(f"it takes {time.time()-start:.2f}s", end='\n')
+            start=time.time()
+            print("\trandom_compute_pfd_replace()... ")
+            self.small_random_compute_fpd_replace() # pFlip update
+            #self.random_compute_fpd_replace() # pFlip update
+            print(f"\tit takes {time.time()-start:.2f}s", end='\n')
             new_pfp = [len(pFlip) for pFlip in self.pFlips]
             new_dist = sum(new_pfp)
+            print("\tprev, new dist = ", total_dist, new_dist)
             if total_dist != new_dist:
-                print()
+                #print()
                 self.dist = new_dist
-                print("-----dist update, newly count:", total_dist, new_dist)
-                print()
+                #print("-----dist update, newly count:", total_dist, new_dist)
+                #print()
                 break
+            if param==3:
+                exit(0)
             param +=1
 
 
@@ -1622,6 +1669,8 @@ def _numba_count_cross(f_pts, f_nei, pts_coor, q1, q2, t):
     cnt = 1
     A = p_q2[0]-p_q1[0]
     B = p_q2[1]-p_q1[1]
+    #if (q1, q2) == (60, 68):
+    #    print(t, row, row_tt, i, j, " in numba")
     while True:
         if row_tt[(j+1)%3] == q2:break
         cnt +=1
