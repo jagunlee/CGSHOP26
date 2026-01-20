@@ -624,7 +624,6 @@ class Data:
 
     # w1:w2 내분점에서 가장 가까운 중간 triangulation을 반환
     def internal_division(self, T1: Triangulation, w1: int, T2: Triangulation, w2: int):
-
         T1copy = copy.deepcopy(T1)
 
         # parallel version
