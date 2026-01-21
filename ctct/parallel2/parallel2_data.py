@@ -29,6 +29,7 @@ def process_(tri_num):
     for e in seq[0]:
         local_T.flip(e[0], e[1])
     updated_pFlips=seq
+    start=time.time()
     for seq_iter in range(1, len(seq)):
         seq1 = _computePFS_total(tri_obj, local_T)
         seq2 = _computePFS_total(local_T, center)
@@ -36,7 +37,7 @@ def process_(tri_num):
             updated_pFlips = seq1 + seq2
         for e in seq[seq_iter]:
             local_T.flip(e[0], e[1])
-    return tri_num, updated_pFlips
+    return tri_num, updated_pFlips, time.time()-start
 
 def _computePFS_total(T1, T2):
     pts = gb_pts_coor
@@ -48,17 +49,6 @@ def _computePFS_total(T1, T2):
     reverse=False
     pFlips_paired1 = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
                                          t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
-
-
-    t1 = T1.fast_copy()
-    t2 = T2.fast_copy()
-    e2f=  process_typed_dict(t1.edge_to_face)
-    tg_e2f = process_typed_dict(t2.edge_to_face)
-    reverse=False
-    pFlips_paired2 = _parallel_flip_path2(t1.face_pts, t1.face_nei, e2f, t1.adj,
-                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 0, reverse)
-
-
     t1 = T1.fast_copy()
     t2 = T2.fast_copy()
     e2f=  process_typed_dict(t1.edge_to_face)
@@ -66,6 +56,15 @@ def _computePFS_total(T1, T2):
     reverse=False
     pFlips_paired3 = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
                                          t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
+    #reverse
+    t1 = T2.fast_copy()
+    t2 = T1.fast_copy()
+    e2f=  process_typed_dict(t1.edge_to_face)
+    tg_e2f = process_typed_dict(t2.edge_to_face)
+    reverse=True
+    tmp = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
+                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
+    pFlips_paired31 = tmp[::-1]
 
     #reverse
     t1 = T2.fast_copy()
@@ -77,28 +76,28 @@ def _computePFS_total(T1, T2):
                                          t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
     pFlips_paired11 = tmp[::-1]
 
-    #reverse
-    t1 = T2.fast_copy()
-    t2 = T1.fast_copy()
-    e2f=  process_typed_dict(t1.edge_to_face)
-    tg_e2f = process_typed_dict(t2.edge_to_face)
-    reverse=True
-    tmp = _parallel_flip_path2(t1.face_pts, t1.face_nei, e2f, t1.adj,
-                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 0, reverse)
-    pFlips_paired21 = tmp[::-1]
 
-    #reverse
-    t1 = T2.fast_copy()
-    t2 = T1.fast_copy()
-    e2f=  process_typed_dict(t1.edge_to_face)
-    tg_e2f = process_typed_dict(t2.edge_to_face)
-    reverse=True
-    tmp = _parallel_flip_path(t1.face_pts, t1.face_nei, e2f, t1.adj,
-                                         t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 1, reverse)
-    pFlips_paired31 = tmp[::-1]
+    #t1 = T1.fast_copy()
+    #t2 = T2.fast_copy()
+    #e2f=  process_typed_dict(t1.edge_to_face)
+    #tg_e2f = process_typed_dict(t2.edge_to_face)
+    #reverse=False
+    #pFlips_paired2 = _parallel_flip_path2(t1.face_pts, t1.face_nei, e2f, t1.adj,
+    #                                     t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 0, reverse)
+    ##reverse
+    #t1 = T2.fast_copy()
+    #t2 = T1.fast_copy()
+    #e2f=  process_typed_dict(t1.edge_to_face)
+    #tg_e2f = process_typed_dict(t2.edge_to_face)
+    #reverse=True
+    #tmp = _parallel_flip_path2(t1.face_pts, t1.face_nei, e2f, t1.adj,
+    #                                     t2.face_pts, t2.face_nei, tg_e2f, t2.adj, pts, 0, reverse)
+    #pFlips_paired21 = tmp[::-1]
 
 
-    path_list = [pFlips_paired1, pFlips_paired2, pFlips_paired3,pFlips_paired11,pFlips_paired21, pFlips_paired31]
+
+    #path_list = [pFlips_paired1, pFlips_paired2, pFlips_paired3,pFlips_paired11,pFlips_paired21, pFlips_paired31]
+    path_list = [pFlips_paired1, pFlips_paired3,pFlips_paired11,pFlips_paired31]
 
     opt_ind = np.argmin([len(x) for x in path_list])
     pFlips_paired = path_list[opt_ind]
@@ -442,22 +441,22 @@ def _parallel_flip_path2(f_pts, f_nei, e2f, adj, tg_f_pts, tg_f_nei, tg_e2f, tg_
         cand = List()
         cand.append((1.0,(1,2)))
         cand.pop(0)
-        skip_flip = List()
-        skip_flip.append((1,2))
-        skip_flip.pop(0)
+        #skip_flip = List()
+        #skip_flip.append((1,2))
+        #skip_flip.pop(0)
         for E_key, _ in e2f.items():
-            #q1, q3 = E_key>>32, E_key & 0xFFFFFFFF
+            q1, q3 = E_key>>32, E_key & 0xFFFFFFFF
 
-            qq1, qq3 = E_key>>32, E_key & 0xFFFFFFFF
-            q1, q3 = min(qq1, qq3), max(qq1, qq3)
+            #qq1, qq3 = E_key>>32, E_key & 0xFFFFFFFF
+            #q1, q3 = min(qq1, qq3), max(qq1, qq3)
 
             e = (q1, q3)
             if e in prev_flip: continue
 
             #이게 없으면 더 짧은 pfd 나옴
-            if (q3, q1) in prev_flip: continue
-            if e in skip_flip: continue
-            if (q3, q1) in skip_flip: continue
+            #if (q3, q1) in prev_flip: continue
+            #if e in skip_flip: continue
+            #if (q3, q1) in skip_flip: continue
 
 
             #q1, q3 = e
@@ -479,8 +478,8 @@ def _parallel_flip_path2(f_pts, f_nei, e2f, adj, tg_f_pts, tg_f_nei, tg_e2f, tg_
             p2 = int(row2[(j+1)%3])
 
             #이게 없으면 더 짧은 pfd 나옴
-            skip_flip.append(e)
-            skip_flip.append((e[1],e[0]))
+            #skip_flip.append(e)
+            #skip_flip.append((e[1],e[0]))
 
             if _flippable_fast(e, p2, p4, pts_coor):
                 test+=1
@@ -518,21 +517,21 @@ def _parallel_flip_path2(f_pts, f_nei, e2f, adj, tg_f_pts, tg_f_nei, tg_e2f, tg_
             flips_reverse.pop(0)
 
         # 이게 없으면 더 짧은 pfd 나옴
-        if reverse:
-            prev_flip = List()
-            prev_flip.append((1,2))
-            prev_flip.pop(0)
+        #if reverse:
+        #    prev_flip = List()
+        #    prev_flip.append((1,2))
+        #    prev_flip.pop(0)
 
         for e in flips:
             p1, p2 = e
             e1 = _flip(p1, p2, f_pts, f_nei, e2f, adj)
             #p3, p4 = e1
-            pp3, pp4 = e1
-            p3, p4 = min(pp3, pp4), max(pp3, pp4)
-            e1 = (p3, p4)
+            #pp3, pp4 = e1
+            #p3, p4 = min(pp3, pp4), max(pp3, pp4)
+            #e1 = (p3, p4)
 
             prev_flip.append(e1)
-            prev_flip.append((p4, p3)) # 이게 없으면 더 짧은 pfd 나옴
+            #prev_flip.append((p4, p3)) # 이게 없으면 더 짧은 pfd 나옴
             if reverse:
                 flips_reverse.append(e1)
         if reverse:
@@ -1097,12 +1096,30 @@ class FastData:
             prev_pFlips_i.append(round_temp)
         return prev_pFlips_i
 
+    def computePFS_2(self, tri1, tri2):
+        T1 = tri1.fast_copy()
+        T2 = tri2.fast_copy()
+        pFlips_paired2 = self.parallel_flip_path2(T1, T2)
+        pFlips_paired21 = self.parallel_flip_path2_reverse(T1, T2)
+        path_list = [pFlips_paired2,pFlips_paired21]
+        opt_ind = np.argmin([len(x) for x in path_list])
+        pFlips_paired = path_list[opt_ind]
+
+        prev_pFlips_i=[]
+        for round_ in pFlips_paired:
+            round_temp=[]
+            for oneFlip in round_:
+                round_temp.append(list(oneFlip))
+            prev_pFlips_i.append(round_temp)
+        return prev_pFlips_i
+
     def old_random_compute_fpd_replace(self):
         prev_len = self.dist
         prev_best = prev_len
         tri_num=0
-
+        print()
         while tri_num < self.num_tris:
+            start=time.time()
             seq = self.pFlips[tri_num]
             if len(seq) == 0 or len(seq) == 1:
                 tri_num +=1
@@ -1112,17 +1129,18 @@ class FastData:
             for e in seq[0]:
                 local_T.flip(e[0], e[1])
             while seq_iter < len(seq):
-                #print(seq_iter, end = ' ', flush =True)
-                #start=time.time()
+                print(seq_iter,"/",len(seq), end = ' ', flush =True)
+                start=time.time()
                 seq1 = self.computePFS_total(self.triangulations[tri_num], local_T)
                 seq2 = self.computePFS_total(local_T, self.center)
-                #print(f"{time.time()-start:.2f}s", end=' ', flush=True)
+                print(f"{time.time()-start:.2f}s", end=' ', flush=True)
                 if (len(seq1) + len(seq2)) <= len(seq):
                     self.pFlips[tri_num] = seq1 + seq2
                 for e in seq[seq_iter]:
                     local_T.flip(e[0], e[1])
                 seq_iter +=1
-            #print()
+            print()
+            print(f"T{tri_num}, len(seq)={len(seq)} takes {time.time()-start:.2f}s", end='\n')
             if seq_iter == len(seq):
                 tri_num +=1
 
@@ -1142,10 +1160,39 @@ class FastData:
                 futures.append(f)
             for f in as_completed(futures):
                 try:
-                    tri_num, updated_seq = f.result()
+                    tri_num, updated_seq, ttt = f.result()
+                    print(f"T{tri_num} 4paths takes {ttt:.2f}s")
                     self.pFlips[tri_num] = updated_seq
                 except Exception as e:
                     print(e)
+
+        prev_len = self.dist
+        prev_best = prev_len
+        tri_num=0
+        while tri_num < self.num_tris:
+            start=time.time()
+            seq = self.pFlips[tri_num]
+            if len(seq) == 0 or len(seq) == 1:
+                tri_num +=1
+                continue
+            seq_iter =1
+            local_T = self.triangulations[tri_num].fast_copy()
+            for e in seq[0]:
+                local_T.flip(e[0], e[1])
+            while seq_iter < len(seq):
+                seq1 = self.computePFS_2(self.triangulations[tri_num], local_T)
+                seq2 = self.computePFS_2(local_T, self.center)
+                if (len(seq1) + len(seq2)) <= len(seq):
+                    self.pFlips[tri_num] = seq1 + seq2
+                for e in seq[seq_iter]:
+                    local_T.flip(e[0], e[1])
+                seq_iter +=1
+            print()
+            print(f"T{tri_num}, len(seq)={len(seq)} takes {time.time()-start:.2f}s", end='\n')
+            if seq_iter == len(seq):
+                tri_num +=1
+
+
 
 
     def findCenterGlobal(self, parallel1=False, parallel2=False):
@@ -1500,26 +1547,26 @@ class FastData:
                         p2 = int(row[(pi+2)%3])
                         newT.flip(p1, p2)
                 newD.triangulations.append(newT)
-            start=time.time()
-            if self.num_edges <500:
-                print("\tserial old ver findCenterGlobal() takes ... ", end=' ', flush=True)
-                self.center = newD.old_findCenterGlobal()
-            if self.num_edges <5000:
-                print("\tserial new ver findCenterGlobal() takes ... ", end=' ', flush=True)
-                self.center = newD.findCenterGlobal(parallel1=False, parallel2=False)
-            elif self.num_edges <10000:
-                print("\tpartial parallel findCenterGlobal() takes ... ", end=' ', flush=True)
-                self.center = newD.findCenterGlobal(parallel1=False, parallel2=True)
-            else:
-                print("\tall parallel findCenterGlobal() takes ... ", end=' ', flush=True)
-                self.center = newD.findCenterGlobal(parallel1=True, parallel2=True)
-            print(f"{time.time()-start:.2f}s")
+            #start=time.time()
+            #if self.num_edges <500:
+            #    print("\tserial old ver findCenterGlobal() takes ... ", end=' ', flush=True)
+            #    self.center = newD.old_findCenterGlobal()
+            #if self.num_edges <5000:
+            #    print("\tserial new ver findCenterGlobal() takes ... ", end=' ', flush=True)
+            #    self.center = newD.findCenterGlobal(parallel1=False, parallel2=False)
+            #elif self.num_edges <10000:
+            #    print("\tpartial parallel findCenterGlobal() takes ... ", end=' ', flush=True)
+            #    self.center = newD.findCenterGlobal(parallel1=False, parallel2=True)
+            #else:
+            #    print("\tall parallel findCenterGlobal() takes ... ", end=' ', flush=True)
+            #    self.center = newD.findCenterGlobal(parallel1=True, parallel2=True)
+            #print(f"{time.time()-start:.2f}s")
 
-            for i in range(self.num_tris):
-                self.pFlips[i] = self.pFlips[i][:-revnum[i]] + newD.pFlips[i]
+            #for i in range(self.num_tris):
+            #    self.pFlips[i] = self.pFlips[i][:-revnum[i]] + newD.pFlips[i]
 
             start=time.time()
-            if self.num_edges <500:
+            if self.num_edges <10000:
                 print("\tserial random_compute_pfd_replace() takes ... ", end=' ', flush=True)
                 self.old_random_compute_fpd_replace() # pFlip update
             else:
