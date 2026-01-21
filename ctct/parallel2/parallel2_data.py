@@ -1547,23 +1547,23 @@ class FastData:
                         p2 = int(row[(pi+2)%3])
                         newT.flip(p1, p2)
                 newD.triangulations.append(newT)
-            #start=time.time()
-            #if self.num_edges <500:
-            #    print("\tserial old ver findCenterGlobal() takes ... ", end=' ', flush=True)
-            #    self.center = newD.old_findCenterGlobal()
-            #if self.num_edges <5000:
-            #    print("\tserial new ver findCenterGlobal() takes ... ", end=' ', flush=True)
-            #    self.center = newD.findCenterGlobal(parallel1=False, parallel2=False)
-            #elif self.num_edges <10000:
-            #    print("\tpartial parallel findCenterGlobal() takes ... ", end=' ', flush=True)
-            #    self.center = newD.findCenterGlobal(parallel1=False, parallel2=True)
-            #else:
-            #    print("\tall parallel findCenterGlobal() takes ... ", end=' ', flush=True)
-            #    self.center = newD.findCenterGlobal(parallel1=True, parallel2=True)
-            #print(f"{time.time()-start:.2f}s")
+            start=time.time()
+            if self.num_edges <500:
+                print("\tserial old ver findCenterGlobal() takes ... ", end=' ', flush=True)
+                self.center = newD.old_findCenterGlobal()
+            if self.num_edges <5000:
+                print("\tserial new ver findCenterGlobal() takes ... ", end=' ', flush=True)
+                self.center = newD.findCenterGlobal(parallel1=False, parallel2=False)
+            elif self.num_edges <10000:
+                print("\tpartial parallel findCenterGlobal() takes ... ", end=' ', flush=True)
+                self.center = newD.findCenterGlobal(parallel1=False, parallel2=True)
+            else:
+                print("\tall parallel findCenterGlobal() takes ... ", end=' ', flush=True)
+                self.center = newD.findCenterGlobal(parallel1=True, parallel2=True)
+            print(f"{time.time()-start:.2f}s")
 
-            #for i in range(self.num_tris):
-            #    self.pFlips[i] = self.pFlips[i][:-revnum[i]] + newD.pFlips[i]
+            for i in range(self.num_tris):
+                self.pFlips[i] = self.pFlips[i][:-revnum[i]] + newD.pFlips[i]
 
             start=time.time()
             if self.num_edges <10000:
