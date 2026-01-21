@@ -1299,7 +1299,6 @@ class FastData:
                 if escore >0:
                     ncand.append((e, escore))
             ncand.sort(key = lambda x:x[1], reverse=True)
-            #print("T", i,": ncand = ",  ncand)
             NCAND.append(ncand)
             marked = set()
             flp =[]
@@ -1383,7 +1382,7 @@ class FastData:
                     marked.add(t2)
                     nscore += escore
                 flips.append(flp)
-                print("count ",count, ": T", i,": nscore= ",  nscore)
+                #print("count ",count, ": T", i,": nscore= ",  nscore)
                 if nscore > mscore:
                     mscore = nscore
                     mi = i
