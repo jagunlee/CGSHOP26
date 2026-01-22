@@ -1,0 +1,588 @@
+import argparse
+import json
+import time
+from pathlib import Path
+from typing import Dict, List, Optional, Sequence, Tuple, Union
+
+import numpy as np
+
+from data import Data
+
+
+# =========================================================
+# Utilities
+# =========================================================
+
+def _norm_edge(u: int, v: int) -> Tuple[int, int]:
+    return (u, v) if u < v else (v, u)
+
+
+def _is_edge_list(x) -> bool:
+    """True if x looks like [[u,v], ...] with ints."""
+    if not isinstance(x, list) or len(x) == 0:
+        return False
+    for e in x:
+        if not (isinstance(e, (list, tuple)) and len(e) == 2):
+            return False
+        if not (isinstance(e[0], (int, float)) and isinstance(e[1], (int, float))):
+            return False
+    return True
+
+
+def _as_edges(x) -> List[Tuple[int, int]]:
+    return [(_norm_edge(int(e[0]), int(e[1]))) for e in x]
+
+
+# =========================================================
+# Find & parse opt solution
+# =========================================================
+
+def find_opt_solution_file(opt_dir: str, instance_uid: str) -> Optional[Path]:
+    """
+    Find matching *.solution.json in opt_dir for instance_uid.
+    Prefers exact match {instance_uid}.solution.json, otherwise newest *{instance_uid}*.solution.json.
+    """
+    opt_path = Path(opt_dir)
+    if not opt_path.exists():
+        return None
+
+    direct = opt_path / f"{instance_uid}.solution.json"
+    if direct.exists():
+        return direct
+
+    cands = list(opt_path.glob(f"*{instance_uid}*.solution.json"))
+    if not cands:
+        return None
+    cands.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return cands[0]
+
+
+def extract_explicit_center_edges(sol: dict) -> Optional[List[Tuple[int, int]]]:
+    """
+    Some solutions may explicitly store the final triangulation edges as 'center'.
+    We support:
+      - sol["meta"]["center"] or sol["meta"]["center_edges"]
+      - sol["center"]
+    """
+    if not isinstance(sol, dict):
+        return None
+
+    meta = sol.get("meta", {})
+    if isinstance(meta, dict):
+        for key in ("center", "center_edges"):
+            if key in meta and _is_edge_list(meta[key]):
+                return _as_edges(meta[key])
+
+    if "center" in sol and _is_edge_list(sol["center"]):
+        return _as_edges(sol["center"])
+
+    return None
+
+
+def normalize_flip_phases(flips) -> List[List[List[Tuple[int, int]]]]:
+    """
+    Normalize solution["flips"] into:
+        phases -> rounds -> edges (normalized tuples)
+
+    Accepts common shapes:
+      (A) flips = [[u,v], ...]                          (single round)
+      (B) flips = [ [[u,v],...], [[u,v],...], ... ]     (rounds)
+      (C) flips = [ phase1, phase2, ... ],
+          where phase = [ [[u,v],...], [[u,v],...], ... ]
+    """
+    if flips is None:
+        return []
+
+    # (A) single round edge list
+    if _is_edge_list(flips):
+        return [[[_as_edges(flips)]]]
+
+    # (B) list of rounds
+    if isinstance(flips, list) and len(flips) > 0 and _is_edge_list(flips[0]):
+        rounds = []
+        for r in flips:
+            if _is_edge_list(r):
+                rounds.append(_as_edges(r))
+        return [[rounds]]
+
+    # (C) list of phases
+    if (
+        isinstance(flips, list)
+        and len(flips) > 0
+        and isinstance(flips[0], list)
+        and len(flips[0]) > 0
+        and _is_edge_list(flips[0][0])
+    ):
+        phases = []
+        for ph in flips:
+            if not isinstance(ph, list):
+                continue
+            rounds = []
+            for r in ph:
+                if _is_edge_list(r):
+                    rounds.append(_as_edges(r))
+            if rounds:
+                phases.append(rounds)
+        return [phases]  # NOTE: wrap one more level to keep return type stable
+
+    return []
+
+
+def flatten_rounds_from_phases(phases_wrapped: List[List[List[List[Tuple[int, int]]]]]) -> List[List[Tuple[int, int]]]:
+    """
+    phases_wrapped is either:
+      - [[ rounds ]] or
+      - [[ phase1_rounds, phase2_rounds, ... ]]
+
+    We flatten to a single list of rounds in chronological order.
+    """
+    if not phases_wrapped:
+        return []
+    top = phases_wrapped[0]
+    # top could be "rounds" (list of round) OR "phases" (list of rounds-list)
+    if len(top) == 0:
+        return []
+    if top and isinstance(top[0], list) and top and (len(top[0]) > 0) and isinstance(top[0][0], tuple):
+        # It's already rounds: [round, round, ...]
+        return top  # type: ignore
+    # else it's phases: [phase_rounds, phase_rounds, ...]
+    rounds: List[List[Tuple[int, int]]] = []
+    for phase_rounds in top:  # type: ignore
+        for r in phase_rounds:
+            rounds.append(r)
+    return rounds
+
+
+# =========================================================
+# Reconstruct center triangulation from flip sequence
+# =========================================================
+
+def try_apply_rounds(tri, rounds: List[List[Tuple[int, int]]]) -> Optional[object]:
+    """
+    Apply all rounds to a fast_copy of tri.
+    Returns the resulting triangulation if succeeded, otherwise None.
+    """
+    t = tri.fast_copy()
+    try:
+        for rnd in rounds:
+            for (u, v) in rnd:
+                t.flip((u, v))
+        return t
+    except Exception:
+        return None
+
+
+def reconstruct_center_from_solution(data: Data, sol_path: Path) -> Tuple[Optional[object], dict]:
+    """
+    Build a center triangulation object using solution.json.
+
+    Priority:
+      1) If explicit center edges exist -> build with data.make_triangulation
+      2) Else, use flip sequence:
+         - Determine a valid starting triangulation by checking
+           whether first round edges are contained, then verifying by applying all rounds.
+         - Apply all flips sequentially to get the final center triangulation.
+
+    Returns:
+      (centerT or None, meta_info dict)
+    """
+    meta_info = {"sol_file": sol_path.name, "method": None}
+
+    try:
+        sol = json.loads(sol_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        meta_info["method"] = "read_failed"
+        meta_info["error"] = str(e)
+        return None, meta_info
+
+    # (1) explicit center
+    center_edges = extract_explicit_center_edges(sol)
+    if center_edges is not None:
+        try:
+            centerT = data.make_triangulation([[u, v] for (u, v) in center_edges])
+            meta_info["method"] = "explicit_center_edges"
+            meta_info["center_edges_len"] = len(center_edges)
+            return centerT, meta_info
+        except Exception as e:
+            meta_info["explicit_center_build_failed"] = str(e)
+
+    # (2) flip sequence
+    flips = sol.get("flips", None)
+    phases_wrapped = normalize_flip_phases(flips)
+    rounds = flatten_rounds_from_phases(phases_wrapped)
+    if not rounds:
+        meta_info["method"] = "no_flips"
+        return None, meta_info
+
+    first_set = set(rounds[0])
+
+    # Candidate starts: triangulations containing all edges in the first round
+    candidates = []
+    for idx, tri in enumerate(data.triangulations):
+        try:
+            if first_set.issubset(set(tri.edges)):
+                candidates.append(idx)
+        except Exception:
+            continue
+
+    # If nothing matches, fall back to trying a small prefix (deterministic)
+    if not candidates:
+        candidates = list(range(min(50, len(data.triangulations))))
+
+    # Try candidates deterministically until flip application succeeds
+    for idx in candidates:
+        tri0 = data.triangulations[idx]
+        res = try_apply_rounds(tri0, rounds)
+        if res is not None:
+            meta_info["method"] = "reconstructed_from_flips"
+            meta_info["start_index"] = idx
+            meta_info["num_rounds"] = len(rounds)
+            meta_info["first_round_edges"] = len(rounds[0])
+            return res, meta_info
+
+    meta_info["method"] = "reconstruct_failed"
+    meta_info["num_rounds"] = len(rounds)
+    meta_info["candidates_tried"] = len(candidates)
+    return None, meta_info
+
+
+# =========================================================
+# Safe distance computation (avoid AssertionError in data.py)
+# =========================================================
+
+def _pfp_len_noassert(data: Data, tri1, tri2, variant: int = 1, max_iters: int = 100000) -> Tuple[int, bool]:
+    """
+    Replicate data.parallel_flip_path / parallel_flip_path2 but DO NOT assert at the end.
+    Returns (len_rounds, success).
+    """
+    tri = tri1.fast_copy()
+    pfp = []
+    iters = 0
+
+    while True:
+        iters += 1
+        if iters > max_iters:
+            break
+
+        cand = []
+        edges = list(tri.edges)
+
+        # mimic original behavior
+        prev_flip = []
+
+        for e in edges:
+            if data.flippable(tri, e):
+                if variant == 2 and e in prev_flip:
+                    continue
+                depth = getattr(data, "SEARCH_DEPTH", 1)
+                score = data.flip_score(tri, tri2, e, depth if variant == 1 else 0)
+                if score[0] > 0:
+                    cand.append((e, score))
+
+        if not cand:
+            break
+
+        cand.sort(key=lambda x: x[1], reverse=True)
+
+        flips = []
+        marked = set()
+        for (p1, p2), _ in cand:
+            t1 = tri.find_triangle(p1, p2)
+            t2 = tri.find_triangle(p2, p1)
+            if t1 in marked or t2 in marked:
+                continue
+            flips.append((p1, p2))
+            marked.add(t1)
+            marked.add(t2)
+
+        # apply flips
+        for e in flips:
+            if variant == 1:
+                tri.flip(e)
+            else:
+                e1 = tri.flip(e)
+                prev_flip.append(e1)
+
+        pfp.append(flips)
+
+    success = (tri.edges == tri2.edges)
+    return len(pfp), success
+
+
+def computePFS_total_safe(data: Data, centerT, mode: str, weighted: bool) -> Tuple[List[float], float, dict]:
+    """
+    Try data.computePFS_total(centerT,...). If AssertionError occurs,
+    fall back to no-assert greedy lengths.
+
+    Returns: (dist_list, total, info)
+    """
+    info = {"used_fallback": False, "fallback_success_cnt": 0, "fallback_fail_cnt": 0}
+
+    try:
+        dist_list, total = data.computePFS_total(centerT, mode=mode, weighted=weighted)
+        return list(dist_list), float(total), info
+    except AssertionError:
+        info["used_fallback"] = True
+    except Exception as e:
+        info["used_fallback"] = True
+        info["fallback_error"] = str(e)
+
+    # fallback: compute per-triangulation
+    weights = None
+    try:
+        weights = data.get_weights(len(data.triangulations))
+    except Exception:
+        weights = [1.0] * len(data.triangulations)
+
+    dist_list = []
+    total = 0.0
+
+    for i, tri_i in enumerate(data.triangulations):
+        if mode == "pfp2":
+            d, ok = _pfp_len_noassert(data, centerT, tri_i, variant=2)
+        elif mode == "pfp":
+            d, ok = _pfp_len_noassert(data, centerT, tri_i, variant=1)
+        else:
+            d1, ok1 = _pfp_len_noassert(data, centerT, tri_i, variant=1)
+            d2, ok2 = _pfp_len_noassert(data, centerT, tri_i, variant=2)
+            d = min(d1, d2)
+            ok = ok1 or ok2
+
+        dd = float(d)
+        if weighted:
+            dd *= float(weights[i])
+
+        dist_list.append(dd)
+        total += dd
+
+        if ok:
+            info["fallback_success_cnt"] += 1
+        else:
+            info["fallback_fail_cnt"] += 1
+
+    return dist_list, float(total), info
+
+
+# =========================================================
+# Coreset builder (ring + 1D grid)
+# =========================================================
+
+def build_triangulation_coreset_practical(
+    data: Data,
+    centerT,
+    eps: float = 0.1,
+    alpha: float = 8.0,
+    alpha_min: float = 16.0,
+    distance_mode: str = "min",
+    weighted_distance: bool = True,
+):
+    """
+    Build a coreset using a GIVEN center triangulation object centerT.
+    (This is important for opt-center not in triangulations.)
+
+    Returns:
+      S_idx     : np.ndarray[int]
+      S_weights : np.ndarray[float]
+      dist_info : dict (fallback stats)
+    """
+    n = len(data.triangulations)
+    if n == 0:
+        return np.array([], dtype=int), np.array([], dtype=float), {}
+
+    weights = data.get_weights(n)
+    total_weight = float(sum(weights))
+
+    nearest_dist, nu_A, dist_info = computePFS_total_safe(
+        data, centerT, mode=distance_mode, weighted=weighted_distance
+    )
+    nearest_dist = np.asarray(nearest_dist, dtype=float)
+
+    R = max(float(nu_A) / max(1.0, total_weight), 1e-12)
+    Dmax = float(nearest_dist.max())
+
+    if Dmax < R:
+        rep = int(np.argmin(nearest_dist))
+        return np.array([rep], dtype=int), np.array([total_weight], dtype=float), dist_info
+
+    from math import ceil, floor, log2
+
+    M = max(1, ceil(log2((Dmax + R) / R)))
+    buckets: Dict[Tuple[int, int], List[Union[int, float]]] = {}
+    tiny = 1e-12
+
+    for i in range(n):
+        dist = float(nearest_dist[i])
+        wi = float(weights[i])
+
+        if dist < R:
+            j = 0
+        else:
+            j = int(ceil(log2(max(dist, tiny) / R)))
+        j = min(j, M)
+
+        rj = (eps * R * (2 ** j)) / float(alpha)
+        rj = max(rj, (eps * R) / float(alpha_min))
+
+        cell_1d = int(floor(dist / rj))
+        key = (j, cell_1d)
+
+        if key not in buckets:
+            buckets[key] = [int(i), wi]
+        else:
+            buckets[key][1] += wi
+
+    reps = []
+    wts = []
+    for rep_idx, wsum in buckets.values():
+        reps.append(int(rep_idx))
+        wts.append(float(wsum))
+
+    return np.array(reps, dtype=int), np.array(wts, dtype=float), dist_info
+
+
+# =========================================================
+# Main: build & save coresets
+# =========================================================
+
+def build_and_save_coresets_for_all_instances(
+    input_dir: str = "./data/benchmark_instances",
+    output_dir: str = "./data/coreset_instance",
+    opt_dir: str = "../opt",
+    eps: float = 0.1,
+    alpha: float = 8.0,
+    alpha_min: float = 16.0,
+    distance_mode: str = "min",
+    weighted_distance: bool = True,
+    include_rirs: bool = False,
+):
+    """
+    For each instance.json in input_dir:
+      - find opt solution in opt_dir
+      - reconstruct center triangulation from solution flips
+      - build coreset using that center triangulation object
+      - save to *_coreset.json (with coreset_weights)
+    """
+    input_path = Path(input_dir)
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    json_paths = sorted(input_path.glob("*.json"))
+    print(f"[INFO] Found {len(json_paths)} json files in {input_dir}")
+
+    for json_file in json_paths:
+        stem = json_file.stem
+        if (not include_rirs) and stem.lower().startswith("rirs"):
+            print(f"[SKIP] {json_file.name} (starts with 'rirs'; include_rirs=False)")
+            continue
+
+        print("\n==============================================")
+        print(f"[PROCESS] {json_file.name}")
+        start_time = time.time()
+
+        # load instance json (for triangulation edge lists to export)
+        try:
+            inst = json.loads(json_file.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"[WARN] failed to read json: {json_file} ({e}) -> skip")
+            continue
+
+        base_uid = inst.get("instance_uid", json_file.stem)
+        tri_list = inst.get("triangulations", [])
+        if not isinstance(tri_list, list) or len(tri_list) == 0:
+            print(f"[WARN] no triangulations in {json_file} -> skip")
+            continue
+
+        # Load Data (Triangulation objects & distance routines)
+        data_full = Data(str(json_file))
+
+        # Find opt solution
+        sol_path = find_opt_solution_file(opt_dir, base_uid)
+        if sol_path is None:
+            print(f"[WARN] opt solution NOT FOUND for {base_uid} in {opt_dir} -> skip (need flips to get center)")
+            continue
+
+        # Reconstruct center
+        centerT, center_meta = reconstruct_center_from_solution(data_full, sol_path)
+        if centerT is None:
+            print(f"[WARN] failed to reconstruct center from {sol_path.name} -> skip")
+            print(f"       detail: {center_meta}")
+            continue
+
+        # Build coreset using the reconstructed center triangulation object
+        S_idx, S_weights, dist_info = build_triangulation_coreset_practical(
+            data_full,
+            centerT=centerT,
+            eps=eps,
+            alpha=alpha,
+            alpha_min=alpha_min,
+            distance_mode=distance_mode,
+            weighted_distance=weighted_distance,
+        )
+
+        S_idx_list = np.asarray(S_idx, dtype=int).tolist()
+        coreset_tris = [tri_list[i] for i in S_idx_list]
+        coreset_wts = np.asarray(S_weights, dtype=float).tolist()
+
+        coreset_uid = f"{base_uid}-coreset"
+        coreset_inst = {
+            "content_type": inst.get("content_type", "CGSHOP2026_Instance"),
+            "instance_uid": coreset_uid,
+            "points_x": inst["points_x"],
+            "points_y": inst["points_y"],
+            "triangulations": coreset_tris,
+            "coreset_weights": coreset_wts,
+            "meta": {
+                "eps": eps,
+                "alpha": alpha,
+                "alpha_min": alpha_min,
+                "distance_mode": distance_mode,
+                "weighted_distance": weighted_distance,
+                "include_rirs": include_rirs,
+                "opt_dir": opt_dir,
+                **center_meta,
+                **dist_info,
+                "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            },
+        }
+
+        out_file = output_path / (json_file.stem + "_coreset.json")
+        out_file.write_text(json.dumps(coreset_inst, indent=2), encoding="utf-8")
+
+        elapsed = time.time() - start_time
+        print(f"[DONE] reps={len(S_idx_list)}  sum_w={sum(coreset_wts):.3f}")
+        print(f"       center_method={center_meta.get('method')}, sol={sol_path.name}")
+        if dist_info.get("used_fallback"):
+            print(f"       [WARN] fallback distance used: ok={dist_info.get('fallback_success_cnt')} fail={dist_info.get('fallback_fail_cnt')}")
+        print(f"       saved -> {out_file}")
+        print(f"       time  -> {elapsed:.3f}s")
+        print("==============================================")
+
+
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument("--input_dir", type=str, default="./data/benchmark_instances")
+    p.add_argument("--output_dir", type=str, default="./data/coreset_instance")
+    p.add_argument("--opt_dir", type=str, default="../opt")
+    p.add_argument("--eps", type=float, default=0.1)
+    p.add_argument("--alpha", type=float, default=8.0)
+    p.add_argument("--alpha_min", type=float, default=16.0)
+    p.add_argument("--distance_mode", type=str, default="min", choices=["pfp", "pfp2", "min"])
+    p.add_argument("--weighted_distance", action="store_true", default=True)
+    p.add_argument("--no_weighted_distance", action="store_false", dest="weighted_distance")
+    p.add_argument("--include_rirs", action="store_true", default=False)
+    return p.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    build_and_save_coresets_for_all_instances(
+        input_dir=args.input_dir,
+        output_dir=args.output_dir,
+        opt_dir=args.opt_dir,
+        eps=args.eps,
+        alpha=args.alpha,
+        alpha_min=args.alpha_min,
+        distance_mode=args.distance_mode,
+        weighted_distance=args.weighted_distance,
+        include_rirs=args.include_rirs,
+    )
