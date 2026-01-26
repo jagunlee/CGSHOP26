@@ -592,14 +592,14 @@ class FastData:
                     if i==j: continue
                     score, _ = self.flip_score(tri, mtriangulations[j], e, 1, 1)
                     escore +=score
-                if escore >0:
-                    ncand.append((e, escore))
+                ncand.append((e, escore))
             ncand.sort(key = lambda x:x[1], reverse=True)
             # print("T", i,"done.")
             NCAND.append(ncand)
             marked = set()
             flp =[]
             for (p1, p2), escore in ncand:
+                if escore <= 0: break
                 t1 = tri.find_face(p1, p2)
                 t2 = tri.find_face(p2, p1)
                 if t1 in marked or t2 in marked: continue
@@ -643,20 +643,12 @@ class FastData:
                 nscore = 0
                 tri = mtriangulations[i]
                 if i!= current_mi:
-                    prev_ncand = NCAND[i]
                     # print("T", i, ": prev_ncand = ", prev_ncand)
-                    for e in F_E[i]:
-                        escore = 0
+                    for e, escore in NCAND[i]:
                         prev_e_score, _ = self.flip_score(tri, prev_mtri, e, 1, 1)
                         current_e_score, _ = self.flip_score(tri, mtriangulations[current_mi], e, 1, 1)
-                        #if e==(4, 6):
-                        #    print("# e = ", e , ", prev_escore = ", prev_e_score, ", current_escore = ", current_e_score)
-                        for cc in prev_ncand:
-                            if cc[0] == e:
-                                new_cc = cc[1] - prev_e_score + current_e_score
-                                escore += new_cc
-                        if escore >0:
-                            ncand.append((e, escore))
+                        escore += current_e_score - prev_e_score
+                        ncand.append((e, escore))
                 else:#i==current_mi
                     ncand=[]
                     for e in F_E[i]:
@@ -677,6 +669,7 @@ class FastData:
                 marked = set()
                 flp =[]
                 for (p1, p2), escore in ncand:
+                    if escore <= 0: break
                     t1 = tri.find_face(p1, p2)
                     t2 = tri.find_face(p2, p1)
                     if t1 in marked or t2 in marked: continue
@@ -707,7 +700,7 @@ class FastData:
         self.pFlips=[]
         for i in range(num):
             if i< num-1:
-                assert(mtriangulations[i].edges == mtriangulations[i+1].edges)
+                assert mtriangulations[i].edges == mtriangulations[i+1].edges, "findCenterGlobal ended with different centers"
             self.pFlips.append(pfps[i])
         return mtriangulations[0]
 
@@ -895,10 +888,10 @@ class FastData:
 
         # errors = check_for_errors(instance, solution)
 
-        if errors != []:
-            print(errors)
-            exit(0)
-        else: print("No errors")
+        # if errors != []:
+        #     print(errors)
+        #     exit(0)
+        # else: print("No errors")
         opt_folder = "opt"
         opt_list = os.listdir(path+opt_folder)
         already_exist = False

@@ -2,6 +2,7 @@ from faster_data import *
 from multiprocessing import Process, Pool
 import os
 import logging
+import sys
 
 def read_dt(d):
     dt = FastData(d)
@@ -23,7 +24,7 @@ def read_dt(d):
             prev = dt.dist
         count += 1
         if dt.dist >= prev * 1.1:
-            dt = Data(d)
+            dt = FastData(d)
 
 if __name__=="__main__":
     argument = sys.argv

@@ -16,15 +16,18 @@ def read_dt(d):
     dt.log = False
     count = 0
     logger.info('File loaded')
-    while True:
-        dt.random_new_center()
-        if dt.dist < prev:
-            logger.info(f"Improved: {prev} -> {dt.dist}")
-            dt.WriteData()
-            prev = dt.dist
-        count += 1
-        if dt.dist >= prev * 1.01:
-            dt = Data(d)
+    try:
+        while True:
+            dt.random_new_center()
+            if dt.dist < prev:
+                logger.info(f"Improved: {prev} -> {dt.dist}")
+                dt.WriteData()
+                prev = dt.dist
+            count += 1
+            if dt.dist >= prev * 1.01:
+                dt = FastData(d)
+    except Exception as e:    # 모든 예외의 에러 메시지를 출력할 때는 Exception을 사용
+        logger.info(f"Exception occured: {e}")
         
 
 if __name__=="__main__":
