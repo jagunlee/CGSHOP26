@@ -12,6 +12,7 @@ import datetime
 import numpy as np
 from pathlib import Path
 import pdb
+from multiprocessing import Process, Pool
 # from cgshop2026_pyutils.schemas import CGSHOP2026Instance, CGSHOP2026Solution
 # from cgshop2026_pyutils.geometry import FlippableTriangulation
 # from cgshop2026_pyutils.verify import check_for_errors
@@ -32,6 +33,8 @@ class Data:
             self.input = inp
             # print('self.input:', self.input)
             self.triangulations = []
+            # if multi: self.ReadData_multi()
+            # else: self.ReadData()
             self.ReadData()
             self.instance_uid = (inp.split('/')[-1]).split('.')[0]
             self.log = False
@@ -39,6 +42,9 @@ class Data:
         # self.distance = []
         # self.pFlips = []
 
+    def __del__(self):
+        for t in self.triangulations:
+            del t
 
     def ReadData(self):
         if "solution" not in self.input:
@@ -107,8 +113,6 @@ class Data:
             #     self.WriteData()
             # print("---------------------------------")
             
-
-
     def make_triangulation(self, t: Triangulation):
         tri = Triangulation()
         tri.adj = [-1] * len(self.pts)
@@ -234,6 +238,7 @@ class Data:
             pfp.append(flips)
             # print(len(flips))
         assert(tri.edges == tri2.edges)
+        del tri
         return pfp
 
     def parallel_flip_path_reverse(self, tri1:Triangulation, tri2:Triangulation):
@@ -271,6 +276,7 @@ class Data:
             pfp.append(flips_reverse)
             # print(len(flips))
         assert(tri.edges == tri1.edges)
+        del tri
         return pfp[::-1]
 
     def parallel_flip_path_2way(self, tri1:Triangulation, tri2:Triangulation):
@@ -395,6 +401,7 @@ class Data:
             # print("flips: ", flips)
             # print(len(flips))
         assert(tri.edges == tri2.edges)
+        del tri
         return pfp
     
     def parallel_flip_path2_reverse(self, tri1:Triangulation, tri2:Triangulation):
@@ -446,6 +453,7 @@ class Data:
             # print("flips: ", flips)
             # print(len(flips))
         assert(tri.edges == tri1.edges)
+        del tri
         return pfp[::-1]
 
     def parallel_flip_path3(self, tri1:Triangulation, tri2:Triangulation):
@@ -485,6 +493,7 @@ class Data:
             pfp.append(flips)
             # print(len(flips))
         assert(tri.edges == tri2.edges)
+        del tri
         return pfp
     
     def parallel_flip_path3_reverse(self, tri1:Triangulation, tri2:Triangulation):
@@ -525,6 +534,7 @@ class Data:
             pfp.append(pfp1)
             # print(len(flips))
         assert(tri.edges == tri1.edges)
+        del tri
         return pfp[::-1]
             
     def flippable(self, tri:Triangulation, e:tuple):
@@ -722,10 +732,103 @@ class Data:
             self.pFlips.append(pfps[i])
         
         # print("total length:",tl)
+        while len(mtriangulations) > 1:
+            tri = mtriangulations.pop()
+            del tri
         return mtriangulations[0]
-                    
+
+    
+    # def findCenterGlobal_multi(self):
+    #     if self.log:
+    #         start = time.time()
+    #     mtriangulations = [t.fast_copy() for t in self.triangulations]
+    #     num = len(mtriangulations)
+    #     pfps =[[] for _ in range(num)]
+    #     scores = [dict() for _ in range(num)]
+    #     tl = 0
+    #     pool = Pool(10)
+    #     newd = Data()
+    #     newd.pts = self.pts
+    #     newd.log = self.log
+    #     res = pool.map(flip_score_multi, [(newd, mtriangulations, i) for i in range(num)])
+    #     for ind, score in enumerate(res):
+    #         scores[ind] = score
+    #     if self.log:
+    #         print("initialize done")
+    #         end = time.time()
+    #         print('time:', f"{end - start:.5f} sec")
+    #     while True:
+    #         mscore = 0
+    #         for i in range(num):
+    #             tri = mtriangulations[i]
+    #             ncand = []
+    #             nflips = []
+    #             nscore = 0
+    #             for e in scores[i]:
+    #                 if scores[i][e] > 0:
+    #                     ncand.append((e, scores[i][e]))
+    #             ncand.sort(key=lambda x:x[1], reverse=True)
+    #             marked = set()
+    #             for (p1, p2), score in ncand:
+    #                 t1 = tri.find_triangle(p1, p2)
+    #                 t2 = tri.find_triangle(p2, p1)
+    #                 if t1 in marked or t2 in marked:
+    #                     continue
+    #                 nflips.append((p1, p2))
+    #                 marked.add(t1)
+    #                 marked.add(t2)
+    #                 nscore += score    
+    #             if nscore > mscore:
+    #                 mscore = nscore
+    #                 mi = i
+    #                 mflips = nflips
+    #         if mscore == 0:
+    #             break
+    #         tl+=1
+    #         if self.log:
+    #             print(tl)
+    #             print(mscore)
+    #             end = time.time()
+    #             print('time:', f"{end - start:.5f} sec")
+    #         pfps[mi].append(mflips)
+    #         for e in mflips:
+    #             mtriangulations[mi].flip(e)
+    #         for i in range(num):
+    #             if i == mi:
+    #                 scores[i].clear()
+    #                 tri = mtriangulations[i]
+    #                 edges = list(tri.edges)
+    #                 for e in edges:
+    #                     if not self.flippable(tri, e): continue
+    #                     escore = 0
+    #                     for j in range(num):
+    #                         if i==j: continue
+    #                         score, _ = self.flip_score(tri, mtriangulations[j], e, 1)
+    #                         escore += score
+    #                     scores[i][e] = escore
+    #             else:
+    #                 tri = mtriangulations[i]
+    #                 edges = list(tri.edges)
+    #                 for e in edges:
+    #                     if not self.flippable(tri, e): continue
+    #                     score, _ = self.flip_score(tri, mtriangulations[mi], e, 1)
+    #                     scores[i][e] += score
+    #     self.pFlips = []
+    #     for i in range(num):
+    #         if i < num-1:
+    #             assert(mtriangulations[i].edges == mtriangulations[i+1].edges)
+    #         self.pFlips.append(pfps[i])
+        
+    #     if self.log: print("total length:",tl)
+    #     while len(mtriangulations) > 1:
+    #         tri = mtriangulations.pop()
+    #         del tri
+    #     return mtriangulations[0]
+   
+
     def findCenterGlobal2(self):
-        start = time.time()
+        if self.log:
+            start = time.time()
         mtriangulations = [copy.deepcopy(t) for t in self.triangulations]
         num = len(mtriangulations)
         pfps =[[] for _ in range(num)]
@@ -742,9 +845,10 @@ class Data:
                     score, _ = self.flip_score(tri, mtriangulations[j], e, 1)
                     escore += score
                 scores[i][e] = escore
-            print(i, "/", num)
-            end = time.time()
-            print('time:', f"{end - start:.5f} sec")
+            if self.log:
+                print(i, "/", num)
+                end = time.time()
+                print('time:', f"{end - start:.5f} sec")
         while True:
             mscore = 0
             for i in range(num):
@@ -773,11 +877,21 @@ class Data:
             if mscore == 0:
                 break
             tl+=1
-            print(tl)
-            print(mscore)
-            end = time.time()
-            print('time:', f"{end - start:.5f} sec")
+            if self.log:
+                print(tl)
+                print(mscore)
+                end = time.time()
+                print('time:', f"{end - start:.5f} sec")
             pfps[mi].append(mflips)
+            for i in range(num):
+                if i == mi:
+                    continue
+                tri = mtriangulations[i]
+                edges = list(tri.edges)
+                for e in edges:
+                    if not self.flippable(tri, e): continue
+                    score, _ = self.flip_score(tri, mtriangulations[mi], e, 1)
+                    scores[i][e] -= score
             for e in mflips:
                 mtriangulations[mi].flip(e)
             for i in range(num):
@@ -806,7 +920,10 @@ class Data:
                 assert(mtriangulations[i].edges == mtriangulations[i+1].edges)
             self.pFlips.append(pfps[i])
         
-        print("total length:",tl)
+        if self.log: print("total length:",tl)
+        while len(mtriangulations) > 1:
+            tri = mtriangulations.pop()
+            del tri
         return mtriangulations[0]
 
     def WriteData(self):
@@ -885,6 +1002,7 @@ class Data:
         pFlips_paired31 = self.parallel_flip_path3_reverse(T1, T2)
         # print(len(pFlips_paired1), len(pFlips_paired2))
         path_list = [pFlips_paired1,pFlips_paired2,pFlips_paired3,pFlips_paired11,pFlips_paired21,pFlips_paired31]
+        random.shuffle(path_list)
         opt_ind = np.argmin([len(x) for x in path_list])
         pFlips_paired = path_list[opt_ind]
         # if len(pFlips_paired1)<len(pFlips_paired2):
@@ -1172,21 +1290,25 @@ class Data:
             local_T:Triangulation = self.triangulations[tri_num].fast_copy()
             for e in seq[0]:
                 local_T.flip(e)
-            cands = [seq]
             minlen = len(seq)
+            cnt = 1
+            res = seq
             while seq_iter < len(seq):
                 if self.log: print(tri_num, seq_iter)
                 seq1 = self.computePFS_total(self.triangulations[tri_num], local_T)
                 seq2 = self.computePFS_total(local_T, self.center)
                 if len(seq1) + len(seq2) < minlen:
-                    cands = [seq1 + seq2]
+                    res = seq1 + seq2
                     minlen = len(seq1) + len(seq2)
+                    cnt = 1
                 elif len(seq1) + len(seq2) == minlen:
-                    cands.append(seq1 + seq2)
+                    if random.choice([False]*cnt + [True]):
+                        res = seq1 + seq2
+                    cnt += 1
                 for e in seq[seq_iter]:
                     local_T.flip(e)
                 seq_iter += 1
-            self.pFlips[tri_num] = random.choice(cands)
+            self.pFlips[tri_num] = res
             if seq_iter == len(seq):
                 tri_num += 1
         return self.center
@@ -1205,7 +1327,7 @@ class Data:
         newd.pts = self.pts
         newd.log = self.log
         while param < max_dist * 2:
-            revnum = [random.randint(1 , min(param, len(self.pFlips[i]))) for i in range(len(self.triangulations))]
+            revnum = [random.randint(min(param, len(self.pFlips[i]), 1) , min(param, len(self.pFlips[i]))) for i in range(len(self.triangulations))]
             if self.log: print(revnum)
             for i in range(len(self.triangulations)):
                 newt = self.center.fast_copy()
@@ -1213,21 +1335,66 @@ class Data:
                 for j in range(revnum[i]):
                     for e in self.pFlips[i][-j-1]:
                         newd.flip_rev(newd.triangulations[i], e)
-            newc = newd.findCenterGlobal()
+            newc = newd.findCenterGlobal2()
             self.center = newc
             for i in range(len(self.triangulations)):
                 self.pFlips[i] = self.pFlips[i][:-revnum[i]] + newd.pFlips[i]
-            self.random_compute_fpd_replace()
-            newdist = sum([len(pFlip) for pFlip in self.pFlips])
+            old = 0
+            self.dist = sum([len(pFlip) for pFlip in self.pFlips])
+            # if self.dist < total_dist:
+            #     self.WriteData()
+            while old != self.dist:
+                old = self.dist
+                self.random_compute_fpd_replace()
+                self.dist = sum([len(pFlip) for pFlip in self.pFlips])
+                # if self.dist < old:
+                #     self.WriteData() 
             if self.log:
-                print(total_dist, sum([len(pFlip) for pFlip in self.pFlips]))
-            if total_dist != newdist: 
-                self.dist = newdist
+                print(total_dist, self.dist)
+            if total_dist != self.dist: 
                 break
             param *= 2
             while newd.triangulations:
                 t = newd.triangulations.pop()
                 del t
+        del newd
+        
+    # def random_new_center_multi(self):
+    #     param = 2
+    #     max_dist = max([len(pFlip) for pFlip in self.pFlips])
+    #     total_dist = sum([len(pFlip) for pFlip in self.pFlips])
+    #     newd = Data()
+    #     newd.pts = self.pts
+    #     newd.log = self.log
+    #     emptyd = Data()
+    #     emptyd.pts = self.pts
+    #     emptyd.log = self.log
+    #     pool = Pool(10)
+    #     while param < max_dist * 2:
+    #         revnum = [random.randint(min(param, len(self.pFlips[i]), 1) , min(param, len(self.pFlips[i]))) for i in range(len(self.triangulations))]
+    #         if self.log: print(revnum)
+    #         newd.triangulations = [None] * len(self.triangulations)
+    #         res = pool.map(getTriMult, [(emptyd, self.center, self.pFlips[i], revnum[i]) for i in range(len(self.triangulations))])
+    #         for i, tri in enumerate(res):
+    #             newd.triangulations[i] = tri
+    #         newc = newd.findCenterGlobal_multi()
+    #         self.center = newc
+    #         for i in range(len(self.triangulations)):
+    #             self.pFlips[i] = self.pFlips[i][:-revnum[i]] + newd.pFlips[i]
+    #         self.random_compute_fpd_replace()
+    #         newdist = sum([len(pFlip) for pFlip in self.pFlips])
+    #         if self.log:
+    #             print(total_dist, sum([len(pFlip) for pFlip in self.pFlips]))
+    #         if total_dist != newdist: 
+    #             self.dist = newdist
+    #             break
+    #         param *= 2
+    #         while newd.triangulations:
+    #             t = newd.triangulations.pop()
+    #             del t
+    #     del newd
+    #     del emptyd
+
 
     # def computeDistanceSum(self, centerT):
 
@@ -1374,3 +1541,29 @@ def turn(p1: MyPoint, p2: MyPoint, p3: MyPoint):
 
 def turn(p1: Point, p2: Point, p3: Point):
     return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)
+
+# def getTriMult(param):
+#     d, tri, pFlip, revnum = param
+#     for i in range(revnum):
+#         for e in pFlip[-i-1]:
+#             d.flip_rev(tri, e)
+#     return tri
+
+
+# def flip_score_multi(param):
+#     newd, mtriangulations, i = param
+#     res = dict()
+#     tri = mtriangulations[i]
+#     edges = list(tri.edges)
+#     num = len(mtriangulations)
+#     for e in edges:
+#         if not newd.flippable(tri, e): continue
+#         escore = 0
+#         for j in range(num):
+#             if i==j: continue
+#             score, _ = newd.flip_score(tri, mtriangulations[j], e, 1)
+#             escore += score
+#         res[e] = escore
+#     if newd.log:
+#         print(i, "th triangulation initialized")
+#     return res

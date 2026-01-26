@@ -26,6 +26,7 @@ class Triangulation:
     def __del__(self):
         for t in self.triangles:
             del t
+        
     def fast_copy(self):
         new = Triangulation()
 
