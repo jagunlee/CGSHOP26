@@ -2,8 +2,8 @@ import data as parallel
 import os
 import argparse
 
-def read_dt(d, fcgs, fcgp1, fcgp2, rp, workers, chunk_size):
-    dt = parallel.FastData(d, instance_path, solution_folder)
+def read_dt(d, path, sol_folder, opt_folder, fcgs, fcgp1, fcgp2, rp, workers, chunk_size):
+    dt = parallel.FastData(d, path, sol_folder, opt_folder)
     prev = dt.dist
     print("initial dist = ", prev)
     while True:
@@ -20,6 +20,9 @@ def read_dt(d, fcgs, fcgp1, fcgp2, rp, workers, chunk_size):
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str)
+    paraser.add_argument('--path', type=str, default='./')
+    paraser.add_argument('--sol_folder', type=str, default='solutions')
+    paraser.add_argument('--opt_folder', type=str, default='opt')
     parser.add_argument('--fcg_old', type=str, default=True, help='old findCenterGlobal()')
     parser.add_argument('--fcg_pr1', type=str, default=False, help='first part parallel findCenterGlobal()')
     parser.add_argument('--fcg_pr2', type=str, default=False, help='second part parallel findCenterGlobal()')
@@ -32,6 +35,9 @@ if __name__=="__main__":
     parser = get_parser()
     args = parser.parse_args()
     inp = args.data
+    path = args.path
+    sol_folder = args.sol_folder
+    opt_folder = args.opt_folder
     fcgs=args.fcg_old
     fcgp1=args.fcg_pr1
     fcgp2=args.fcg_pr2
@@ -43,4 +49,4 @@ if __name__=="__main__":
     fcgp2 = True if fcgp2=='t' else False
     rp = True if rp=='t' else False
     if "json" in inp:
-        read_dt(inp, fcgs, fcgp1, fcgp2, rp, workers, chunk_size)
+        read_dt(inp, path, sol_folder, opt_folder, fcgs, fcgp1, fcgp2, rp, workers, chunk_size)

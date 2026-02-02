@@ -608,15 +608,18 @@ def _parallel_flip_path3(f_pts, f_nei, e2f, adj, tg_f_pts, tg_f_nei, tg_e2f, tg_
 
 
 class FastData:
-    def __init__(self, inst_path, sol_folder, inp=''):
+    def __init__(self, path, sol_folder,opt_folder inp=''):
         if not inp:
             self.triangulations=[]
         else:
             self.input = inp
+            self.path = path
+            self.sol_folder = sol_folder
+            self.opt_folder = opt_folder
             self.pts = None # np.array([N, 2])
-            self.ReadData(inst_path)
+            self.ReadData()
 
-    def ReadData(self, inst_path):
+    def ReadData(self):
         if "solution" not in self.input:
             pass
         else:
@@ -628,7 +631,7 @@ class FastData:
             self.instance_uid = root["instance_uid"]
 
 
-            org_input = inst_path+'data/benchmark_instances/'+self.instance_uid+'.json'
+            org_input = self.path+'data/benchmark_instances/'+self.instance_uid+'.json'
             with open(org_input, "r", encoding="utf-8") as f:
                 root=json.load(f)
             self.pts_x = root["points_x"]
@@ -1721,7 +1724,7 @@ class FastData:
         print(f"____________________\n")
 
 
-    def WriteData(self, inst_path, sol_folder, opt_folder):
+    def WriteData(self):
         inst = dict()
         inst["content_type"] = "CGSHOP2026_Solution"
         inst["instance_uid"] = self.instance_uid
@@ -1731,11 +1734,11 @@ class FastData:
         dist = sum([len(pFlip) for pFlip in self.pFlips])
         inst["meta"] = {"dist": dist}
 
-        with open(inst_path+sol_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+        with open(self.path+self.sol_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
             json.dump(inst, f, indent='\t')
 
         #verify
-        org_input = inst_path+'data/benchmark_instances/'+self.instance_uid+'.json'
+        org_input = self.path+'data/benchmark_instances/'+self.instance_uid+'.json'
         with open(org_input, "r", encoding="utf-8") as f:
             root=json.load(f)
 
@@ -1755,14 +1758,14 @@ class FastData:
         if errors != []:
             print(errors)
             exit(0)
-        opt_list = os.listdir(path+opt_folder)
+        opt_list = os.listdir(self.path+self.opt_folder)
         already_exist = False
 
         for sol in opt_list:
             if self.instance_uid+".solution.json" in sol:
                 already_exist = True
 
-                with open(path+opt_folder+"/"+sol, "r", encoding="utf-8") as ff:
+                with open(self.path+self.opt_folder+"/"+sol, "r", encoding="utf-8") as ff:
                     root = json.load(ff)
                     try:
                         old_score = root["meta"]["dist"]
@@ -1770,13 +1773,13 @@ class FastData:
                         old_flips = root["flips"]
                         old_score = len([len(x) for x in old_flips])
                 if old_score>dist:
-                    os.remove(path+opt_folder+"/"+sol)
-                    with open(path+opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+                    os.remove(self.path+self.opt_folder+"/"+sol)
+                    with open(self.path+self.opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
                         json.dump(inst, f, indent='\t')
                     print(f"solution saved {old_score} -> {dist}")
 
         if not already_exist:
-            with open(path+opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+            with open(self.path+self.opt_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
                 json.dump(inst, f, indent='\t')
             print(f"solution saved")
 
