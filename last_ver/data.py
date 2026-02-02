@@ -1,5 +1,4 @@
 import json, os
-#from multiprocessing import Process, Pool
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import functools
@@ -188,9 +187,6 @@ def _flip(p1, p2, f_pts, f_nei, e2f, adj):
     e2f[(p3 << 32) | p4] = t2
 
     e1 = (min(p3, p4), max(p3, p4))
-    #edges.add(e1)
-    #if (min(p1, p2), max(p1, p2)) in edges:
-    #    edges.discard((min(p1, p2), max(p1, p2)))
     adj[p1] = np.int32(p3)
     adj[p2] = np.int32(p3)
 
@@ -235,8 +231,6 @@ def _numba_count_cross_fast(f_pts, f_nei, q1, q2, t, pts_coor):
     cnt = 1
     A = p_q2[0]-p_q1[0]
     B = p_q2[1]-p_q1[1]
-    #if (q1, q2) == (60, 68):
-    #    print(t, row, row_tt, i, j, " in numba_fast")
     while True:
         if row_tt[(j+1)%3] == q2:break
         cnt +=1
@@ -614,15 +608,15 @@ def _parallel_flip_path3(f_pts, f_nei, e2f, adj, tg_f_pts, tg_f_nei, tg_e2f, tg_
 
 
 class FastData:
-    def __init__(self, inp=''):
+    def __init__(self, inst_path, sol_folder, inp=''):
         if not inp:
             self.triangulations=[]
         else:
             self.input = inp
             self.pts = None # np.array([N, 2])
-            self.ReadData()
+            self.ReadData(inst_path)
 
-    def ReadData(self):
+    def ReadData(self, inst_path):
         if "solution" not in self.input:
             pass
         else:
@@ -634,13 +628,12 @@ class FastData:
             self.instance_uid = root["instance_uid"]
 
 
-            #org_input = '/home/gm1225/PFD/data/benchmark_instances/'+self.instance_uid+'.json'
-            org_input = '/Users/hyeyun/Experiment/PFD/hyeyun_git/data/benchmark_instances/'+self.instance_uid+'.json'
+            org_input = inst_path+'data/benchmark_instances/'+self.instance_uid+'.json'
             with open(org_input, "r", encoding="utf-8") as f:
                 root=json.load(f)
             self.pts_x = root["points_x"]
             self.pts_y = root["points_y"]
-            self.pts = np.array(list(zip(root["points_x"], root["points_y"])), dtype=np.float64) # can be replaced by pts_x,y?
+            self.pts = np.array(list(zip(root["points_x"], root["points_y"])), dtype=np.float64)
 
             self.num_pts = len(root["points_x"])
             self.num_edges = len(root["triangulations"][0])
@@ -768,7 +761,6 @@ class FastData:
 
     def find_triangle_containing(self, tri, con:tuple):
         q1, q2 = con
-        #tri = self.triangulations[tri_idx]
         e2f = tri.edge_to_face
         f_pts = tri.face_pts
         f_nei = tri.face_nei
@@ -779,7 +771,6 @@ class FastData:
 
         p = tri.adj[q1]
         p = np.int64(p)
-        #assert((min(p, q1), max(p, q1)) in tri.edges)
 
         t = e2f.get((p1<<32)|p)
         if t is None:
@@ -796,8 +787,6 @@ class FastData:
 
         t1 = e2f.get(key13)
         t2 = e2f.get(key31)
-
-        #if t1 is None or t2 is None: return (-999, depth)
 
         f_pts = tri.face_pts
         row1 = f_pts[t1]
@@ -852,7 +841,7 @@ class FastData:
         tri.flip(p2, p4)
         return m_score
 
-    def total_flip_score(self, tri:FastTriangulation, mtriangulations, tri_target_list, e:tuple):
+    def total_flip_score(self, tri:FastTriangulation, tri_target_list, e:tuple):
         start=time.time()
         p1, p3 = e
 
@@ -883,29 +872,87 @@ class FastData:
         total_score=0
         pts_coor = self.pts
         for target_idx in tri_target_list:
-            #tri_target = self.triangulations[target_idx] #Wrong! should be mtriangulations
-            tri_target = mtriangulations[target_idx]
+            tri_target = self.triangulations[target_idx]
             ori_cross=0
             new_cross=0
 
-            target_f_pts = tri_target.face_pts
-            target_f_nei = tri_target.face_nei
+            f_pts = tri_target.face_pts
+            f_nei = tri_target.face_nei
 
             ftc = self.find_triangle_containing(tri_target, (p1, p3))
             if ftc is None:
                 ori_cross=0
             else:
-                ori_cross = _numba_count_cross(target_f_pts,target_f_nei,pts_coor,p1,p3,ftc)
+                ori_cross = _numba_count_cross(f_pts,f_nei,pts_coor,p1,p3,ftc)
 
             ftc = self.find_triangle_containing(tri_target, (p2, p4))
             if ftc is None:
                 new_cross = 0
             else:
-                new_cross = _numba_count_cross(target_f_pts,target_f_nei,pts_coor,p2,p4,ftc)
+                new_cross = _numba_count_cross(f_pts,f_nei,pts_coor,p2,p4,ftc)
 
             n_cross = ori_cross - new_cross
             total_score += n_cross
-        return e, total_score, time.time()-start
+        return total_score, time.time()-start
+
+    def my_total_flip_score(self, current_mi, mtriangulations,tri_target_list, e_job_list, chunk_num):
+        start=time.time()
+        e_job_total_score=[0 for _ in range(len(e_job_list))]
+        tri = mtriangulations[current_mi]
+        f_pts = tri.face_pts
+        pts_coor = self.pts
+        for e_idx, e in enumerate(e_job_list):
+            p1, p3 = e
+
+            e2f = tri.edge_to_face
+            key13 = (np.int64(p1) << 32) | np.int64(p3)
+            key31 = (np.int64(p3) << 32) | np.int64(p1)
+
+            t1 = e2f.get(key13)
+            t2 = e2f.get(key31)
+
+            #if t1 is None or t2 is None: return (-999, depth)
+
+            row1 = f_pts[t1]
+            i=0
+            if row1[0] == p3: i = 0
+            elif row1[1] == p3: i = 1
+            else: i = 2
+            p4 = row1[(i + 1) % 3]
+
+            row2 = f_pts[t2]
+            j=0
+            if row2[0] == p1: j = 0
+            elif row2[1] == p1: j = 1
+            else: j = 2
+            p2 = row2[(j + 1) % 3]
+
+            total_score=0
+            for target_idx in tri_target_list:
+                tri_target = mtriangulations[target_idx]
+                ori_cross=0
+                new_cross=0
+
+                target_f_pts = tri_target.face_pts
+                target_f_nei = tri_target.face_nei
+
+                ftc = self.find_triangle_containing(tri_target, (p1, p3))
+                if ftc is None:
+                    ori_cross=0
+                else:
+                    ori_cross = _numba_count_cross(target_f_pts,target_f_nei,pts_coor,p1,p3,ftc)
+
+                ftc = self.find_triangle_containing(tri_target, (p2, p4))
+                if ftc is None:
+                    new_cross = 0
+                else:
+                    new_cross = _numba_count_cross(target_f_pts,target_f_nei,pts_coor,p2,p4,ftc)
+
+                n_cross = ori_cross - new_cross
+                total_score += n_cross
+
+            e_job_total_score[e_idx] = total_score
+        return chunk_num, e_job_total_score, time.time()-start
 
 
     def parallel_flip_path(self, tri1, tri2):
@@ -915,7 +962,6 @@ class FastData:
 
         while True:
             cand = []
-            #edges = list(tri.edges)
             prev_flip = set()
             for e in tri.edges:
                 if self.flippable(tri, e):
@@ -1060,7 +1106,6 @@ class FastData:
                 prev_flip.append((int(e1[0]), int(e1[1])))
             pfp.append(prev_flip)
             prev_flip = set(prev_flip)
-        #assert(tri.edges == tri_target.edges)
         assert(tri.edges == tri1.edges)
         return pfp[::-1]
 
@@ -1230,7 +1275,7 @@ class FastData:
                     print("error", e)
             print()
 
-    def findCenterGlobal(self, cpus, parallel1=False, parallel2=False):
+    def findCenterGlobal(self, cpus,chunk_size, parallel1=False, parallel2=False):
         mtriangulations = [t.fast_copy() for t in self.triangulations]
         num = len(self.triangulations)
         pfps = [ [] for _ in range(num)]
@@ -1287,9 +1332,8 @@ class FastData:
                         g = exe.submit(fcg3, tn, F_E_array)
                         g_futures.append(g)
                     for g in as_completed(g_futures):
-                        tri_num, ncand, times = g.result()
+                        tri_num, ncand = g.result()
                         NCAND[tri_num] = ncand
-                        #print(f"T{tri_num}: {times:.2f}s")
                 #print(end='\n')
             print(f"\tfirst parallel takes {time.time()-start:.2f}s")
 
@@ -1322,7 +1366,7 @@ class FastData:
         start2=time.time()
         for e in flips[mi]:
             mtriangulations[mi].flip(e[0], e[1])
-        print(f"flips takes {time.time()-start2:.2f}s")
+        print(f"\tflips takes {time.time()-start2:.2f}s")
         fe =[]
         tri = mtriangulations[mi]
         start3=time.time()
@@ -1330,7 +1374,7 @@ class FastData:
             if self.flippable(tri, ee):
                 fe.append(ee)
         F_E[mi] = fe
-        print(f"flippable takes {time.time()-start3:.2f}s")
+        print(f"\tflippable takes {time.time()-start3:.2f}s")
 
         ####### second findCenterGlobal ######
         if parallel2==False:
@@ -1404,58 +1448,64 @@ class FastData:
         else:
             start=time.time()
             count=1
-            #with ProcessPoolExecutor(initializer=init_worker_fcg, initargs=(self.pts,),max_workers=cpus) as exe:
-            with ThreadPoolExecutor(initializer=init_worker_fcg, initargs=(self.pts,),max_workers=cpus) as exe:
+            with ProcessPoolExecutor(initializer=init_worker_fcg, initargs=(self.pts,),max_workers=cpus) as exe:
+            #with ThreadPoolExecutor(initializer=init_worker_fcg, initargs=(self.pts,),max_workers=cpus) as exe:
                 while True:
-                    #count_start=time.time()
+                    count_start=time.time()
                     mscore=0
                     current_mi = mi
-                    count_start=time.time()
                     #### step 1: fi != current_mi ####
                     futures=[]
                     for fi in range(num):
                         if fi==current_mi:continue
-                        #f = exe.submit(fcg, fi, NCAND[fi], current_mi, F_E[fi], prev_mtri, mtriangulations)#, e2f, prev_e2f, curr_e2f)
                         f = exe.submit(fcg, fi, NCAND[fi], F_E[fi], mtriangulations[fi], prev_mtri, mtriangulations[mi])
                         futures.append(f)
                     for f in as_completed(futures):
                         try:
                             tri_num, nscore, flp, ncand, t_start = f.result()
-                            #print(f"T{tri_num} {t_start:.2f}s", end=' ', flush=True)
+                            if tri_num%10==0:
+                                print(f"T{tri_num}: {t_start:.2f}s", end=' ', flush=True)
                             if  nscore > mscore:
                                 mscore = nscore
                                 mi = tri_num
                             flips[tri_num] = flp
-                            NCAND[tri_num] = ncand # already sorted in fcg()
+                            NCAND[tri_num] = ncand #already sorted in fcg()
                         except Exception as e:
                             print("error!", "count ", count,": ",  e)
-                    #print()
-                    print(f"\tstep1 takes {time.time()-count_start:.2f}s")
+                    print()
+                    print(f"\tstep1 {time.time()-count_start:.2f}s")
+
                     futures=[]
                     #### step 2: fi == current_mi ####
                     ncand=[]
-                    start2=time.time()
                     target_list = [j for j in range(num) if j!=current_mi]
-                    for e in F_E[current_mi]:
-                        f = exe.submit(self.total_flip_score, tri, mtriangulations, target_list, e)
+                    e_idx_list = []
+                    start2_0=time.time()
+                    for fe_idx in range(0, len(F_E[current_mi]), chunk_size):
+                        e_idx_list.append(F_E[current_mi][fe_idx:fe_idx + chunk_size])
+                    print(f"\tchunk {time.time()-start2_0:.2f}s")
+                    start2=time.time()
+                    for chunk_num, edge_job_list in enumerate(e_idx_list):
+                        f = exe.submit(self.my_total_flip_score, current_mi, mtriangulations, target_list, edge_job_list, chunk_num) #tri is mtriangulations[mi]
                         futures.append(f)
                     for f in as_completed(futures):
                         try:
-                            e, escore, take_time = f.result()
-                            #print(f"{escore}: {take_time:.2f}s")
-                            if escore >0:
-                                ncand.append((e, escore))
+                            chunk_num, e_job_total_score, ch_time = f.result()
+                            print(f"C{chunk_num}, {ch_time:.2f}s", end=' ', flush=True)
+                            for eidx, escore in enumerate(e_job_total_score):
+                                if escore >0:
+                                    e = e_idx_list[chunk_num][eidx]
+                                    ncand.append((e, escore))
                         except Exception as e:
                             print("error! in step2", "count ", count, ": ", e )
+                    print()
                     ncand.sort(key = lambda x:x[1], reverse=True)
                     futures=[]
-
                     print(f"\tstep2 takes {time.time()-start2:.2f}s, {len(F_E[current_mi])}, current_mi={current_mi}, len(ncand)={len(ncand)}")
-                    #print(f"\tstep2 takes {time.time()-start2:.2f}s, {len(F_E[current_mi])}, current_mi={current_mi}, len(ncand)={len(ncand)}, {ncand}")
-                    #print(f"\tstep2 takes {time.time()-start2:.2f}s")
                     marked = set()
                     flp =[]
                     nscore = 0
+                    start3=time.time()
                     for (p1, p2), escore in ncand:
                         t1 = tri.find_face(p1, p2)
                         t2 = tri.find_face(p2, p1)
@@ -1484,7 +1534,7 @@ class FastData:
                             fe.append(ee)
                     F_E[mi] = fe
                     fe=[]
-                    print(f"count {count} done: {time.time()-count_start:.2f}s ----")
+                    print(f"count {count} done: {time.time()-count_start:.2f}s")
                     count+=1
             #print(end='\n')
             print(f"\tsecond parallel takes {time.time()-start:.2f}s")
@@ -1496,7 +1546,6 @@ class FastData:
                 assert(mtriangulations[i].edges == mtriangulations[i+1].edges)
             self.pFlips.append(pfps[i])
         return mtriangulations[0]
-
 
     def old_findCenterGlobal(self):
         mtriangulations = [t.fast_copy() for t in self.triangulations]
@@ -1572,8 +1621,8 @@ class FastData:
         tri.flip(p1, p2)
 
 
-    def random_new_center(self, old_fcg, fcg_parallel1, fcg_parallel2, replace_parallel, cpus):
-        print(old_fcg, fcg_parallel1, fcg_parallel2, replace_parallel, cpus)
+    def random_new_center(self, old_fcg, fcg_parallel1, fcg_parallel2, replace_parallel, cpus, chunk_size):
+        print(old_fcg, fcg_parallel1, fcg_parallel2, replace_parallel, cpus, chunk_size)
         param = 1
         len_flips = [len(pFlip) for pFlip in self.pFlips]
         max_dist = max(len_flips)
@@ -1582,7 +1631,6 @@ class FastData:
             print("prm ",param, ":")#, end=' ', flush=True)
             #revnum = [min(param, len(pFlip)) for pFlip in self.pFlips]
             revnum = [random.randint(min(param, len(self.pFlips[i]), 1), min(param, len(self.pFlips[i]))) for i in range(len(self.triangulations))]
-            print(revnum)
             newD = FastData()
             newD.pts = self.pts
             for i in range(self.num_tris):
@@ -1609,13 +1657,13 @@ class FastData:
             else:
                 if fcg_parallel1==False and fcg_parallel2==False:
                     print("\tserial new ver findCenterGlobal() takes ... ", end=' ', flush=True)
-                    self.center = newD.findCenterGlobal(cpus, parallel1=False, parallel2=False)
+                    self.center = newD.findCenterGlobal(cpus, chunk_size,parallel1=False, parallel2=False)
                 elif fcg_parallel1==False and fcg_parallel2==True:
                     print("\tpartial parallel findCenterGlobal() takes ... ", end=' ', flush=True)
-                    self.center = newD.findCenterGlobal(cpus, parallel1=False, parallel2=True)
+                    self.center = newD.findCenterGlobal(cpus, chunk_size, parallel1=False, parallel2=True)
                 else:
                     print("\tall parallel findCenterGlobal() takes ... ", end=' ', flush=True)
-                    self.center = newD.findCenterGlobal(cpus, parallel1=True, parallel2=True)
+                    self.center = newD.findCenterGlobal(cpus, chunk_size,parallel1=True, parallel2=True)
             print(f"{time.time()-start:.2f}s")
 
             for i in range(self.num_tris):
@@ -1632,29 +1680,7 @@ class FastData:
 
             new_pfp = [len(pFlip) for pFlip in self.pFlips]
             new_dist = sum(new_pfp)
-            #print("\tprev, new dist = ", total_dist,"->", new_dist)
 
-            #verify
-            #org_input = '/home/gm1225/PFD/data/benchmark_instances/'+self.instance_uid+'.json'
-            org_input = '/Users/hyeyun/Experiment/PFD/hyeyun_git/data/benchmark_instances/'+self.instance_uid+'.json'
-            with open(org_input, "r", encoding="utf-8") as f:
-                root=json.load(f)
-
-            instance = CGSHOP2026Instance(
-                instance_uid=self.instance_uid,
-                points_x=self.pts_x,
-                points_y=self.pts_y,
-                triangulations=root["triangulations"],
-                )
-            solution = CGSHOP2026Solution(
-                    instance_uid=self.instance_uid,
-                    flips=self.pFlips,
-                    )
-            errors = check_for_errors(instance, solution)
-
-            if errors != []:
-                print(errors)
-                exit(0)
             if total_dist != new_dist:
                 self.dist = new_dist
                 break
@@ -1695,7 +1721,7 @@ class FastData:
         print(f"____________________\n")
 
 
-    def WriteData(self):
+    def WriteData(self, inst_path, sol_folder, opt_folder):
         inst = dict()
         inst["content_type"] = "CGSHOP2026_Solution"
         inst["instance_uid"] = self.instance_uid
@@ -1705,15 +1731,11 @@ class FastData:
         dist = sum([len(pFlip) for pFlip in self.pFlips])
         inst["meta"] = {"dist": dist}
 
-        #path = '/home/gm1225/PFD/'
-        path = '/Users/hyeyun/Experiment/PFD/hyeyun_git/'
-        folder = "hy_solutions"
-        with open(path+folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
+        with open(inst_path+sol_folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
             json.dump(inst, f, indent='\t')
 
         #verify
-        #org_input = '/home/gm1225/PFD/data/benchmark_instances/'+self.instance_uid+'.json'
-        org_input = '/Users/hyeyun/Experiment/PFD/hyeyun_git/data/benchmark_instances/'+self.instance_uid+'.json'
+        org_input = inst_path+'data/benchmark_instances/'+self.instance_uid+'.json'
         with open(org_input, "r", encoding="utf-8") as f:
             root=json.load(f)
 
@@ -1733,8 +1755,6 @@ class FastData:
         if errors != []:
             print(errors)
             exit(0)
-        #else: print("No errors")
-        opt_folder = "hy_opt"
         opt_list = os.listdir(path+opt_folder)
         already_exist = False
 
@@ -1771,17 +1791,11 @@ def init_worker_fcg(pts):
     global gb_pts_coor
     gb_pts_coor = pts
 
-def test(tri_num):
-    return tri_num, 0, [], [], time.time()
-
-#def fcg(tri_num, prev_ncand, current_mi, F_E, prev_mtri, mtriangulations):
 def fcg(tri_num, prev_ncand, F_E, tri, prev_mtri, current_mtri):
     start=time.time()
     ncand=[]
-    #tri = mtriangulations[tri_num]
 
     f_pts = tri.face_pts
-    #e2f=  process_typed_dict(mtriangulations[tri_num].edge_to_face)
     e2f=  process_typed_dict(tri.edge_to_face)
 
     prev_f_pts = prev_mtri.face_pts
@@ -1789,10 +1803,6 @@ def fcg(tri_num, prev_ncand, F_E, tri, prev_mtri, current_mtri):
     prev_e2f=  process_typed_dict(prev_mtri.edge_to_face)
     prev_adj = prev_mtri.adj
 
-    #curr_f_pts = mtriangulations[current_mi].face_pts
-    #curr_f_nei = mtriangulations[current_mi].face_nei
-    #curr_e2f=  process_typed_dict(mtriangulations[current_mi].edge_to_face)
-    #curr_adj = mtriangulations[current_mi].adj
     curr_f_pts = current_mtri.face_pts
     curr_f_nei = current_mtri.face_nei
     curr_e2f=  process_typed_dict(current_mtri.edge_to_face)
@@ -1867,32 +1877,16 @@ def prepare_edge_array(F_E_tri_num, e2f, f_pts):
         prepared_edges.append((p1, p3, p2, p4))
     return prepared_edges
 
-def fcg2(tri_num,  j_list, prepared_E, mtriangulations):
-    start=time.time()
-    total_local_scores = np.zeros(len(prepared_E), dtype=np.int64)
-    mtris_e2f=[process_typed_dict(mt.edge_to_face) for mt in mtriangulations]
-
-    for j in j_list:
-        if tri_num==j: continue
-        tg_f_pts = mtriangulations[j].face_pts
-        tg_f_nei = mtriangulations[j].face_nei
-        tg_adj = mtriangulations[j].adj
-        tg_e2f= mtris_e2f[j]
-        scores = _T_flip_score_fast(1, gb_pts_coor, tg_f_pts, tg_f_nei, tg_adj, tg_e2f, prepared_E,1)
-        total_local_scores += scores
-    print(f"T{tri_num}, {time.time()-start:.2f}s", end=' ', flush=True)
-    return total_local_scores
 
 def init_worker_fcg3(pts, tris):
     global gb_pts_coor, gb_tris
     gb_pts_coor = pts
     gb_tris = tris
 
-#def fcg3(tri_num,  prepared_E, mtriangulations):
 def fcg3(tri_num,  prepared_E):
     global gb_tris
 
-    start=time.time()
+    #start=time.time()
     num = len(gb_tris)
     total_scores = np.zeros(len(prepared_E), dtype=np.int64)
     mtris_e2f=[process_typed_dict(mt.edge_to_face) for mt in gb_tris]
@@ -1910,13 +1904,11 @@ def fcg3(tri_num,  prepared_E):
     ncand=[]
     for idx in sorted_indices:
         score = total_scores[idx]
-        #if score <=0: break # seems wrong
         if score >0:
             p1, p3, _, _ = prepared_E[idx]
             ncand.append(((p1, p3), score))
-    #print(f"T{tri_num}, {time.time()-start:.2f}s", end=' ', flush=True)
     ncand.sort(key=lambda x:x[1], reverse=True)
-    return tri_num, ncand, time.time()-start
+    return tri_num, ncand
 
 
 def init_worker_fcg4(pts, tris, candidate):
@@ -1940,9 +1932,6 @@ def fcg4(tri_num):
         marked.add(t2)
         nscore += escore
     return tri_num, nscore, flp
-
-
-
 
 @numba.njit
 def _T_flip_score_fast(depth, pts_coor, f_pts, f_nei, adj, e2f, prepared_E, ver):
@@ -2088,5 +2077,3 @@ def _find_t_c(f_pts, f_nei, pts_coor, q1, q2, t):
             t = f_nei[t, (i+2)%3]
         else:
             return t #face_idx
-
-
