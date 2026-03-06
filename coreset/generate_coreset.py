@@ -1,6 +1,6 @@
 import argparse
 import json
-import time
+import time, math
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple, Union
 
@@ -367,77 +367,311 @@ def computePFS_total_safe(data: Data, centerT, mode: str, weighted: bool) -> Tup
 # Coreset builder (ring + 1D grid)
 # =========================================================
 
-def build_triangulation_coreset_practical(
-    data: Data,
+def _dist_between_tris_safe(data, triA, triB, mode: str = "min", max_iters: int = 100000) -> float:
+    """
+    Metric distance assumed. We compute a greedy PFP length (no-assert) similarly to your fallback.
+    mode in {"pfp","pfp2","min"}.
+    """
+    def _pfp_len_variant(tri1, tri2, variant: int) -> int:
+        tri = tri1.fast_copy()
+        iters = 0
+        prev_flip = []
+
+        while True:
+            iters += 1
+            if iters > max_iters:
+                break
+
+            cand = []
+            edges = list(tri.edges)
+            for e in edges:
+                if data.flippable(tri, e):
+                    if variant == 2 and e in prev_flip:
+                        continue
+                    depth = getattr(data, "SEARCH_DEPTH", 1)
+                    score = data.flip_score(tri, tri2, e, depth if variant == 1 else 0)
+                    if score[0] > 0:
+                        cand.append((e, score))
+
+            if not cand:
+                break
+
+            cand.sort(key=lambda x: x[1], reverse=True)
+
+            flips = []
+            marked = set()
+            for (p1, p2), _ in cand:
+                t1 = tri.find_triangle(p1, p2)
+                t2 = tri.find_triangle(p2, p1)
+                if t1 in marked or t2 in marked:
+                    continue
+                flips.append((p1, p2))
+                marked.add(t1)
+                marked.add(t2)
+
+            for e in flips:
+                if variant == 1:
+                    tri.flip(e)
+                else:
+                    e1 = tri.flip(e)
+                    prev_flip.append(e1)
+
+        return iters  # NOTE: rounds length in your code is len(pfp); here we use iters proxy? better: count rounds.
+
+    # Better: count "rounds" like your _pfp_len_noassert
+    def _pfp_rounds(tri1, tri2, variant: int) -> int:
+        tri = tri1.fast_copy()
+        pfp = []
+        iters = 0
+        prev_flip = []
+        while True:
+            iters += 1
+            if iters > max_iters:
+                break
+
+            cand = []
+            edges = list(tri.edges)
+            for e in edges:
+                if data.flippable(tri, e):
+                    if variant == 2 and e in prev_flip:
+                        continue
+                    depth = getattr(data, "SEARCH_DEPTH", 1)
+                    score = data.flip_score(tri, tri2, e, depth if variant == 1 else 0)
+                    if score[0] > 0:
+                        cand.append((e, score))
+
+            if not cand:
+                break
+
+            cand.sort(key=lambda x: x[1], reverse=True)
+
+            flips = []
+            marked = set()
+            for (p1, p2), _ in cand:
+                t1 = tri.find_triangle(p1, p2)
+                t2 = tri.find_triangle(p2, p1)
+                if t1 in marked or t2 in marked:
+                    continue
+                flips.append((p1, p2))
+                marked.add(t1)
+                marked.add(t2)
+
+            for e in flips:
+                if variant == 1:
+                    tri.flip(e)
+                else:
+                    e1 = tri.flip(e)
+                    prev_flip.append(e1)
+
+            pfp.append(flips)
+
+        return len(pfp)
+
+    if mode == "pfp":
+        return float(_pfp_rounds(triA, triB, variant=1))
+    if mode == "pfp2":
+        return float(_pfp_rounds(triA, triB, variant=2))
+    # mode == "min"
+    d1 = float(_pfp_rounds(triA, triB, variant=1))
+    d2 = float(_pfp_rounds(triA, triB, variant=2))
+    return min(d1, d2)
+
+
+def build_triangulation_coreset_cake(
+    data,
     centerT,
     eps: float = 0.1,
     alpha: float = 8.0,
     alpha_min: float = 16.0,
     distance_mode: str = "min",
-    weighted_distance: bool = True,
+    # cake slicing params
+    angle_beta: float = 4.0,
+    max_anchors_per_ring: int = 32,
+    fps_sample_limit: int = 250,
+    use_radial_cell: bool = False,
+    seed: int = 0,
 ):
     """
-    Build a coreset using a GIVEN center triangulation object centerT.
-    (This is important for opt-center not in triangulations.)
+    'Cake-like' coreset:
+      1) ring by dist-to-center
+      2) inside each ring, pick anchor set via farthest-point sampling (a tau-net)
+      3) assign each point to nearest anchor -> angular/wedge-like buckets
+      4) (optional) also split by radial 1D cell
+      5) keep 1 representative per bucket, aggregate weights.
 
     Returns:
-      S_idx     : np.ndarray[int]
-      S_weights : np.ndarray[float]
-      dist_info : dict (fallback stats)
+      S_idx: np.ndarray[int]   representative indices (in data.triangulations)
+      S_wts: np.ndarray[float] aggregated weights
+      info: dict (stats)
     """
+    rng = np.random.default_rng(seed)
     n = len(data.triangulations)
     if n == 0:
-        return np.array([], dtype=int), np.array([], dtype=float), {}
+        return np.array([], dtype=int), np.array([], dtype=float), {"empty": True}
 
-    weights = data.get_weights(n)
-    total_weight = float(sum(weights))
+    weights = np.asarray(data.get_weights(n), dtype=float)
+    W = float(weights.sum())
 
-    nearest_dist, nu_A, dist_info = computePFS_total_safe(
-        data, centerT, mode=distance_mode, weighted=weighted_distance
-    )
-    nearest_dist = np.asarray(nearest_dist, dtype=float)
+    # --- compute pure center distances delta_i (do NOT multiply weights here; keep metric clean) ---
+    # We reuse your safe center distance code path idea:
+    # Use Data.computePFS_total if available; otherwise fallback to greedy.
+    # Here we call your computePFS_total_safe but force weighted=False if you paste it in same file.
+    # If not available, do it directly with safe pair distance.
+    try:
+        # if your computePFS_total_safe is in scope:
+        delta_list, _, _ = computePFS_total_safe(data, centerT, mode=distance_mode, weighted=False)
+        delta = np.asarray(delta_list, dtype=float)
+    except NameError:
+        # fallback: compute delta by pairwise safe distance
+        delta = np.zeros(n, dtype=float)
+        for i in range(n):
+            delta[i] = _dist_between_tris_safe(data, centerT, data.triangulations[i], mode=distance_mode)
 
-    R = max(float(nu_A) / max(1.0, total_weight), 1e-12)
-    Dmax = float(nearest_dist.max())
+    # scale R and ring count M (same spirit as your code)
+    nu_A = float(np.sum(weights * delta))
+    R = max(nu_A / max(W, 1e-12), 1e-12)
+    Dmax = float(delta.max())
 
     if Dmax < R:
-        rep = int(np.argmin(nearest_dist))
-        return np.array([rep], dtype=int), np.array([total_weight], dtype=float), dist_info
+        rep = int(np.argmin(delta))
+        return np.array([rep], dtype=int), np.array([W], dtype=float), {
+            "method": "singleton",
+            "R": R,
+            "Dmax": Dmax,
+        }
 
-    from math import ceil, floor, log2
+    M = max(1, int(math.ceil(math.log2((Dmax + R) / R))))
 
-    M = max(1, ceil(log2((Dmax + R) / R)))
-    buckets: Dict[Tuple[int, int], List[Union[int, float]]] = {}
-    tiny = 1e-12
+    # distance cache for inter-PFD in rings
+    dist_cache: Dict[Tuple[int, int], float] = {}
 
+    def d_idx(i: int, j: int) -> float:
+        a, b = (i, j) if i < j else (j, i)
+        key = (a, b)
+        if key in dist_cache:
+            return dist_cache[key]
+        dij = _dist_between_tris_safe(data, data.triangulations[a], data.triangulations[b], mode=distance_mode)
+        dist_cache[key] = dij
+        return dij
+
+    # ring assignment
+    ring_of = np.zeros(n, dtype=int)
     for i in range(n):
-        dist = float(nearest_dist[i])
-        wi = float(weights[i])
-
+        dist = float(delta[i])
         if dist < R:
             j = 0
         else:
-            j = int(ceil(log2(max(dist, tiny) / R)))
-        j = min(j, M)
+            j = int(math.ceil(math.log2(max(dist, 1e-12) / R)))
+        ring_of[i] = min(j, M)
 
-        rj = (eps * R * (2 ** j)) / float(alpha)
-        rj = max(rj, (eps * R) / float(alpha_min))
+    reps: List[int] = []
+    rep_wts: List[float] = []
+    stats = {"R": R, "Dmax": Dmax, "M": M, "rings": {}}
 
-        cell_1d = int(floor(dist / rj))
-        key = (j, cell_1d)
+    # buckets: key -> (rep_idx, weight_sum)
+    buckets: Dict[Tuple[int, int, int], List[float]] = {}  # (j, anchor_id, radial_cell) -> [rep, wsum]
 
-        if key not in buckets:
-            buckets[key] = [int(i), wi]
+    for j in range(0, M + 1):
+        I = np.where(ring_of == j)[0].tolist()
+        if not I:
+            continue
+
+        # define tau_j: target cluster radius within this ring
+        # radius scale ~ R*2^j; keep tau proportional to eps * scale
+        scale = R * (2 ** j)
+        tau = (eps * scale) / float(angle_beta)
+        tau = max(tau, (eps * R) / float(alpha_min))  # safety floor
+
+        # --- choose anchors by farthest-point sampling until coverage <= tau or cap ---
+        # start anchor: pick farthest from center in this ring (deterministic)
+        start = max(I, key=lambda idx: float(delta[idx]))
+        anchors = [start]
+
+        # helper: compute min-dist-to-anchors for an index
+        def min_dist_to_anchors(idx: int) -> float:
+            return min(d_idx(idx, a) for a in anchors)
+
+        while True:
+            if len(anchors) >= max_anchors_per_ring:
+                break
+
+            # to speed up, optionally sample candidates
+            cand = I
+            if fps_sample_limit is not None and len(I) > fps_sample_limit:
+                cand = rng.choice(I, size=fps_sample_limit, replace=False).tolist()
+
+            farthest = None
+            farthest_md = -1.0
+            for idx in cand:
+                md = min_dist_to_anchors(idx)
+                if md > farthest_md:
+                    farthest_md = md
+                    farthest = idx
+
+            # if even the farthest point is within tau -> coverage achieved
+            if farthest is None or farthest_md <= tau:
+                break
+
+            anchors.append(int(farthest))
+
+        # --- assign each point to nearest anchor (wedge-like partition) ---
+        # optional: radial cell width like your original
+        if use_radial_cell:
+            r_rad = (eps * R * (2 ** j)) / float(alpha)
+            r_rad = max(r_rad, (eps * R) / float(alpha_min))
         else:
-            buckets[key][1] += wi
+            r_rad = None
 
-    reps = []
-    wts = []
-    for rep_idx, wsum in buckets.values():
-        reps.append(int(rep_idx))
-        wts.append(float(wsum))
+        # For statistics
+        stats["rings"][j] = {"size": len(I), "anchors": len(anchors), "tau": float(tau)}
 
-    return np.array(reps, dtype=int), np.array(wts, dtype=float), dist_info
+        for idx in I:
+            # nearest anchor id
+            best_aid = 0
+            best_da = float("inf")
+            for aid, a in enumerate(anchors):
+                da = d_idx(idx, a) if idx != a else 0.0
+                if da < best_da:
+                    best_da = da
+                    best_aid = aid
+
+            # radial cell inside ring (optional)
+            if r_rad is None:
+                cell = 0
+            else:
+                cell = int(math.floor(float(delta[idx]) / float(r_rad)))
+
+            key = (j, best_aid, cell)
+            wi = float(weights[idx])
+
+            if key not in buckets:
+                buckets[key] = [float(idx), wi]  # rep index stored as float in list for mutability
+            else:
+                buckets[key][1] += wi
+
+    # finalize reps
+    for rep_idx_f, wsum in buckets.values():
+        reps.append(int(rep_idx_f))
+        rep_wts.append(float(wsum))
+
+    return np.array(reps, dtype=int), np.array(rep_wts, dtype=float), {
+        **stats,
+        "num_buckets": len(buckets),
+        "num_reps": len(reps),
+        "sum_weights": float(np.sum(rep_wts)),
+        "dist_cache_size": len(dist_cache),
+        "params": {
+            "eps": eps,
+            "alpha": alpha,
+            "alpha_min": alpha_min,
+            "angle_beta": angle_beta,
+            "max_anchors_per_ring": max_anchors_per_ring,
+            "fps_sample_limit": fps_sample_limit,
+            "use_radial_cell": use_radial_cell,
+            "distance_mode": distance_mode,
+        },
+    }
+
 
 
 # =========================================================
@@ -509,15 +743,19 @@ def build_and_save_coresets_for_all_instances(
             continue
 
         # Build coreset using the reconstructed center triangulation object
-        S_idx, S_weights, dist_info = build_triangulation_coreset_practical(
+        S_idx, S_weights, dist_info = build_triangulation_coreset_cake(
             data_full,
             centerT=centerT,
-            eps=eps,
-            alpha=alpha,
-            alpha_min=alpha_min,
-            distance_mode=distance_mode,
-            weighted_distance=weighted_distance,
+            eps=0.5,
+            alpha=8.0,
+            alpha_min=16.0,
+            distance_mode="min",
+            angle_beta=1.0,
+            max_anchors_per_ring=8,
+            fps_sample_limit=250,
+            use_radial_cell=False,   # 케이크 느낌이면 보통 False 추천
         )
+
 
         S_idx_list = np.asarray(S_idx, dtype=int).tolist()
         coreset_tris = [tri_list[i] for i in S_idx_list]

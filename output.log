@@ -1,0 +1,24 @@
+=== Ratio statistics (ours/best) grouped by ORIGINAL triangulation count ===
+log_file   : C:\Users\sykang\OneDrive\바탕 화면\CGSHOP26\logs\solve_from_coreset-260119.log
+bench_dir  : C:\Users\sykang\OneDrive\바탕 화면\CGSHOP26\data\benchmark_instances
+parsed entries (with ratio): 114
+matched to benchmark .json : 114
+missing benchmark .json    : 0
+benchmark read failures    : 0
+
+Overall: #=114, mean=1.088899, median=1.076923, min=0.857143, max=1.333333
+orig_n <= 10: #=80, mean=1.082848, median=1.069048, min=0.857143, max=1.333333
+orig_n >  10: #=34, mean=1.103135, median=1.101545, min=0.980769, max=1.230216
+Mean gap (orig_n>10 - orig_n<=10) = 0.020287
+
+=== Mean ratio by original triangulation count (orig_n) ===
+orig_n | #inst | mean_ratio | min_ratio | max_ratio
+     2 |    28 |  1.018112 |  0.857143 |  1.200000
+     3 |    17 |  1.093075 |  1.000000 |  1.285714
+     5 |    15 |  1.139287 |  1.000000 |  1.333333
+    10 |    20 |  1.122457 |  1.000000 |  1.266667
+    20 |    29 |  1.111048 |  0.980769 |  1.230216
+    50 |     2 |  1.048551 |  1.043269 |  1.053834
+    75 |     2 |  1.049714 |  1.033298 |  1.066129
+   100 |     1 |  1.089676 |  1.089676 |  1.089676
+

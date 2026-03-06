@@ -1,0 +1,47 @@
+=== Ratio statistics from solve_from_coreset log ===
+log_file   : C:\Users\sykang\OneDrive\바탕 화면\CGSHOP26\logs\solve_from_coreset-260119.log
+bench_dir  : C:\Users\sykang\OneDrive\바탕 화면\CGSHOP26\data\benchmark_instances
+parsed entries (with ratio) : 114
+matched to benchmark        : 0
+unmatched                   : 114
+
+Overall: (no data)
+orig_n <= 10: (no data)
+orig_n >  10: (no data)
+
+=== Mean ratio by original triangulation count (orig_n) ===
+orig_n | #inst | mean_ratio | min_ratio | max_ratio
+
+=== Unmatched entries (first 30) ===
+random_instance_110_15_3_coreset.json | uid=None | ratio=1.285714
+random_instance_111_15_2_coreset.json | uid=None | ratio=1.2
+random_instance_130_15_5_coreset.json | uid=None | ratio=1.333333
+random_instance_132_80_20_coreset.json | uid=None | ratio=1.192308
+random_instance_136_320_2_coreset.json | uid=None | ratio=1.0
+random_instance_137_40_10_coreset.json | uid=None | ratio=1.147059
+random_instance_160_320_20_coreset.json | uid=None | ratio=1.192308
+random_instance_168_15_2_coreset.json | uid=None | ratio=1.0
+random_instance_168_80_5_coreset.json | uid=None | ratio=1.105263
+random_instance_16_15_2_coreset.json | uid=None | ratio=1.0
+random_instance_188_40_10_coreset.json | uid=None | ratio=1.195122
+random_instance_192_15_2_coreset.json | uid=None | ratio=1.0
+random_instance_197_320_10_coreset.json | uid=None | ratio=1.133333
+random_instance_204_80_20_coreset.json | uid=None | ratio=1.071429
+random_instance_213_80_20_coreset.json | uid=None | ratio=1.097826
+random_instance_224_15_20_coreset.json | uid=None | ratio=1.078431
+random_instance_225_160_3_coreset.json | uid=None | ratio=1.2
+random_instance_271_15_20_coreset.json | uid=None | ratio=1.02
+random_instance_286_15_5_coreset.json | uid=None | ratio=1.076923
+random_instance_292_15_20_coreset.json | uid=None | ratio=1.0
+random_instance_299_40_10_coreset.json | uid=None | ratio=1.266667
+random_instance_307_15_20_coreset.json | uid=None | ratio=1.186441
+random_instance_312_80_2_coreset.json | uid=None | ratio=1.0
+random_instance_337_40_2_coreset.json | uid=None | ratio=1.0
+random_instance_34_320_2_coreset.json | uid=None | ratio=1.125
+random_instance_351_320_5_coreset.json | uid=None | ratio=1.32
+random_instance_353_80_10_coreset.json | uid=None | ratio=1.102564
+random_instance_359_320_2_coreset.json | uid=None | ratio=1.0
+random_instance_36_80_3_coreset.json | uid=None | ratio=1.0
+random_instance_397_40_3_coreset.json | uid=None | ratio=1.0
+... and 84 more
+

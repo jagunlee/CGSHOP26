@@ -1,0 +1,57 @@
+=== Coreset size reduction report ===
+orig_dir   : C:\Users\sykang\OneDrive\바탕 화면\CGSHOP26\data\benchmark_instances
+coreset_dir: C:\Users\sykang\OneDrive\바탕 화면\CGSHOP26\data\coreset_instance_260118
+total original instances: 250
+matched instances       : 250
+missing coreset files   : 0
+parse failures          : 0
+
+=== Overall ===
+Average reduction (%) : 33.84
+Average remaining (%) : 66.16  (coreset/original)
+Avg sizes             : orig=15.93, coreset=4.96
+Reduction range (%)   : [0.00, 95.00]
+
+=== Split by original triangulation count (<=10 vs >10) ===
+orig_n <= 10 : #inst=176, avg_reduction=15.12%, avg_remaining=84.88%, avg_sizes(orig->core)=5.19->4.12
+orig_n >  10 : #inst=74, avg_reduction=78.35%, avg_remaining=21.65%, avg_sizes(orig->core)=41.49->6.93
+
+=== Reduction by original triangulation count ===
+orig_n | #inst | avg_core_n | avg_reduction(%) | min(%) | max(%)
+     2 |    26 |       2.00 |            0.00 |   0.00 |   0.00
+     3 |    17 |       2.65 |           11.76 |   0.00 |  33.33
+     4 |    14 |       3.71 |            7.14 |   0.00 |  25.00
+     5 |    48 |       4.21 |           15.83 |   0.00 |  60.00
+     6 |    40 |       5.45 |            9.17 |   0.00 |  33.33
+     7 |    12 |       5.75 |           17.86 |   0.00 |  28.57
+    10 |    19 |       4.63 |           53.68 |  40.00 |  70.00
+    20 |    41 |       5.63 |           71.83 |  60.00 |  85.00
+    50 |    15 |       8.20 |           83.60 |  80.00 |  86.00
+    75 |    16 |       8.81 |           88.25 |  86.67 |  90.67
+   100 |     1 |       8.00 |           92.00 |  92.00 |  92.00
+   200 |     1 |      10.00 |           95.00 |  95.00 |  95.00
+
+=== Examples (top 10 reductions) ===
+rirs-12500-200-e8ac0d06.json: 200 -> 10  (95.00%)
+rirs-12500-100-0c057cab.json: 100 -> 8  (92.00%)
+rirs-1500-75-10c039f8.json: 75 -> 7  (90.67%)
+rirs-12500-75-2ef068ba.json: 75 -> 8  (89.33%)
+rirs-2000-75-42f0456a.json: 75 -> 8  (89.33%)
+rirs-2500-75-fe6940e6.json: 75 -> 8  (89.33%)
+rirs-6000-75-3640423c.json: 75 -> 8  (89.33%)
+rirs-7000-75-98ec3d45.json: 75 -> 8  (89.33%)
+rirs-9000-75-940659a6.json: 75 -> 8  (89.33%)
+rirs-1000-75-50e9d715.json: 75 -> 9  (88.00%)
+
+=== Examples (bottom 10 reductions) ===
+woc-50-random-e56ec684.json: 3 -> 3  (0.00%)
+woc-50-tsplib-037ddc15.json: 5 -> 5  (0.00%)
+woc-60-tsplib-63f3f788.json: 6 -> 6  (0.00%)
+woc-70-random-9a7d18d3.json: 5 -> 5  (0.00%)
+woc-70-tsplib-8ae47929.json: 6 -> 6  (0.00%)
+woc-75-random-6e4b56b1.json: 6 -> 6  (0.00%)
+woc-75-tsplib-43f8ca86.json: 6 -> 6  (0.00%)
+woc-90-random-5ab97996.json: 5 -> 5  (0.00%)
+woc-90-tsplib-8e18a238.json: 4 -> 4  (0.00%)
+woc-90-tsplib-96a321d8.json: 4 -> 4  (0.00%)
+
