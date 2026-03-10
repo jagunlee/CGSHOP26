@@ -11,10 +11,10 @@ Representative-set-based solvers for the CG:SHOP 2026 competition.
 To run the pipeline, use the following command examples:
 
 ```bash
-# 1. Build coresets (Exclude RIRS)
+# 1. Build coresets
 python coreset/builder.py -b data/benchmark_instances -c data/coreset_instances
 
-# 2. Global search solver
+# 2. Initial solver
 python coreset/initial_solver.py -v result.csv -l coreset/logs/solve_global.log
 
 # 3. Analysis report
