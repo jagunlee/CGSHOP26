@@ -1,0 +1,30 @@
+=== Coreset Size Reduction Report ===
+Overall: #inst=201, Avg Reduction=24.86%, Avg Size: 7.0 -> 4.1
+
+orig_n | #inst | avg_core_n | avg_reduction(%)
+     2 |    26 |       2.00 |            0.00%
+     3 |    17 |       2.82 |            5.88%
+     4 |    14 |       3.64 |            8.93%
+     5 |    48 |       4.04 |           19.17%
+     6 |    40 |       4.95 |           17.50%
+     7 |    12 |       5.50 |           21.43%
+    10 |    19 |       4.32 |           56.84%
+    20 |    25 |       5.48 |           72.60%
+
+=== Quality (Ratio = Ours / Best) Report ===
+Source Log: solve_global.log
+Overall     : #=201, mean=1.133082, median=1.128205, min=1.000000, max=1.312500
+orig_n <= 10: #=176, mean=1.131187, median=1.125000, min=1.000000, max=1.312500
+orig_n > 10 : #=25, mean=1.146421, median=1.135135, min=1.050360, max=1.285714
+Mean gap (orig_n>10 - orig_n<=10) = 0.015234
+
+=== Mean ratio by original triangulation count (orig_n) ===
+orig_n | #inst | mean_ratio | min_ratio | max_ratio
+     2 |    26 |  1.021581 |  1.000000 |  1.200000
+     3 |    17 |  1.102587 |  1.000000 |  1.285714
+     4 |    14 |  1.154841 |  1.033333 |  1.263158
+     5 |    48 |  1.162899 |  1.000000 |  1.312500
+     6 |    40 |  1.159111 |  1.000000 |  1.291667
+     7 |    12 |  1.132790 |  1.062500 |  1.294118
+    10 |    19 |  1.149420 |  1.075000 |  1.236842
+    20 |    25 |  1.146421 |  1.050360 |  1.285714
