@@ -1,1 +1,1 @@
-# CGSHOP26
+# CG#Hunters Approach to Central Triangulation Under Parallel Flip Operations
