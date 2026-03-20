@@ -26,7 +26,7 @@ class Triangulation:
     def __del__(self):
         for t in self.triangles:
             del t
-        
+
     def fast_copy(self):
         new = Triangulation()
 
@@ -60,7 +60,7 @@ class Triangulation:
             return self.dict[(q1,q2)]
         else:
             return None
-            
+
     def flip(self, e):
         p1, p2 = e
         t1 = self.find_triangle(p1, p2)

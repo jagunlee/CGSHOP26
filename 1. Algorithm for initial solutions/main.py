@@ -2,51 +2,43 @@ import sys
 import os
 from data import *
 import time
-import csv
 import argparse
-
-def mySort(s : str): 
-    if 'woc' in s: 
-        return int(s.split('-')[1]) * 5
-    elif 'random' in s:
-        return int(s.split('_')[4]) * int(s.split('_')[5].split('.')[0])
-    elif 'rirs' in s:
-        return int(s.split('-')[1]) * int(s.split('-')[2])
-    else:
-        raise Exception('instance name invalid')
+import natsort
 
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', type=int, default=0)
     parser.add_argument('-l', type=str)
     return parser
-        
+
 if __name__=="__main__":
     parser = get_parser()
     args = parser.parse_args()
-    start = time.time()
     instances = []
     userInput = False
 
-    for file in os.listdir(os.path.dirname(__file__) + '/data/benchmark_instances'):
+    parent_directory = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+    for file in os.listdir(parent_directory + '/data/benchmark_instances'):
         if 'pdf' == file[len(file)-3:]:
             pass
         else:
-            instances.append('data/benchmark_instances/'+file)
+            instances.append('../data/benchmark_instances/'+file)
 
-    instances.sort(key = mySort)
-    instances = [instances[int(args.n)]]
+    instances = natsort.natsorted(instances)
+    instance = instances[int(args.n)]
+
     log = open('log/'+args.l, 'w')
     sys.stdout = log
 
-    result = []
+    #### 1. Read instance ####
+    start = time.time()
+    D = Data(instance)
+    end = time.time()
+    print(f"Read instance:{instance}")
+    print(f"read takes {end - start:.5f} sec")
 
-    for instance in instances:
-        D = Data(instance)
-        print('instance', instance, 'read')
-        end = time.time()
-        print('total time:', f"{end - start:.5f} sec")
-        centerT = D.findCenterGlobal()
-        D.WriteData()
-        end = time.time()
-        print('total time:', f"{end - start:.5f} sec")
+    #### 2. Generate Initial solution ####
+    centerT = D.findCenterGlobal()
+    D.WriteData()
+    end = time.time()
+    print(f"initial solution takes {end - start:.5f} sec")

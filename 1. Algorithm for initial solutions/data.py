@@ -1,17 +1,9 @@
 import json
 import sys
-import random
+import copy
+from multiprocessing import Process, Pool
 from Point import Point
 from Triangulation import Triangle, Triangulation
-import copy
-import time
-import os
-import pandas as pd
-import datetime
-import numpy as np
-from pathlib import Path
-import pdb
-from multiprocessing import Process, Pool
 
 sys.setrecursionlimit(1000000)
 SEARCH_DEPTH = 1
@@ -20,7 +12,7 @@ PAR_CROSS = 1
 
 class Data:
     def __init__(self, inp=''):
-        if not inp: 
+        if not inp:
             self.triangulations = []
             self.log = False
         else:
@@ -40,7 +32,6 @@ class Data:
             root = json.load(f)
             self.instance_name = root["instance_uid"]
             self.instance_uid = self.instance_name
-            print('self.instance_uid:', self.instance_uid)
             self.pts_x = root["points_x"]
             self.pts_y = root["points_y"]
             self.pts = []
@@ -82,7 +73,7 @@ class Data:
                 for flp in flip_seq:
                     self.center.flip((flp[0], flp[1]))
 
-            
+
     def make_triangulation(self, t: Triangulation):
         tri = Triangulation()
         tri.adj = [-1] * len(self.pts)
@@ -152,7 +143,7 @@ class Data:
                 t = t.nei(i+2)
             else:
                 return t
-    
+
     def count_cross(self, tri: Triangulation, con: tuple):
         t = self.find_triangle_containing(tri, con)
         if not t:
@@ -172,7 +163,7 @@ class Data:
                 tt = t.neis[i]
                 j = tt.get_ind(t.pts[i])
         return cnt
-            
+
     def flippable(self, tri:Triangulation, e:tuple):
         p1, p3 = e
         t1 = tri.find_triangle(p1, p3)
@@ -184,7 +175,7 @@ class Data:
         j = t2.get_ind(p1)
         p2 = t2.pt(j + 1)
         return (turn(self.pts[p2], self.pts[p3], self.pts[p4]) > 0) and (turn(self.pts[p2], self.pts[p1], self.pts[p4]) < 0)
-        
+
     def flip_score(self, tri:Triangulation, tri_dest:Triangulation, e:tuple, depth:int):
         p1, p3 = e
         t1 = tri.find_triangle(p1, p3)
@@ -207,8 +198,8 @@ class Data:
                 nsc = self.flip_score(tri, tri_dest, pe, depth - 1)
                 m_score = max(m_score, (nsc[0] + m_score[0], nsc[1]))
         tri.flip((p2, p4))
-        return m_score    
-    
+        return m_score
+
 
     def findCenterGlobal(self):
         if self.log:
@@ -253,7 +244,7 @@ class Data:
                     nflips.append((p1, p2))
                     marked.add(t1)
                     marked.add(t2)
-                    nscore += score    
+                    nscore += score
                 if nscore > mscore:
                     mscore = nscore
                     mi = i
@@ -303,7 +294,7 @@ class Data:
             if i < num-1:
                 assert(mtriangulations[i].edges == mtriangulations[i+1].edges)
             self.pFlips.append(pfps[i])
-        
+
         if self.log: print("total length:",tl)
         while len(mtriangulations) > 1:
             tri = mtriangulations.pop()
@@ -320,7 +311,7 @@ class Data:
 
         inst["flips"] = self.pFlips
         inst["meta"] = {"dist": self.dist, "input": self.input, "center": self.center.return_edge()}
-        
+
         folder = "solutions"
         with open(folder+"/"+self.instance_uid+".solution"+".json", "w", encoding="utf-8") as f:
             json.dump(inst, f, indent='\t')
