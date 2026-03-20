@@ -6,7 +6,7 @@ Algorithms for computing initial solutions for the CG:SHOP 2026 competition. (re
 
 1. First, put the instance file(s) into `data/benchmark_instances` (if necessary).
 
-2. Then, use the following command (instance number is order of instances in a folder) :
+2. Then, use the following command. Please refer to ['instance_list.txt'](../instance_list.txt) for mapping of [instance number] to specific instances.:
 
 ```bash
 python main.py -n [instance number] -l [log file name]
