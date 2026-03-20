@@ -1,14 +1,10 @@
 import json
 import sys
 import copy
-from multiprocessing import Process, Pool
 from Point import Point
 from Triangulation import Triangle, Triangulation
 
 sys.setrecursionlimit(1000000)
-SEARCH_DEPTH = 1
-PAR_LEN = 2.5
-PAR_CROSS = 1
 
 class Data:
     def __init__(self, inp=''):
