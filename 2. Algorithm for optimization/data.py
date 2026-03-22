@@ -939,6 +939,68 @@ class FastData:
         assert(tri.edges == tri1.edges)
         return pfp[::-1]
 
+    def random_compute_fpd(self,debug=True, tri_num=-1):
+        print(f"Random compute fpd for {self.instance_uid}")
+        prev_len = self.dist
+        prev_best = prev_len   
+        if tri_num==-1:
+            tri_num = len(self.triangulations)-1
+            
+        from multiprocessing import Pool
+        # pool = Pool(max(50,len(self.triangulations)))
+        while tri_num < len(self.triangulations) and 0<=tri_num:
+            seq = self.pFlips[tri_num]
+            if len(seq) == 0:
+                tri_num -= 1
+                continue
+            if len(seq) == 1:
+                tri_num -= 1
+                continue
+            seq_iter = 1
+            
+            T1_ind = 0
+            T2_ind = 1
+            if debug:
+                print(f"[{self.instance_uid}] Processing triangulation {tri_num}")
+            while T2_ind<len(seq):
+                
+                # print(tri_num, T1_ind, T2_ind)
+                local_T1 = self.triangulations[tri_num].fast_copy()
+                for ind1 in range(T1_ind):
+                    for e in seq[ind1]:
+                        local_T1.flip(e)
+                local_T2 = local_T1.fast_copy()
+                for ind2 in range(T1_ind, T2_ind):
+                    for e in seq[ind2]:
+                        local_T2.flip(e)
+                seq1  = self.compuePFS_total(local_T1, local_T2)
+                if len(seq1)< T2_ind - T1_ind:
+                    self.pFlips[tri_num] = self.pFlips[tri_num][0:T1_ind] + seq1 + self.pFlips[tri_num][T2_ind:]
+                    print(f"[{self.instance_uid}] Updated: {prev_len} -> {prev_len+len(seq1)- (T2_ind - T1_ind)}")
+                    prev_len = prev_len+len(seq1)- (T2_ind - T1_ind)
+                    self.dist = sum([len(pFlip) for pFlip in self.pFlips])
+                    self.WriteData()
+                    T1_ind = 0
+                    T2_ind = 1
+                    break
+                else:
+                    if T1_ind + 1 < T2_ind:
+                        T1_ind += 1
+                        # print(tri_num, T1_ind, T2_ind, len(seq))
+                    else:
+                        T2_ind += 1
+                        T1_ind = 0
+                        # print(tri_num, T1_ind, T2_ind, len(seq))
+            if T2_ind==len(seq):
+                tri_num -= 1
+        if prev_len < prev_best:
+            total_dist = sum([len(pFlip) for pFlip in self.pFlips])
+            self.dist = total_dist
+            self.WriteData()
+            print(f"[{self.instance_uid}] Improved: {prev_best} -> {total_dist}")
+        print(f"[{self.instance_uid}] Done")
+        return self.center
+
     def parallel_flip_path2(self, tri1, tri2):
         tri = tri1.fast_copy()
         tri_target = tri2.fast_copy()
