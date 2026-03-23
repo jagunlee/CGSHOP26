@@ -79,14 +79,14 @@ def analyze_size(bench_dir: Path, core_dir: Path, out_log: Path, exclude_rirs: b
     avg_red = mean([r[3] for r in records])
     avg_orig = mean([r[1] for r in records])
     avg_core = mean([r[2] for r in records])
-    
+
     lines.append(f"Overall: #inst={len(records)}, Avg Reduction={avg_red:.2f}%, Avg Size: {avg_orig:.1f} -> {avg_core:.1f}")
     lines.append("\norig_n | #inst | avg_core_n | avg_reduction(%)")
-    
+
     by_n = defaultdict(list)
-    for _, o_n, c_n, red in records: 
+    for _, o_n, c_n, red in records:
         by_n[o_n].append((c_n, red))
-    
+
     for o_n in sorted(by_n.keys()):
         c_ns, reds = zip(*by_n[o_n])
         lines.append(f"{o_n:6d} | {len(reds):5d} | {mean(c_ns):10.2f} | {mean(reds):15.2f}%")
@@ -170,7 +170,7 @@ def analyze_quality(bench_dir: Path, log_path: Path, out_log: Path, exclude_rirs
 
     lines = ["\n=== Quality (Ratio = Ours / Best) Report ==="]
     lines.append(f"Source Log: {log_path.name}")
-    
+
     def fmt_line(title, s):
         if s:
             lines.append(f"{title:<12}: #={s['count']}, mean={s['mean']:.6f}, median={s['median']:.6f}, min={s['min']:.6f}, max={s['max']:.6f}")
@@ -178,17 +178,17 @@ def analyze_quality(bench_dir: Path, log_path: Path, out_log: Path, exclude_rirs
     fmt_line("Overall", overall)
     fmt_line("orig_n <= 10", le10)
     fmt_line("orig_n > 10", gt10)
-    
+
     if le10 and gt10:
         lines.append(f"Mean gap (orig_n>10 - orig_n<=10) = {(gt10['mean'] - le10['mean']):.6f}")
 
     lines.append("\n=== Mean ratio by original triangulation count (orig_n) ===")
     lines.append("orig_n | #inst | mean_ratio | min_ratio | max_ratio")
-    
+
     by_n = defaultdict(list)
     for r, n, _, _ in matched:
         by_n[n].append(r)
-    
+
     for n in sorted(by_n.keys()):
         rs = by_n[n]
         lines.append(f"{n:6d} | {len(rs):5d} | {mean(rs):9.6f} | {min(rs):9.6f} | {max(rs):9.6f}")
@@ -215,7 +215,7 @@ if __name__ == "__main__":
     core = Path(args.core_dir)
     log_p = Path(args.log_path)
     out_p = Path(args.out_log)
-    
+
     # Ensure output directory exists
     out_p.parent.mkdir(parents=True, exist_ok=True)
 

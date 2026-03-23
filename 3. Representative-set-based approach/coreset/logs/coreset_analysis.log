@@ -1,0 +1,9 @@
+=== Coreset Size Reduction Report ===
+Overall: #inst=17, Avg Reduction=31.08%, Avg Size: 7.9 -> 3.6
+
+orig_n | #inst | avg_core_n | avg_reduction(%)
+     2 |     5 |       2.00 |            0.00%
+     3 |     3 |       2.67 |           11.11%
+     5 |     3 |       3.33 |           33.33%
+    10 |     2 |       4.00 |           60.00%
+    20 |     4 |       6.25 |           68.75%

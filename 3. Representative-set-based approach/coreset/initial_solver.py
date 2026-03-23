@@ -17,9 +17,9 @@ def solve_global(bench_dir: str, core_dir: str, res_csv: str, log_path: str, exc
 
     inst_best = load_best_costs(res_csv)
     print(f"[INFO] Loaded {len(inst_best)} instance best costs from {res_csv}")
-    
+
     with open(log_file, "a", encoding="utf-8") as lf:
-        lf.write("========== solve_from_coreset (findCenterGlobal2 + coreset weighted sum) ==========\n")
+        lf.write("========== solve_from_coreset (findCenterGlobal + coreset weighted sum) ==========\n")
         lf.write(f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
         lf.write(f"benchmark_dir = {bench_dir}\n")
         lf.write(f"coreset_dir   = {core_dir}\n")
@@ -33,7 +33,7 @@ def solve_global(bench_dir: str, core_dir: str, res_csv: str, log_path: str, exc
         print(f"[CORESET] {co_file.name}")
 
         base_stem = co_file.stem[:-len("_coreset")] if co_file.stem.endswith("_coreset") else co_file.stem
-        
+
         if exclude_rirs and base_stem.lower().startswith("rirs"):
             print(f"  [SKIP] base_stem starts with 'rirs': {base_stem}")
             continue
@@ -45,7 +45,7 @@ def solve_global(bench_dir: str, core_dir: str, res_csv: str, log_path: str, exc
 
         dt_core, dt_full = Data(str(co_file)), Data(str(full_file))
         uid = getattr(dt_full, "instance_uid", base_stem)
-        
+
         if exclude_rirs and uid.lower().startswith("rirs"):
             print(f"  [SKIP] instance_uid starts with 'rirs': {uid}")
             continue
@@ -55,10 +55,10 @@ def solve_global(bench_dir: str, core_dir: str, res_csv: str, log_path: str, exc
 
         # Find Center on Coreset
         t0 = time.time()
-        center_tri = dt_core.findCenterGlobal2()
-        
+        center_tri = dt_core.findCenterGlobal()
+
         if center_tri is None:
-            print("      [WARN] findCenterGlobal2 returned None! Trying internal self.center...")
+            print("      [WARN] findCenterGlobal returned None! Trying internal self.center...")
             center_tri = getattr(dt_core, "center", None)
             if center_tri is None:
                 print("      [WARN] Falling back to random_move() to generate center...")
@@ -68,9 +68,9 @@ def solve_global(bench_dir: str, core_dir: str, res_csv: str, log_path: str, exc
             continue
 
         find_center_time = time.time() - t0
-        print(f"      findCenterGlobal2 done. time = {find_center_time:.3f} s")
+        print(f"      findCenterGlobal done. time = {find_center_time:.3f} s")
 
-        # Evaluate on Coreset 
+        # Evaluate on Coreset
         t_core0 = time.time()
         evaluate_distance_and_path(dt_core, center_tri)
         core_eval_time = time.time() - t_core0
@@ -128,11 +128,11 @@ def solve_global(bench_dir: str, core_dir: str, res_csv: str, log_path: str, exc
             f"coreset_dist_sum_unweighted  = {coreset_unweighted:.6f}",
             f"coreset_dist_sum_weighted    = {coreset_weighted:.6f}",
             f"coreset_weights_sum          = {w_sum:.6f}",
-            f"findCenterGlobal2_time       = {find_center_time:.3f}s",
+            f"findCenterGlobal_time       = {find_center_time:.3f}s",
             f"coreset_computeDistSum_time  = {core_eval_time:.3f}s",
             f"full_computeDistanceSum_time = {eval_time:.3f}s"
         ]
-        
+
         if ref_cost is not None:
             lines.extend([
                 f"best_cost(result.csv)        = {ref_cost:.6f}",
@@ -143,12 +143,12 @@ def solve_global(bench_dir: str, core_dir: str, res_csv: str, log_path: str, exc
             ])
         else:
             lines.append("best_cost(result.csv)        = None (no matching header column)")
-        
+
         lines.append("-------------------------------------------------------")
-        
+
         with open(log_file, "a", encoding="utf-8") as lf:
             lf.write("\n".join(lines) + "\n")
-            
+
         print("=======================================================")
 
     print(f"\n[LOG] Saved results to {log_file}")

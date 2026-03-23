@@ -1,17 +1,5 @@
-========== solve_from_coreset (findCenterGlobal2 + coreset weighted sum) ==========
-Time: 2026-03-16 05:38:14
-benchmark_dir = data/benchmark_instances
-coreset_dir   = data/coreset_instance
-result_csv    = result.csv
-
-========== solve_from_coreset (findCenterGlobal2 + coreset weighted sum) ==========
-Time: 2026-03-16 05:41:17
-benchmark_dir = data/benchmark_instances
-coreset_dir   = data/coreset_instance
-result_csv    = result.csv
-
-========== solve_from_coreset (findCenterGlobal2 + coreset weighted sum) ==========
-Time: 2026-03-16 05:52:41
+========== solve_from_coreset (findCenterGlobal + coreset weighted sum) ==========
+Time: 2026-03-23 11:01:51
 benchmark_dir = data/benchmark_instances
 coreset_dir   = data/coreset_instance
 result_csv    = result.csv
