@@ -1574,18 +1574,6 @@ class FastData:
             self.pFlips.append(pfps[i])
         return mtriangulations[0]
 
-    def flip_rev(self, tri, e):
-        p, q = e
-        t = self.find_triangle_containing(tri, e)
-        row = f_pts[t]
-        if row[0] == q1: i=0
-        elif row[1] == q1: i=1
-        else: i=2
-        p1 = row[(i+1)%3]
-        p2 = row[(i+2)%3]
-        tri.flip(p1, p2)
-
-
     def random_new_center(self, fcg_serial, fcg_parallel1, fcg_parallel2, replace_parallel, cpus, chunk_size):
         param = 1
         len_flips = [len(pFlip) for pFlip in self.pFlips]
