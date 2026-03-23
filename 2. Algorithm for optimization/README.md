@@ -9,7 +9,7 @@ Algorithms for Solution Optimization for the CG:SHOP 2026 competition. (related 
 2. Then, use the following command :
 * run all in serial
 ```bash
-python main.py --data solutions/[solution file] --fcg_serial t --replace_pr f  --data [solution file for optimization]
+python main.py --data solutions/[solution file] --fcg_serial t --replace_pr f
 ```
 * run all in parallel
 ```bash
