@@ -98,10 +98,10 @@ def _flip(p1, p2, f_pts, f_nei, e2f, adj):
     else: j=2
     p4 = int(row2[(j+1)%3])
 
-    n_p2p3 = f_nei[t1, i] 
+    n_p2p3 = f_nei[t1, i]
     n_p3p1 = f_nei[t1, (i+1)%3]
 
-    m_p1p4 = f_nei[t2, j] 
+    m_p1p4 = f_nei[t2, j]
     m_p4p2 = f_nei[t2, (j+1)%3]
 
     f_pts[t1,i] = np.int32(p4)
@@ -170,7 +170,7 @@ def _numba_count_cross_fast(f_pts, f_nei, q1, q2, t, pts_coor):
 
     idx_next = (i+1)%3
     tt = f_nei[t, idx_next]
-    tmp = f_pts[t, idx_next] 
+    tmp = f_pts[t, idx_next]
     row_tt = f_pts[tt]
     j=0
     if row_tt[0] == tmp: j=0
@@ -536,12 +536,13 @@ class FastData:
             self.triangulations=[]
         else:
             self.input = inp
-            self.pts = None 
+            self.pts = None
             self.ReadData()
 
     def ReadData(self):
         if "solution" not in self.input:
-            pass
+            print("You need a .solution.json file")
+            exit(0)
         else:
             with open(self.input, "r", encoding="utf-8") as f:
                 root=json.load(f)
@@ -551,12 +552,12 @@ class FastData:
             self.instance_uid = root["instance_uid"]
 
 
-            org_input = 'data/benchmark_instances/'+self.instance_uid+'.json'
+            org_input = '../data/benchmark_instances/'+self.instance_uid+'.json'
             with open(org_input, "r", encoding="utf-8") as f:
                 root=json.load(f)
             self.pts_x = root["points_x"]
             self.pts_y = root["points_y"]
-            self.pts = np.array(list(zip(root["points_x"], root["points_y"])), dtype=np.float64) # can be replaced by pts_x,y?
+            self.pts = np.array(list(zip(root["points_x"], root["points_y"])), dtype=np.float64)
 
             self.num_pts = len(root["points_x"])
             self.num_edges = len(root["triangulations"][0])
@@ -1136,11 +1137,11 @@ class FastData:
             prev_pFlips_i.append(round_temp)
         return prev_pFlips_i, opt_ind
 
-    def old_random_compute_fpd_replace(self):
+    def serial_random_compute_pfd_replace(self):
         prev_len = self.dist
         prev_best = prev_len
         tri_num=0
-        print()
+        #print()
         while tri_num < self.num_tris:
             start=time.time()
             seq = self.pFlips[tri_num]
@@ -1152,23 +1153,23 @@ class FastData:
             for e in seq[0]:
                 local_T.flip(e[0], e[1])
             while seq_iter < len(seq):
-                print(f"{seq_iter}/{len(seq)}", end = ' ', flush =True)
-                start=time.time()
+                #print(f"{seq_iter}/{len(seq)}", end = ' ', flush =True)
+                #start=time.time()
                 seq1 = self.computePFS_total(self.triangulations[tri_num], local_T)
                 seq2 = self.computePFS_total(local_T, self.center)
-                print(f"{time.time()-start:.2f}s", end=' ', flush=True)
+                #print(f"{time.time()-start:.2f}s", end=' ', flush=True)
                 if (len(seq1) + len(seq2)) <= len(seq):
                     self.pFlips[tri_num] = seq1 + seq2
                 for e in seq[seq_iter]:
                     local_T.flip(e[0], e[1])
                 seq_iter +=1
-            print()
-            print(f"T{tri_num}, len(seq)={len(seq)} takes {time.time()-start:.2f}s", end='\n')
+            #print()
+            #print(f"\tT{tri_num}, len(seq)={len(seq)} takes {time.time()-start:.2f}s", end='\n')
             if seq_iter == len(seq):
                 tri_num +=1
 
 
-    def random_compute_fpd_replace(self, cpus):
+    def random_compute_pfd_replace(self, cpus):
         TN = [tri_num for tri_num in range(self.num_tris) if len(self.pFlips[tri_num])>1]
 
         with ProcessPoolExecutor(
@@ -1208,7 +1209,7 @@ class FastData:
         NCAND=[[] for _ in range(num)]
         mi=0
         print()
-        ####### first findCenterGlobal ######
+        ####### first part ######
         if parallel1==False:
             start=time.time()
             for i in range(num):
@@ -1272,7 +1273,7 @@ class FastData:
         start2=time.time()
         for e in flips[mi]:
             mtriangulations[mi].flip(e[0], e[1])
-        print(f"\tflips takes {time.time()-start2:.2f}s")
+        #print(f"\tflips takes {time.time()-start2:.2f}s")
         fe =[]
         tri = mtriangulations[mi]
         start3=time.time()
@@ -1280,9 +1281,9 @@ class FastData:
             if self.flippable(tri, ee):
                 fe.append(ee)
         F_E[mi] = fe
-        print(f"\tflippable takes {time.time()-start3:.2f}s")
+        #print(f"\tflippable takes {time.time()-start3:.2f}s")
 
-        ####### second findCenterGlobal ######
+        ####### second part ######
         if parallel2==False:
             start=time.time()
             count=1
@@ -1386,7 +1387,7 @@ class FastData:
                     start2_0=time.time()
                     for fe_idx in range(0, len(F_E[current_mi]), chunk_size):
                         e_idx_list.append(F_E[current_mi][fe_idx:fe_idx + chunk_size])
-                    print(f"\tchunk {time.time()-start2_0:.2f}s")
+                    #print(f"\tchunk {time.time()-start2_0:.2f}s")
                     start2=time.time()
                     for chunk_num, edge_job_list in enumerate(e_idx_list):
                         f = exe.submit(self.my_total_flip_score, current_mi, mtriangulations, target_list, edge_job_list, chunk_num) #tri is mtriangulations[mi]
@@ -1394,7 +1395,7 @@ class FastData:
                     for f in as_completed(futures):
                         try:
                             chunk_num, e_job_total_score, ch_time = f.result()
-                            print(f"C{chunk_num}, {ch_time:.2f}s", end=' ', flush=True)
+                            print(f"Ch{chunk_num}, {ch_time:.2f}s", end=' ', flush=True)
                             for eidx, escore in enumerate(e_job_total_score):
                                 if escore >0:
                                     e = e_idx_list[chunk_num][eidx]
@@ -1449,7 +1450,7 @@ class FastData:
             self.pFlips.append(pfps[i])
         return mtriangulations[0]
 
-    def old_findCenterGlobal(self):
+    def serial_findCenterGlobal(self):
         mtriangulations = [t.fast_copy() for t in self.triangulations]
         num = len(self.triangulations)
         pfps = [ [] for _ in range(num)]
@@ -1523,14 +1524,13 @@ class FastData:
         tri.flip(p1, p2)
 
 
-    def random_new_center(self, old_fcg, fcg_parallel1, fcg_parallel2, replace_parallel, cpus, chunk_size):
-        print(old_fcg, fcg_parallel1, fcg_parallel2, replace_parallel, cpus, chunk_size)
+    def random_new_center(self, fcg_serial, fcg_parallel1, fcg_parallel2, replace_parallel, cpus, chunk_size):
         param = 1
         len_flips = [len(pFlip) for pFlip in self.pFlips]
         max_dist = max(len_flips)
         total_dist = sum(len_flips)
-        while param < max_dist *2:
-            print("prm ",param, ":")
+        while param < max_dist *1:
+            print("in random_new_center(), param ",param, ":")
             revnum = [random.randint(min(param, len(self.pFlips[i]), 1), min(param, len(self.pFlips[i]))) for i in range(len(self.triangulations))]
             newD = FastData()
             newD.pts = self.pts
@@ -1551,18 +1551,18 @@ class FastData:
                 newD.triangulations.append(newT)
 
             start=time.time()
-            if old_fcg==True:
-                print("\tserial old ver findCenterGlobal() takes ... ", end=' ', flush=True)
-                self.center = newD.old_findCenterGlobal()
+            if fcg_serial==True:
+                print("\tserial_findCenterGlobal() takes ... ", end=' ', flush=True)
+                self.center = newD.serial_findCenterGlobal()
             else:
                 if fcg_parallel1==False and fcg_parallel2==False:
-                    print("\tserial new ver findCenterGlobal() takes ... ", end=' ', flush=True)
+                    print("\tNew serial ver in findCenterGlobal() takes ... ", end=' ', flush=True)
                     self.center = newD.findCenterGlobal(cpus, chunk_size,parallel1=False, parallel2=False)
                 elif fcg_parallel1==False and fcg_parallel2==True:
-                    print("\tpartial parallel findCenterGlobal() takes ... ", end=' ', flush=True)
+                    print("\tPartial parallel in findCenterGlobal() takes ... ", end=' ', flush=True)
                     self.center = newD.findCenterGlobal(cpus, chunk_size, parallel1=False, parallel2=True)
                 else:
-                    print("\tall parallel findCenterGlobal() takes ... ", end=' ', flush=True)
+                    print("\tAll parallel in findCenterGlobal() takes ... ", end=' ', flush=True)
                     self.center = newD.findCenterGlobal(cpus, chunk_size,parallel1=True, parallel2=True)
             print(f"{time.time()-start:.2f}s")
 
@@ -1572,10 +1572,10 @@ class FastData:
             start=time.time()
             if replace_parallel==False:
                 print("\tserial random_compute_pfd_replace() takes ... ", end=' ', flush=True)
-                self.old_random_compute_fpd_replace() # pFlip update
+                self.serial_random_compute_pfd_replace() # pFlip update
             else:
                 print("\tparallel random_compute_pfd_replace() takes ... ", end=' ', flush=True)
-                self.random_compute_fpd_replace(cpus) # pFlip update
+                self.random_compute_pfd_replace(cpus) # pFlip update
             print(f"{time.time()-start:.2f}s", end='\n')
 
             new_pfp = [len(pFlip) for pFlip in self.pFlips]
@@ -1636,7 +1636,7 @@ class FastData:
 
         '''
         #verify
-        org_input = 'data/benchmark_instances/'+self.instance_uid+'.json'
+        org_input = '../data/benchmark_instances/'+self.instance_uid+'.json'
         with open(org_input, "r", encoding="utf-8") as f:
             root=json.load(f)
 
@@ -1652,13 +1652,13 @@ class FastData:
                 )
 
         errors = check_for_errors(instance, solution)
-        
+
         if errors != []:
             print(errors)
             exit(0)
         '''
-        
-        opt_folder = "optimal"
+
+        opt_folder = "opt"
         opt_list = os.listdir(opt_folder)
         already_exist = False
 
@@ -1943,7 +1943,7 @@ def _numba_count_cross(f_pts, f_nei, pts_coor, q1, q2, t):
 
     idx_next = (i+1)%3
     tt = f_nei[t, idx_next]
-    tmp = f_pts[t, idx_next] 
+    tmp = f_pts[t, idx_next]
     row_tt = f_pts[tt]
     j=0
     if row_tt[0] == tmp: j=0
@@ -2004,6 +2004,6 @@ def _find_t_c(f_pts, f_nei, pts_coor, q1, q2, t):
         elif turn_val2 >0:
             t = f_nei[t, (i+2)%3]
         else:
-            return t 
+            return t
 
 
