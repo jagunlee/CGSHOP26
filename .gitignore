@@ -9,3 +9,5 @@ huntrix/*
 hy_opt/*
 hy_solutoins/*
 gathering.py
+*.zip
+opt2/*
